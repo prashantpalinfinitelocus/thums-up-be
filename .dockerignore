@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Build output
+dist/
+build/
+.strapi/
+
+# Development
+.env.local
+.env.*.local
+
+# Cache
+.cache/
+.temp/
+.tmp/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
