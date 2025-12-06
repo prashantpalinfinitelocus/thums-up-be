@@ -11,6 +11,9 @@ RUN npm install --legacy-peer-deps
 # Copy source code
 COPY ./strapi .
 
+# Copy GCP service account (will be overridden by volume mount at runtime)
+COPY ./gcp-service-account.json ./gcp-service-account.json
+
 # Build the application
 RUN npm run build
 

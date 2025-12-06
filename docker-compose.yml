@@ -54,16 +54,13 @@ services:
   strapi:
     build:
       context: .
-      dockerfile: Dockerfile.strapi.dev
+      dockerfile: Dockerfile.strapi
     container_name: thums_up_strapi
-    environment:
-      NODE_ENV: development
     ports:
       - "1338:1337"
     volumes:
-      - ./strapi:/srv/app
       - ./gcp-service-account.json:/srv/app/gcp-service-account.json:ro
-      - /srv/app/node_modules
+      - strapi_uploads:/srv/app/public/uploads
     env_file:
       - ./strapi/.env
     restart: unless-stopped
@@ -73,5 +70,7 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  strapi_uploads:
     driver: local
 
