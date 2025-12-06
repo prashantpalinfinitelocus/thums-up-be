@@ -1,70 +1,30 @@
-FROM node:18-alpine
+FROM node:18
 
-RUN apk add --no-cache python3 make g++
+# Install OS deps required for better-sqlite3 and bcrypt etc.
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv/app
 
-# Install all dependencies first (including devDependencies for build)
+# Copy package files
 COPY ./strapi/package*.json ./
-RUN npm install --legacy-peer-deps
+COPY ./strapi/patches ./patches
 
-# Copy source code (excluding dist, node_modules, etc. via .dockerignore)
+# Install deps
+RUN npm install
+
+# Apply patches
+RUN npx patch-package
+
+# Copy full Strapi project (excluding dist via .dockerignore)
 COPY ./strapi .
 
-# Debug: Check if dist was copied
-RUN echo "=== After COPY - Checking if dist exists ===" && \
-    if [ -d "dist" ]; then \
-        echo "WARNING: dist directory was copied!" && \
-        ls -la dist/ && \
-        if [ -e "dist/config/plugins.js" ]; then \
-            file dist/config/plugins.js || echo "Cannot check file type"; \
-        fi; \
-    else \
-        echo "Good: No dist directory copied"; \
-    fi
-
-# Copy GCP service account (will be overridden by volume mount at runtime)
+# Copy GCP service account
 COPY ./gcp-service-account.json ./gcp-service-account.json
 
-# Ensure dist directory is clean before build
-RUN rm -rf dist/ .cache/ .tmp/ build/
-
-# Debug: Verify clean state
-RUN echo "=== After cleanup - Verifying clean state ===" && \
-    if [ -d "dist" ]; then \
-        echo "ERROR: dist still exists after cleanup!"; \
-        ls -la dist/; \
-    else \
-        echo "Good: dist removed successfully"; \
-    fi
-
-# Build the application
+# Build Strapi admin
 RUN npm run build
 
-# Verify the build output
-RUN echo "=== After build - Checking build output ===" && \
-    if [ -d "dist/config" ]; then \
-        ls -la dist/config/ && \
-        if [ -e "dist/config/plugins.js" ]; then \
-            file dist/config/plugins.js && \
-            if [ -f "dist/config/plugins.js" ]; then \
-                echo "SUCCESS: plugins.js is a file" && \
-                head -5 dist/config/plugins.js; \
-            elif [ -d "dist/config/plugins.js" ]; then \
-                echo "ERROR: plugins.js is a directory!" && \
-                ls -la dist/config/plugins.js/; \
-            fi; \
-        else \
-            echo "ERROR: plugins.js not found!"; \
-        fi; \
-    else \
-        echo "ERROR: dist/config not created!"; \
-    fi
-
-# Set production environment (using JavaScript configs)
-ENV NODE_ENV=production
-
+# Expose correct Strapi port
 EXPOSE 1337
 
-CMD ["npm", "run", "start"]
-
+CMD ["npm", "run", "develop"]
