@@ -7,7 +7,6 @@ services:
     ports:
       - "${APP_PORT:-8080}:${APP_PORT:-8080}"
     volumes:
-      - .:/app
       - ./gcp-service-account.json:/app/gcp-service-account.json:ro
     env_file:
       - .env
