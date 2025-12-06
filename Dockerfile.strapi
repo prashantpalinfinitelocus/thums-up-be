@@ -8,14 +8,22 @@ WORKDIR /srv/app
 COPY ./strapi/package*.json ./
 RUN npm install --legacy-peer-deps
 
-# Copy source code
+# Copy source code (excluding dist, node_modules, etc. via .dockerignore)
 COPY ./strapi .
 
 # Copy GCP service account (will be overridden by volume mount at runtime)
 COPY ./gcp-service-account.json ./gcp-service-account.json
 
+# Ensure dist directory is clean before build
+RUN rm -rf dist/ .cache/ .tmp/ build/
+
 # Build the application
 RUN npm run build
+
+# Verify the build output
+RUN echo "Checking build output..." && \
+    ls -la dist/config/ && \
+    file dist/config/plugins.js
 
 # Set production environment
 ENV NODE_ENV=production

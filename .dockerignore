@@ -1,17 +1,21 @@
 # Dependencies
 node_modules/
 npm-debug.log*
+strapi/node_modules/
 
 # Build output
 dist/
 build/
 .strapi/
+strapi/dist/
+strapi/build/
+strapi/.strapi/
 
 # Development
 .env.local
 .env.*.local
 
-# Cache
+
 .cache/
 .temp/
 .tmp/
@@ -23,4 +27,5 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
 
