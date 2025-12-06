@@ -64,7 +64,6 @@ services:
       - ./strapi:/srv/app
       - ./gcp-service-account.json:/srv/app/gcp-service-account.json:ro
       - /srv/app/node_modules
-      - /srv/app/dist
     env_file:
       - ./strapi/.env
     restart: unless-stopped
