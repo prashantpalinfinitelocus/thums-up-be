@@ -11,19 +11,55 @@ RUN npm install --legacy-peer-deps
 # Copy source code (excluding dist, node_modules, etc. via .dockerignore)
 COPY ./strapi .
 
+# Debug: Check if dist was copied
+RUN echo "=== After COPY - Checking if dist exists ===" && \
+    if [ -d "dist" ]; then \
+        echo "WARNING: dist directory was copied!" && \
+        ls -la dist/ && \
+        if [ -e "dist/config/plugins.js" ]; then \
+            file dist/config/plugins.js || echo "Cannot check file type"; \
+        fi; \
+    else \
+        echo "Good: No dist directory copied"; \
+    fi
+
 # Copy GCP service account (will be overridden by volume mount at runtime)
 COPY ./gcp-service-account.json ./gcp-service-account.json
 
 # Ensure dist directory is clean before build
 RUN rm -rf dist/ .cache/ .tmp/ build/
 
+# Debug: Verify clean state
+RUN echo "=== After cleanup - Verifying clean state ===" && \
+    if [ -d "dist" ]; then \
+        echo "ERROR: dist still exists after cleanup!"; \
+        ls -la dist/; \
+    else \
+        echo "Good: dist removed successfully"; \
+    fi
+
 # Build the application
 RUN npm run build
 
 # Verify the build output
-RUN echo "Checking build output..." && \
-    ls -la dist/config/ && \
-    file dist/config/plugins.js
+RUN echo "=== After build - Checking build output ===" && \
+    if [ -d "dist/config" ]; then \
+        ls -la dist/config/ && \
+        if [ -e "dist/config/plugins.js" ]; then \
+            file dist/config/plugins.js && \
+            if [ -f "dist/config/plugins.js" ]; then \
+                echo "SUCCESS: plugins.js is a file" && \
+                head -5 dist/config/plugins.js; \
+            elif [ -d "dist/config/plugins.js" ]; then \
+                echo "ERROR: plugins.js is a directory!" && \
+                ls -la dist/config/plugins.js/; \
+            fi; \
+        else \
+            echo "ERROR: plugins.js not found!"; \
+        fi; \
+    else \
+        echo "ERROR: dist/config not created!"; \
+    fi
 
 # Set production environment
 ENV NODE_ENV=production
