@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: thums_up_postgres
+    environment:
+      POSTGRES_DB: thums-up
+      POSTGRES_USER: prashantpal
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prashantpal -d thums-up"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   app:
     build:
       context: .
@@ -12,8 +30,12 @@ services:
       - .env
     restart: unless-stopped
     depends_on:
-      - subscriber
-      - strapi
+      postgres:
+        condition: service_healthy
+      subscriber:
+        condition: service_started
+      strapi:
+        condition: service_started
 
   subscriber:
     build:
@@ -25,6 +47,9 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   strapi:
     build:
@@ -37,16 +62,14 @@ services:
       - ./strapi:/srv/app
       - ./gcp-service-account.json:/srv/app/gcp-service-account.json:ro
       - /srv/app/node_modules
-    environment:
-      DATABASE_CLIENT: postgres
-      DATABASE_HOST: 127.0.0.1
-      DATABASE_PORT: 5432
-      DATABASE_NAME: thums-up
-      DATABASE_USERNAME: prashantpal
-      DATABASE_PASSWORD: password123
-      DATABASE_SSL: false
-      GCS_BUCKET_NAME: coca-cola-notifications-3a790.appspot.com
-      GCS_SERVICE_ACCOUNT: ./gcp-service-account.json
-      NODE_ENV: ${APP_ENV:-development}
+    env_file:
+      - ./strapi/.env
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
 
