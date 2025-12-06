@@ -61,11 +61,10 @@ RUN echo "=== After build - Checking build output ===" && \
         echo "ERROR: dist/config not created!"; \
     fi
 
-# Note: Using development mode to support TypeScript config files
-# For true production, you'd need to compile config files to JS
+# Use development mode to support TypeScript config files
 ENV NODE_ENV=development
 
 EXPOSE 1337
 
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "develop"]
 
