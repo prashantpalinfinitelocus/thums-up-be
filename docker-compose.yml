@@ -33,7 +33,7 @@ services:
       dockerfile: Dockerfile.strapi
     container_name: thums_up_strapi
     ports:
-      - "1337:1337"
+      - "1338:1337"
     volumes:
       - ./strapi:/srv/app
       - ./gcp-service-account.json:/srv/app/gcp-service-account.json:ro
