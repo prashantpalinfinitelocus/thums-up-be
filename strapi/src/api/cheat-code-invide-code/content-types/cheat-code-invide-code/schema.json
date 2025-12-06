@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cheat_code_invide_codes",
+  "info": {
+    "singularName": "cheat-code-invide-code",
+    "pluralName": "cheat-code-invide-codes",
+    "displayName": "cheat_code_invide_code"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "cheat_code_title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "cheat_code_sub_title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "submit_button": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

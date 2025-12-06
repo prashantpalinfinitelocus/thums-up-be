@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "surprise_me_pop_ups",
+  "info": {
+    "singularName": "surprise-me-pop-up",
+    "pluralName": "surprise-me-pop-ups",
+    "displayName": "surprise_me_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "surprise_me_pop_up_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "surprise_me_pop_up_sub_heading_1": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "surprise_me_pop_up_sub_heading_2": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "surprise_me_pop_up_yes_button": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "surprise_me_pop_up_no_button": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

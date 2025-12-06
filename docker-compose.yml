@@ -1,0 +1,53 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: thums_up_backend
+    ports:
+      - "${APP_PORT:-8080}:${APP_PORT:-8080}"
+    volumes:
+      - .:/app
+      - ./gcp-service-account.json:/app/gcp-service-account.json:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - subscriber
+      - strapi
+
+  subscriber:
+    build:
+      context: .
+      dockerfile: Dockerfile.subscriber
+    container_name: thums_up_subscriber
+    volumes:
+      - ./gcp-service-account.json:/app/gcp-service-account.json:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  strapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.strapi
+    container_name: thums_up_strapi
+    ports:
+      - "1337:1337"
+    volumes:
+      - ./strapi:/srv/app
+      - ./gcp-service-account.json:/srv/app/gcp-service-account.json:ro
+      - /srv/app/node_modules
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: 127.0.0.1
+      DATABASE_PORT: 5432
+      DATABASE_NAME: thums-up
+      DATABASE_USERNAME: prashantpal
+      DATABASE_PASSWORD: password123
+      DATABASE_SSL: false
+      GCS_BUCKET_NAME: coca-cola-notifications-3a790.appspot.com
+      GCS_SERVICE_ACCOUNT: ./gcp-service-account.json
+      NODE_ENV: ${APP_ENV:-development}
+    restart: unless-stopped
+

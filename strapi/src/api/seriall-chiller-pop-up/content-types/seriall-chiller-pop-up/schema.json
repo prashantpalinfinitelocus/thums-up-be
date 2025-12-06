@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "seriall_chiller_pop_ups",
+  "info": {
+    "singularName": "seriall-chiller-pop-up",
+    "pluralName": "seriall-chiller-pop-ups",
+    "displayName": "serial_chiller_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "serial_chiller_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "serial_chiller_sub_heading_1": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "serial_chiller_sub_heading_2": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

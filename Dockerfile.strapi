@@ -1,0 +1,20 @@
+FROM node:18-alpine
+
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /srv/app
+
+ENV NODE_ENV=production
+
+COPY ./strapi/package*.json ./
+
+RUN npm install --production
+
+COPY ./strapi .
+
+RUN npm run build
+
+EXPOSE 1337
+
+CMD ["npm", "run", "start"]
+

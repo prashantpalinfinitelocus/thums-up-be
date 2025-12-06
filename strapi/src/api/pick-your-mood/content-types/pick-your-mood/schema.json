@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pick_your_moods",
+  "info": {
+    "singularName": "pick-your-mood",
+    "pluralName": "pick-your-moods",
+    "displayName": "pick_your_mood"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "hello": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

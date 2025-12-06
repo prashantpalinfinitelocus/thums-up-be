@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "refresh_rings",
+  "info": {
+    "singularName": "refresh-ring",
+    "pluralName": "refresh-rings",
+    "displayName": "refresh_ring"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "refresh_rings_header": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "refresh_ring_content": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "refresh_ring_serial_chiller_header": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "refresh_ring_serial_chiller_sub_title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

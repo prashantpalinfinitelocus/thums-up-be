@@ -1,0 +1,259 @@
+{
+  "kind": "singleType",
+  "collectionName": "site_contents",
+  "info": {
+    "singularName": "site-content",
+    "pluralName": "site-contents",
+    "displayName": "site-content"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "home_page": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::home-page.home-page"
+    },
+    "web_footer": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::web-footer.web-footer"
+    },
+    "nav_footer": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::nav-footer.nav-footer"
+    },
+    "nav_bar": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::nav-bar.nav-bar"
+    },
+    "scroll_and_lol": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::scroll-and-lol.scroll-and-lol"
+    },
+    "pj_challenge": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::pj-challenge.pj-challenge"
+    },
+    "joke_box": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::joke-box.joke-box"
+    },
+    "hall_of_lame": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::hall-of-lame.hall-of-lame"
+    },
+    "refer_a_friend": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::refer-a-friend.refer-a-friend"
+    },
+    "have_an_invite_code": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::have-an-invite-code.have-an-invite-code"
+    },
+    "contest": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contest.contest"
+    },
+    "notification_text_after_click": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::notification-text-after-click.notification-text-after-click"
+    },
+    "my_profile": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::my-profile.my-profile"
+    },
+    "comic_coins": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::comic-coin.comic-coin"
+    },
+    "logout_button_navbar_profile_dropdown": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::logout-button-navbar-profile-dropdown.logout-button-navbar-profile-dropdown"
+    },
+    "faq": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::faq.faq"
+    },
+    "contact_us": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact-us.contact-us"
+    },
+    "plus_add_inside_profile": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::plus-add-inside-profile.plus-add-inside-profile"
+    },
+    "pick_your_mood": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::pick-your-mood.pick-your-mood"
+    },
+    "privacy_policy": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::privacy-policy.privacy-policy"
+    },
+    "terms_and_conditions": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::terms-and-condition.terms-and-condition"
+    },
+    "break_the_ice_complete_profile_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::break-the-ice-complete-profile-pop-up.break-the-ice-complete-profile-pop-up"
+    },
+    "surprise_me_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::surprise-me-pop-up.surprise-me-pop-up"
+    },
+    "serial_chiller_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::seriall-chiller-pop-up.seriall-chiller-pop-up"
+    },
+    "vote_is_in_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::vote-is-in-pop-up.vote-is-in-pop-up"
+    },
+    "made_you_lol_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::made-you-lol-pop-up.made-you-lol-pop-up"
+    },
+    "trying_to_prank_us_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::trying-to-prank-us-pop-up.trying-to-prank-us-pop-up"
+    },
+    "ahem_ahem_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::ahem-ahrm-pop-up.ahem-ahrm-pop-up"
+    },
+    "leaderboard": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::leaderboard.leaderboard"
+    },
+    "login": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::login.login"
+    },
+    "signup": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::signup.signup"
+    },
+    "otp": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::otp.otp"
+    },
+    "unique_code": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::unique-code.unique-code"
+    },
+    "edit_profile": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::edit-profile.edit-profile"
+    },
+    "easy_me_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::easy-me-pop-up.easy-me-pop-up"
+    },
+    "trying_to_get_one_past_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::trying-to-get-one-past.trying-to-get-one-past"
+    },
+    "joke_box_filter": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::filter-joke-box.filter-joke-box"
+    },
+    "joke_is_in_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::joke-is-in-pop-up.joke-is-in-pop-up"
+    },
+    "validations_translation": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::validations-translation.validations-translation"
+    },
+    "unique_code_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::unique-code-pop-up.unique-code-pop-up"
+    },
+    "that_was_quick_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::that-was-quick-pop-up.that-was-quick-pop-up"
+    },
+    "sorry_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::sorry-pop-up.sorry-pop-up"
+    },
+    "cheat_code_invide_code": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::cheat-code-invide-code.cheat-code-invide-code"
+    },
+    "send_again_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::send-again-pop-up.send-again-pop-up"
+    },
+    "coach_marker": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::c.c"
+    },
+    "report_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::report-pop-up.report-pop-up"
+    },
+    "thand_rakh_pop_up": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::thand-rakh-pop-up.thand-rakh-pop-up"
+    },
+    "refresh_ring": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::refresh-ring.refresh-ring"
+    }
+  }
+}

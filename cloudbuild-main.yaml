@@ -1,0 +1,78 @@
+substitutions:
+  _REGION: asia-south1
+  _PROJECT_ID: thums-up-project-id
+  _REPO_NAME: thums-up-cloud-build-repo
+  _MAIN_SERVICE: thums-up-cloudrun-main-backend
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker pull ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_MAIN_SERVICE}:latest || exit 0']
+    id: 'pull-cache'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-f',
+        'Dockerfile.dev',
+        '-t',
+        '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_MAIN_SERVICE}:$SHORT_SHA',
+        '-t',
+        '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_MAIN_SERVICE}:latest',
+        '--cache-from',
+        '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_MAIN_SERVICE}:latest',
+        '.'
+      ]
+    id: 'build-image'
+    waitFor: ['pull-cache']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_MAIN_SERVICE}:$SHORT_SHA'
+      ]
+    id: 'push-sha'
+    waitFor: ['build-image']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_MAIN_SERVICE}:latest'
+      ]
+    id: 'push-latest'
+    waitFor: ['build-image']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      [
+        'run',
+        'deploy',
+        '${_MAIN_SERVICE}',
+        '--image=${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_MAIN_SERVICE}:$SHORT_SHA',
+        '--region=${_REGION}',
+        '--platform=managed',
+        '--execution-environment=gen2',
+        '--min-instances=1',
+        '--max-instances=3',
+        '--allow-unauthenticated',
+        '--cpu=4',
+        '--memory=2Gi',
+        '--service-account=thums-up-cloudrun-sa@${_PROJECT_ID}.iam.gserviceaccount.com',
+        '--set-secrets=APP_ENV=APP_ENV:latest,INFOBIP_BASE_URL=INFOBIP_BASE_URL:latest,INFOBIP_API_KEY=INFOBIP_API_KEY:latest,JWT_SECRET_KEY=JWT_SECRET_KEY:latest,JWT_ACCESS_TOKEN_EXPIRY=JWT_ACCESS_TOKEN_EXPIRY:latest,JWT_REFRESH_TOKEN_EXPIRY=JWT_REFRESH_TOKEN_EXPIRY:latest,DB_HOST=DB_HOST:latest,DB_PORT=DB_PORT:latest,DB_USER=DB_USER:latest,DB_PASSWORD=DB_PASSWORD:latest,DB_NAME=DB_NAME:latest,DB_SSL_MODE=DB_SSL_MODE:latest,GOOGLE_PUBSUB_PROJECT_ID=GOOGLE_PUBSUB_PROJECT_ID:latest,GOOGLE_PUBSUB_SUBSCRIPTION_ID=GOOGLE_PUBSUB_SUBSCRIPTION_ID:latest,GOOGLE_PUBSUB_TOPIC_ID=GOOGLE_PUBSUB_TOPIC_ID:latest,X_API_KEY=X_API_KEY:latest,GCP_BUCKET_NAME=GCP_BUCKET_NAME:latest,GCP_PROJECT_ID=GCP_PROJECT_ID:latest'
+      ]
+    id: 'deploy-cloudrun'
+    waitFor: ['push-sha', 'push-latest']
+
+images:
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_MAIN_SERVICE}:$SHORT_SHA'
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_MAIN_SERVICE}:latest'
+
+timeout: 1800s
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+

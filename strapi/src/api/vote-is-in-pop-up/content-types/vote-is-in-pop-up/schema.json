@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "vote_is_in_pop_ups",
+  "info": {
+    "singularName": "vote-is-in-pop-up",
+    "pluralName": "vote-is-in-pop-ups",
+    "displayName": "vote_is_in_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "vote_is_in_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "vote_is_in_sub_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "vote_is_in_button_text": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

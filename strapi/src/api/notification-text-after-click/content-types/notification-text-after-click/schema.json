@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "notification_text_after_clicks",
+  "info": {
+    "singularName": "notification-text-after-click",
+    "pluralName": "notification-text-after-clicks",
+    "displayName": "notification_text_after_click"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "notification_header": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "notification_sub_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "if_no_notfications_are_there": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

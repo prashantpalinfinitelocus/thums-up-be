@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "contact_uses",
+  "info": {
+    "singularName": "contact-us",
+    "pluralName": "contact-uses",
+    "displayName": "contact_us"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "contact_us_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "email_us": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "call_us_toll_free_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

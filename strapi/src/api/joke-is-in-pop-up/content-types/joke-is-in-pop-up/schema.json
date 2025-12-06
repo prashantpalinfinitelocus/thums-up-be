@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "joke_is_in_pop_ups",
+  "info": {
+    "singularName": "joke-is-in-pop-up",
+    "pluralName": "joke-is-in-pop-ups",
+    "displayName": "joke_is_in_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "joke_is_in_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "joke_is_in_sub_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "explore_more_button": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

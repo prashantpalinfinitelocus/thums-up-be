@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "logout_button_navbar_profile_dropdowns",
+  "info": {
+    "singularName": "logout-button-navbar-profile-dropdown",
+    "pluralName": "logout-button-navbar-profile-dropdowns",
+    "displayName": "logout_button_navbar_profile_dropdown"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "logout": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

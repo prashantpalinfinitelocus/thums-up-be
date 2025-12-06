@@ -1,0 +1,34 @@
+{
+  "name": "thums-up-strapi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Thums Up Strapi CMS",
+  "scripts": {
+    "build": "strapi build",
+    "dev": "strapi develop",
+    "develop": "strapi develop",
+    "start": "strapi start"
+  },
+  "dependencies": {
+    "@strapi-community/strapi-provider-upload-google-cloud-storage": "^5.0.5",
+    "@strapi/plugin-cloud": "5.14.0",
+    "@strapi/plugin-users-permissions": "5.14.0",
+    "@strapi/strapi": "5.14.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "8.8.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.0.0",
+    "styled-components": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0 <=22.x.x",
+    "npm": ">=6.0.0"
+  }
+}
