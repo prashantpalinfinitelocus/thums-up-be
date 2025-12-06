@@ -1,7 +1,7 @@
-import path from 'path';
-import fs from 'fs';
+const path = require('path');
+const fs = require('fs');
 
-export default ({ env }) => {
+module.exports = ({ env }) => {
   const serviceAccountPath = path.resolve(__dirname, '../../gcp-service-account.json');
   const serviceAccount = fs.existsSync(serviceAccountPath) 
     ? JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'))
@@ -27,3 +27,4 @@ export default ({ env }) => {
     },
   };
 };
+

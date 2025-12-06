@@ -24,7 +24,10 @@ COPY ./gcp-service-account.json ./gcp-service-account.json
 # Build Strapi admin
 RUN npm run build
 
+# Copy config files to dist (Strapi 5 looks for them there in production)
+RUN mkdir -p dist/config && cp -r config/*.js dist/config/
+
 # Expose correct Strapi port
 EXPOSE 1337
 
-CMD ["npm", "run", "develop"]
+CMD ["npm", "run", "start"]

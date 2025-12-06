@@ -1,4 +1,4 @@
-export default ({ env }) => ({
+module.exports = ({ env }) => ({
   auth: {
     secret: env("ADMIN_JWT_SECRET", "thums-up-admin-secret"),
   },
@@ -15,3 +15,4 @@ export default ({ env }) => ({
     promoteEE: false,
   },
 });
+

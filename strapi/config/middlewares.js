@@ -1,7 +1,4 @@
-export default [
-  {
-    resolve: "./src/middlewares/strip-strapi-prefix",
-  },
+module.exports = [
   "strapi::logger",
   "strapi::errors",
   "strapi::security",
@@ -13,3 +10,4 @@ export default [
   "strapi::favicon",
   "strapi::public",
 ];
+
