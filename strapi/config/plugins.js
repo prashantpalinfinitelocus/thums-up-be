@@ -3,9 +3,19 @@ const fs = require('fs');
 
 module.exports = ({ env }) => {
   const serviceAccountPath = path.resolve(__dirname, '../../gcp-service-account.json');
-  const serviceAccount = fs.existsSync(serviceAccountPath) 
-    ? JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'))
-    : undefined;
+
+  let serviceAccount;
+  try {
+    if (fs.existsSync(serviceAccountPath)) {
+      const stat = fs.statSync(serviceAccountPath);
+      if (stat.isFile()) {
+        serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+      }
+    }
+  } catch (err) {
+    // If reading/parsing fails (e.g. EISDIR, invalid JSON), fall back to undefined.
+    serviceAccount = undefined;
+  }
 
   return {
     email: false,

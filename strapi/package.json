@@ -4,7 +4,7 @@
   "private": true,
   "description": "Thums Up Strapi CMS",
   "scripts": {
-    "build": "strapi build && npm run copy-configs",
+    "build": "mkdir -p .cache && strapi build && npm run copy-configs",
     "copy-configs": "rm -rf dist/config && mkdir -p dist/config && cp config/*.js dist/config/ || true",
     "dev": "strapi develop",
     "develop": "strapi develop",
