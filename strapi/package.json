@@ -5,7 +5,7 @@
   "description": "Thums Up Strapi CMS",
   "scripts": {
     "build": "strapi build && npm run copy-configs",
-    "copy-configs": "mkdir -p dist/config && cp -r config/*.js dist/config/ || true",
+    "copy-configs": "rm -rf dist/config && mkdir -p dist/config && cp config/*.js dist/config/ || true",
     "dev": "strapi develop",
     "develop": "strapi develop",
     "start": "strapi start"
