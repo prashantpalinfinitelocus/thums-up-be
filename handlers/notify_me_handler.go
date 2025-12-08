@@ -39,7 +39,7 @@ func (h *NotifyMeHandler) Subscribe(c *gin.Context) {
 		return
 	}
 
-	response, err := h.notifyMeService.Subscribe(c.Request.Context(), req)
+	response, created, err := h.notifyMeService.Subscribe(c.Request.Context(), req)
 	if err != nil {
 		if appErr, ok := err.(*errors.AppError); ok {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
@@ -61,14 +61,21 @@ func (h *NotifyMeHandler) Subscribe(c *gin.Context) {
 		email = *req.Email
 	}
 
-	if h.notificationService != nil {
+	if created && h.notificationService != nil {
 		go h.notificationService.PublishNotifyMeMessage(c.Request.Context(), req.PhoneNumber, email)
 	}
 
-	c.JSON(http.StatusCreated, dtos.SuccessResponse{
+	statusCode := http.StatusCreated
+	message := "Successfully subscribed to notifications"
+	if !created {
+		statusCode = http.StatusOK
+		message = "Phone number is already subscribed to notifications"
+	}
+
+	c.JSON(statusCode, dtos.SuccessResponse{
 		Success: true,
 		Data:    response,
-		Message: "Successfully subscribed to notifications",
+		Message: message,
 	})
 }
 
