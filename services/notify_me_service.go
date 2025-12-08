@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -37,6 +38,7 @@ func NewNotifyMeService(
 
 func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeRequest) (*dtos.NotifyMeResponse, bool, error) {
 	existing, _ := s.notifyMeRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), req.PhoneNumber)
+	fmt.Println("existing", existing)
 	if existing != nil {
 		return &dtos.NotifyMeResponse{
 			ID:          existing.ID,
