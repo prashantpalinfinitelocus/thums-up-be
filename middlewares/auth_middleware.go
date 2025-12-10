@@ -1,13 +1,17 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/config"
+	"github.com/Infinite-Locus-Product/thums_up_backend/repository"
 )
 
 type JWTClaims struct {
@@ -16,7 +20,7 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -64,8 +68,19 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		user, err := userRepo.FindById(context.Background(), db, uuid.MustParse(claims.UserID))
+		if err != nil || user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"error":   "User not found",
+			})
+			c.Abort()
+			return
+		}
+
 		c.Set("user_id", claims.UserID)
 		c.Set("phone", claims.Phone)
+		c.Set("user", user)
 		c.Next()
 	}
 }
@@ -101,4 +116,3 @@ func OptionalAuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-

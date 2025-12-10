@@ -56,13 +56,8 @@ func (h *NotifyMeHandler) Subscribe(c *gin.Context) {
 		return
 	}
 
-	email := ""
-	if req.Email != nil {
-		email = *req.Email
-	}
-
 	if created && h.notificationService != nil {
-		go h.notificationService.PublishNotifyMeMessage(c.Request.Context(), req.PhoneNumber, email)
+		go h.notificationService.PublishNotifyMeMessage(c.Request.Context(), req.PhoneNumber, req.Email)
 	}
 
 	statusCode := http.StatusCreated

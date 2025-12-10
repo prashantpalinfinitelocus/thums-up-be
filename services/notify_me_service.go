@@ -48,10 +48,16 @@ func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeReques
 		}, false, nil
 	}
 
+	var emailPtr *string
+	if req.Email != "" {
+		emailCopy := req.Email
+		emailPtr = &emailCopy
+	}
+
 	notifyMe := &entities.NotifyMe{
 		Name:        req.Name,
 		PhoneNumber: req.PhoneNumber,
-		Email:       req.Email,
+		Email:       emailPtr,
 		IsNotified:  false,
 	}
 
