@@ -209,8 +209,8 @@ func setupRoutes(router *gin.Engine) {
 			profileGroup.GET("/", profileHandler.GetProfile)
 			profileGroup.PATCH("/", profileHandler.UpdateProfile)
 
-			profileGroup.GET("/address", addressHandler.GetAddresses)
 			profileGroup.POST("/address", addressHandler.AddAddress)
+			profileGroup.GET("/address", addressHandler.GetAddresses)
 			profileGroup.PUT("/address/:addressId", addressHandler.UpdateAddress)
 			profileGroup.DELETE("/address/:addressId", addressHandler.DeleteAddress)
 		}
