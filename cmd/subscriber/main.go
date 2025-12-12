@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	pubsubpkg "cloud.google.com/go/pubsub"
 	log "github.com/sirupsen/logrus"
@@ -48,11 +49,13 @@ func startSubscriber() {
 
 	subscriber := pubsub.NewSubscriber(pubsubClient)
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	messageHandler := createMessageHandler()
 
+	srv := setupHealthCheckServer(cfg.AppPort)
 	go func() {
-		srv := setupHealthCheckServer(cfg.AppPort)
 		log.Infof("Health check server starting on port %s", cfg.AppPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Warnf("Health check server error: %v", err)
@@ -61,7 +64,7 @@ func startSubscriber() {
 
 	go func() {
 		if err := subscriber.Subscribe(ctx, cfg.PubSubConfig.SubscriptionID, messageHandler); err != nil {
-			log.Fatalf("Failed to start subscriber: %v", err)
+			log.WithError(err).Error("Subscriber error")
 		}
 	}()
 
@@ -70,6 +73,14 @@ func startSubscriber() {
 	<-quit
 
 	log.Info("Shutting down subscriber...")
+	cancel()
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.WithError(err).Warn("Health check server shutdown error")
+	}
+
 	subscriber.Close()
 	log.Info("Subscriber stopped")
 }

@@ -9,8 +9,8 @@ import (
 
 type QuestionRepository interface {
 	GenericRepository[entities.QuestionMaster]
-	FindActiveQuestions(ctx context.Context, db *gorm.DB) ([]entities.QuestionMaster, error)
-	FindByLanguageID(ctx context.Context, db *gorm.DB, languageID int) ([]entities.QuestionMaster, error)
+	FindActiveQuestions(ctx context.Context, db *gorm.DB, limit, offset int) ([]entities.QuestionMaster, error)
+	FindByLanguageID(ctx context.Context, db *gorm.DB, languageID int, limit, offset int) ([]entities.QuestionMaster, error)
 }
 
 type questionRepository struct {
@@ -23,17 +23,25 @@ func NewQuestionRepository() QuestionRepository {
 	}
 }
 
-func (r *questionRepository) FindActiveQuestions(ctx context.Context, db *gorm.DB) ([]entities.QuestionMaster, error) {
+func (r *questionRepository) FindActiveQuestions(ctx context.Context, db *gorm.DB, limit, offset int) ([]entities.QuestionMaster, error) {
 	var questions []entities.QuestionMaster
-	if err := db.WithContext(ctx).Where("is_active = ? AND is_deleted = ?", true, false).Find(&questions).Error; err != nil {
+	query := db.WithContext(ctx).Where("is_active = ? AND is_deleted = ?", true, false)
+	if limit > 0 {
+		query = query.Limit(limit).Offset(offset)
+	}
+	if err := query.Find(&questions).Error; err != nil {
 		return nil, err
 	}
 	return questions, nil
 }
 
-func (r *questionRepository) FindByLanguageID(ctx context.Context, db *gorm.DB, languageID int) ([]entities.QuestionMaster, error) {
+func (r *questionRepository) FindByLanguageID(ctx context.Context, db *gorm.DB, languageID int, limit, offset int) ([]entities.QuestionMaster, error) {
 	var questions []entities.QuestionMaster
-	if err := db.WithContext(ctx).Where("language_id = ? AND is_active = ? AND is_deleted = ?", languageID, true, false).Find(&questions).Error; err != nil {
+	query := db.WithContext(ctx).Where("language_id = ? AND is_active = ? AND is_deleted = ?", languageID, true, false)
+	if limit > 0 {
+		query = query.Limit(limit).Offset(offset)
+	}
+	if err := query.Find(&questions).Error; err != nil {
 		return nil, err
 	}
 	return questions, nil

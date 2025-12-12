@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	stderrors "errors"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -47,7 +48,11 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 		return nil, errors.NewNotFoundError("Question not found", nil)
 	}
 
-	existing, _ := s.thunderSeatRepo.CheckUserSubmission(ctx, s.txnManager.GetDB(), userID, req.QuestionID)
+	existing, err := s.thunderSeatRepo.CheckUserSubmission(ctx, s.txnManager.GetDB(), userID, req.QuestionID)
+	if err != nil && !stderrors.Is(err, gorm.ErrRecordNotFound) {
+		log.WithError(err).Error("Failed to check user submission")
+		return nil, errors.NewInternalServerError("Failed to check submission", err)
+	}
 	if existing != nil {
 		return nil, errors.NewBadRequestError("You have already submitted an answer for this question", nil)
 	}

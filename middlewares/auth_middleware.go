@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/config"
+	"github.com/Infinite-Locus-Product/thums_up_backend/errors"
 	"github.com/Infinite-Locus-Product/thums_up_backend/repository"
 )
 
@@ -26,7 +26,7 @@ func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.Handler
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"error":   "Authorization header required",
+				"error":   errors.ErrAuthHeaderRequired,
 			})
 			c.Abort()
 			return
@@ -36,7 +36,7 @@ func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.Handler
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"error":   "Invalid authorization header format",
+				"error":   errors.ErrInvalidAuthHeaderFormat,
 			})
 			c.Abort()
 			return
@@ -52,7 +52,7 @@ func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.Handler
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"error":   "Invalid or expired token",
+				"error":   errors.ErrInvalidOrExpiredToken,
 			})
 			c.Abort()
 			return
@@ -62,17 +62,27 @@ func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.Handler
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"error":   "Invalid token claims",
+				"error":   errors.ErrInvalidTokenClaims,
 			})
 			c.Abort()
 			return
 		}
 
-		user, err := userRepo.FindById(context.Background(), db, uuid.MustParse(claims.UserID))
+		userUUID, err := uuid.Parse(claims.UserID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"error":   errors.ErrInvalidUserID,
+			})
+			c.Abort()
+			return
+		}
+
+		user, err := userRepo.FindById(c.Request.Context(), db, userUUID)
 		if err != nil || user == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"error":   "User not found",
+				"error":   errors.ErrUserNotFound,
 			})
 			c.Abort()
 			return

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"time"
 
@@ -59,7 +60,7 @@ func (s *authService) SendOTP(ctx context.Context, phoneNumber string) error {
 	count, err := s.otpRepo.CountRecentAttempts(ctx, s.txnManager.GetDB(), phoneNumber,
 		time.Duration(constants.OTP_COOLDOWN_MINUTES)*time.Minute)
 	if err == nil && count >= constants.MAX_OTP_ATTEMPTS {
-		return errors.NewTooManyRequestsError("Too many OTP requests. Please try again later", nil)
+		return errors.NewTooManyRequestsError(errors.ErrOTPTooManyRequests, nil)
 	}
 
 	otp := utils.GenerateOTP(constants.OTP_LENGTH)
@@ -74,7 +75,7 @@ func (s *authService) SendOTP(ctx context.Context, phoneNumber string) error {
 
 	if err := s.otpRepo.Create(ctx, s.txnManager.GetDB(), otpLog); err != nil {
 		log.WithError(err).Error("Failed to save OTP")
-		return errors.NewInternalServerError("Failed to send OTP", err)
+		return errors.NewInternalServerError(errors.ErrOTPSendFailed, err)
 	}
 
 	message := fmt.Sprintf("Your Thums Up verification code is: %s. Valid for %d minutes.",
@@ -82,7 +83,7 @@ func (s *authService) SendOTP(ctx context.Context, phoneNumber string) error {
 
 	if err := s.infobipClient.SendSMS(formattedPhone, message); err != nil {
 		log.WithError(err).Error("Failed to send SMS")
-		return errors.NewInternalServerError("Failed to send OTP via SMS", err)
+		return errors.NewInternalServerError(errors.ErrOTPSMSFailed, err)
 	}
 
 	return nil
@@ -92,15 +93,15 @@ func (s *authService) VerifyOTP(ctx context.Context, phoneNumber string, otp str
 	valid, err := s.otpRepo.VerifyOTP(ctx, s.txnManager.GetDB(), phoneNumber, otp)
 	if err != nil || !valid {
 		s.otpRepo.IncrementAttempts(ctx, s.txnManager.GetDB(), phoneNumber)
-		return nil, errors.NewUnauthorizedError("Invalid or expired OTP", err)
+		return nil, errors.NewUnauthorizedError(errors.ErrOTPInvalidOrExpired, err)
 	}
 
 	user, err := s.userRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), phoneNumber)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFoundError("User not found. Please sign up first", err)
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.NewNotFoundError(errors.ErrUserNotFound, err)
 		}
-		return nil, errors.NewInternalServerError("Failed to find user", err)
+		return nil, errors.NewInternalServerError(errors.ErrUserNotFound, err)
 	}
 
 	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
@@ -112,7 +113,7 @@ func (s *authService) VerifyOTP(ctx context.Context, phoneNumber string, otp str
 			}).Error
 	})
 	if err != nil {
-		return nil, errors.NewInternalServerError("Failed to update OTP status", err)
+		return nil, errors.NewInternalServerError(errors.ErrOTPVerifyFailed, err)
 	}
 
 	tokenResponse, err := s.generateTokens(ctx, user)
@@ -124,15 +125,23 @@ func (s *authService) VerifyOTP(ctx context.Context, phoneNumber string, otp str
 }
 
 func (s *authService) SignUp(ctx context.Context, req dtos.SignUpRequest) (*dtos.TokenResponse, error) {
-	existing, _ := s.userRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), req.PhoneNumber)
+	existing, err := s.userRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), req.PhoneNumber)
+	if err != nil && !stderrors.Is(err, gorm.ErrRecordNotFound) {
+		log.WithError(err).Error("Failed to check existing phone number")
+		return nil, errors.NewInternalServerError(errors.ErrPhoneNumberCheck, err)
+	}
 	if existing != nil {
-		return nil, errors.NewConflictError("User with this phone number already exists", nil)
+		return nil, errors.NewConflictError(errors.ErrUserAlreadyExists, nil)
 	}
 
 	if req.Email != nil {
-		existingEmail, _ := s.userRepo.FindByEmail(ctx, s.txnManager.GetDB(), *req.Email)
+		existingEmail, err := s.userRepo.FindByEmail(ctx, s.txnManager.GetDB(), *req.Email)
+		if err != nil && !stderrors.Is(err, gorm.ErrRecordNotFound) {
+			log.WithError(err).Error("Failed to check existing email")
+			return nil, errors.NewInternalServerError(errors.ErrEmailCheck, err)
+		}
 		if existingEmail != nil {
-			return nil, errors.NewConflictError("User with this email already exists", nil)
+			return nil, errors.NewConflictError(errors.ErrEmailAlreadyInUse, nil)
 		}
 	}
 
@@ -155,12 +164,12 @@ func (s *authService) SignUp(ctx context.Context, req dtos.SignUpRequest) (*dtos
 		}
 	}
 
-	err := s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
 		return s.userRepo.Create(ctx, tx, user)
 	})
 	if err != nil {
 		log.WithError(err).Error("Failed to create user")
-		return nil, errors.NewInternalServerError("Failed to create user", err)
+		return nil, errors.NewInternalServerError(errors.ErrProfileCreateFailed, err)
 	}
 
 	tokenResponse, err := s.generateTokens(ctx, user)
@@ -174,20 +183,20 @@ func (s *authService) SignUp(ctx context.Context, req dtos.SignUpRequest) (*dtos
 func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*dtos.TokenResponse, error) {
 	token, err := s.refreshTokenRepo.FindByToken(ctx, s.txnManager.GetDB(), refreshToken)
 	if err != nil {
-		return nil, errors.NewUnauthorizedError("Invalid refresh token", err)
+		return nil, errors.NewUnauthorizedError(errors.ErrRefreshTokenInvalid, err)
 	}
 
 	if token.IsRevoked {
-		return nil, errors.NewUnauthorizedError("Refresh token has been revoked", nil)
+		return nil, errors.NewUnauthorizedError(errors.ErrRefreshTokenRevoked, nil)
 	}
 
 	if time.Now().After(token.ExpiresAt) {
-		return nil, errors.NewUnauthorizedError("Refresh token has expired", nil)
+		return nil, errors.NewUnauthorizedError(errors.ErrRefreshTokenExpired, nil)
 	}
 
 	user, err := s.userRepo.FindByID(ctx, s.txnManager.GetDB(), token.UserID)
 	if err != nil {
-		return nil, errors.NewInternalServerError("Failed to find user", err)
+		return nil, errors.NewInternalServerError(errors.ErrUserNotFound, err)
 	}
 
 	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
@@ -208,7 +217,7 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*d
 func (s *authService) generateTokens(ctx context.Context, user *entities.User) (*dtos.TokenResponse, error) {
 	accessToken, err := s.generateAccessToken(user)
 	if err != nil {
-		return nil, errors.NewInternalServerError("Failed to generate access token", err)
+		return nil, errors.NewInternalServerError(errors.ErrTokenGenerationFailed, err)
 	}
 
 	refreshTokenString := uuid.New().String()
@@ -225,7 +234,7 @@ func (s *authService) generateTokens(ctx context.Context, user *entities.User) (
 		return s.refreshTokenRepo.Create(ctx, tx, refreshToken)
 	})
 	if err != nil {
-		return nil, errors.NewInternalServerError("Failed to save refresh token", err)
+		return nil, errors.NewInternalServerError(errors.ErrTokenRefreshFailed, err)
 	}
 
 	name := ""

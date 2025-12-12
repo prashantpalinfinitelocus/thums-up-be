@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	stderrors "errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -35,7 +36,8 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 	}
 
 	if err := h.authService.SendOTP(c.Request.Context(), req.PhoneNumber); err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -45,7 +47,7 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 		log.WithError(err).Error("Failed to send OTP")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to send OTP",
+			Error:   errors.ErrOTPSendFailed,
 		})
 		return
 	}
@@ -71,7 +73,8 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 
 	tokenResponse, err := h.authService.VerifyOTP(c.Request.Context(), req.PhoneNumber, req.OTP)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -81,7 +84,7 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 		log.WithError(err).Error("Failed to verify OTP")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to verify OTP",
+			Error:   errors.ErrOTPVerifyFailed,
 		})
 		return
 	}
@@ -106,7 +109,8 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 
 	tokenResponse, err := h.authService.SignUp(c.Request.Context(), req)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -116,7 +120,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		log.WithError(err).Error("Failed to sign up")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to sign up",
+			Error:   errors.ErrProfileCreateFailed,
 		})
 		return
 	}
@@ -141,7 +145,8 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 	tokenResponse, err := h.authService.RefreshToken(c.Request.Context(), req.RefreshToken)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -151,7 +156,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		log.WithError(err).Error("Failed to refresh token")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to refresh token",
+			Error:   errors.ErrTokenRefreshFailed,
 		})
 		return
 	}
@@ -161,4 +166,3 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		Data:    tokenResponse,
 	})
 }
-

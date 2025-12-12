@@ -12,7 +12,7 @@ type NotifyMe struct {
 	Name        string    `gorm:"type:varchar(255);not null" json:"name"`
 	PhoneNumber string    `gorm:"type:varchar(15);index;not null" json:"phone_number"`
 	Email       *string   `gorm:"type:varchar(255)" json:"email,omitempty"`
-	IsNotified  bool      `gorm:"default:false" json:"is_notified"`
+	IsNotified  bool      `gorm:"default:false;index:idx_notify_me_is_notified" json:"is_notified"`
 	NotifiedAt  *time.Time `json:"notified_at,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	stderrors "errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -24,15 +25,25 @@ func NewThunderSeatHandler(thunderSeatService services.ThunderSeatService) *Thun
 }
 
 func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
-	user, _ := c.Get("user")
-	userID := user.(*entities.User).ID
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Success: false, Error: errors.ErrUserNotAuthenticated})
+		return
+	}
+
+	userEntity, ok := user.(*entities.User)
+	if !ok || userEntity == nil {
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Success: false, Error: errors.ErrInvalidUserContext})
+		return
+	}
+	userID := userEntity.ID
 
 	var req dtos.ThunderSeatSubmitRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		validationErrors := utils.FormatValidationErrors(err)
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Validation failed",
+			Error:   errors.ErrValidationFailed,
 			Details: validationErrors,
 		})
 		return
@@ -40,7 +51,8 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 
 	response, err := h.thunderSeatService.SubmitAnswer(c.Request.Context(), req, userID)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -50,7 +62,7 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		log.WithError(err).Error("Failed to submit thunder seat answer")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to submit answer",
+			Error:   errors.ErrAnswerSubmitFailed,
 		})
 		return
 	}
@@ -67,14 +79,15 @@ func (h *ThunderSeatHandler) GetUserSubmissions(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
 			Success: false,
-			Error:   "User not authenticated",
+			Error:   errors.ErrUserNotAuthenticated,
 		})
 		return
 	}
 
 	responses, err := h.thunderSeatService.GetUserSubmissions(c.Request.Context(), userID.(string))
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -84,7 +97,7 @@ func (h *ThunderSeatHandler) GetUserSubmissions(c *gin.Context) {
 		log.WithError(err).Error("Failed to get user submissions")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to get user submissions",
+			Error:   errors.ErrSubmissionsFetchFailed,
 		})
 		return
 	}
@@ -98,7 +111,8 @@ func (h *ThunderSeatHandler) GetUserSubmissions(c *gin.Context) {
 func (h *ThunderSeatHandler) GetCurrentWeek(c *gin.Context) {
 	response, err := h.thunderSeatService.GetCurrentWeek(c.Request.Context())
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -108,7 +122,7 @@ func (h *ThunderSeatHandler) GetCurrentWeek(c *gin.Context) {
 		log.WithError(err).Error("Failed to get current week")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to get current week",
+			Error:   errors.ErrCurrentWeekFailed,
 		})
 		return
 	}

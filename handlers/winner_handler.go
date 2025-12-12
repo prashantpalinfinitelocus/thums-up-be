@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	stderrors "errors"
 	"net/http"
 	"strconv"
 
@@ -37,7 +38,8 @@ func (h *WinnerHandler) SelectWinners(c *gin.Context) {
 
 	responses, err := h.winnerService.SelectWinners(c.Request.Context(), req)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -72,7 +74,8 @@ func (h *WinnerHandler) GetWinnersByWeek(c *gin.Context) {
 
 	responses, err := h.winnerService.GetWinnersByWeek(c.Request.Context(), weekNumber)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -107,7 +110,8 @@ func (h *WinnerHandler) GetAllWinners(c *gin.Context) {
 
 	responses, total, err := h.winnerService.GetAllWinners(c.Request.Context(), req.Limit, req.Offset)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,

@@ -12,6 +12,7 @@ import (
 type Config struct {
 	AppEnv         string
 	AppPort        string
+	AllowedOrigins string
 	DbConfig       DatabaseConfig
 	InfobipConfig  InfobipConfig
 	JwtConfig      JwtConfig
@@ -71,11 +72,14 @@ func getEnv(key, fallback string) string {
 }
 
 func loadConfig() (*Config, error) {
-	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using environment variables")
+	}
 
 	return &Config{
-		AppEnv:  getEnv("APP_ENV", "development"),
-		AppPort: getEnv("APP_PORT", "8080"),
+		AppEnv:         getEnv("APP_ENV", "development"),
+		AppPort:        getEnv("APP_PORT", "8080"),
+		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "*"),
 
 		DbConfig: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),

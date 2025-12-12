@@ -10,7 +10,7 @@ import (
 type NotifyMeRepository interface {
 	GenericRepository[entities.NotifyMe]
 	FindByPhoneNumber(ctx context.Context, db *gorm.DB, phoneNumber string) (*entities.NotifyMe, error)
-	FindUnnotified(ctx context.Context, db *gorm.DB) ([]entities.NotifyMe, error)
+	FindUnnotified(ctx context.Context, db *gorm.DB, limit, offset int) ([]entities.NotifyMe, error)
 	MarkAsNotified(ctx context.Context, db *gorm.DB, id string) error
 }
 
@@ -32,9 +32,13 @@ func (r *notifyMeRepository) FindByPhoneNumber(ctx context.Context, db *gorm.DB,
 	return &notifyMe, nil
 }
 
-func (r *notifyMeRepository) FindUnnotified(ctx context.Context, db *gorm.DB) ([]entities.NotifyMe, error) {
+func (r *notifyMeRepository) FindUnnotified(ctx context.Context, db *gorm.DB, limit, offset int) ([]entities.NotifyMe, error) {
 	var records []entities.NotifyMe
-	if err := db.WithContext(ctx).Where("is_notified = ?", false).Find(&records).Error; err != nil {
+	query := db.WithContext(ctx).Where("is_notified = ?", false)
+	if limit > 0 {
+		query = query.Limit(limit).Offset(offset)
+	}
+	if err := query.Find(&records).Error; err != nil {
 		return nil, err
 	}
 	return records, nil

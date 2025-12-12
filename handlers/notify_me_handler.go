@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"context"
+	stderrors "errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -33,7 +36,7 @@ func (h *NotifyMeHandler) Subscribe(c *gin.Context) {
 		validationErrors := utils.FormatValidationErrors(err)
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Validation failed",
+			Error:   errors.ErrValidationFailed,
 			Details: validationErrors,
 		})
 		return
@@ -41,7 +44,8 @@ func (h *NotifyMeHandler) Subscribe(c *gin.Context) {
 
 	response, created, err := h.notifyMeService.Subscribe(c.Request.Context(), req)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -51,13 +55,19 @@ func (h *NotifyMeHandler) Subscribe(c *gin.Context) {
 		log.WithError(err).Error("Failed to subscribe")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to subscribe",
+			Error:   errors.ErrSubscriptionFailed,
 		})
 		return
 	}
 
 	if created && h.notificationService != nil {
-		go h.notificationService.PublishNotifyMeMessage(c.Request.Context(), req.PhoneNumber, req.Email)
+		bgCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		go func() {
+			defer cancel()
+			if err := h.notificationService.PublishNotifyMeMessage(bgCtx, req.PhoneNumber, req.Email); err != nil {
+				log.WithError(err).Error("Failed to publish notify me message")
+			}
+		}()
 	}
 
 	statusCode := http.StatusCreated
@@ -79,14 +89,15 @@ func (h *NotifyMeHandler) GetSubscription(c *gin.Context) {
 	if phoneNumber == "" {
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Phone number is required",
+			Error:   errors.ErrPhoneNumberRequired,
 		})
 		return
 	}
 
 	response, err := h.notifyMeService.GetSubscription(c.Request.Context(), phoneNumber)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -96,7 +107,7 @@ func (h *NotifyMeHandler) GetSubscription(c *gin.Context) {
 		log.WithError(err).Error("Failed to get subscription")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to get subscription",
+			Error:   errors.ErrSubscriptionNotFound,
 		})
 		return
 	}
@@ -110,7 +121,8 @@ func (h *NotifyMeHandler) GetSubscription(c *gin.Context) {
 func (h *NotifyMeHandler) GetAllUnnotified(c *gin.Context) {
 	responses, err := h.notifyMeService.GetAllUnnotified(c.Request.Context())
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -120,7 +132,7 @@ func (h *NotifyMeHandler) GetAllUnnotified(c *gin.Context) {
 		log.WithError(err).Error("Failed to get unnotified subscriptions")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   "Failed to get unnotified subscriptions",
+			Error:   errors.ErrUnnotifiedFetchFailed,
 		})
 		return
 	}
