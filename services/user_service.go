@@ -52,35 +52,36 @@ func NewUserService(
 }
 
 func (s *userService) GetUser(ctx context.Context, userID string) (*entities.User, error) {
-	tx, err := s.txnManager.StartTxn()
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
 	}
-	defer s.txnManager.RollbackOnPanic(tx)
 
-	user, err := s.userRepo.FindById(ctx, tx, uuid.MustParse(userID))
+	user, err := s.userRepo.FindById(ctx, s.txnManager.GetDB(), userUUID)
 	if err != nil {
-		s.txnManager.AbortTxn(tx)
 		return nil, err
 	}
 
 	if user == nil {
-		s.txnManager.AbortTxn(tx)
 		return nil, fmt.Errorf("user not found")
 	}
 
-	s.txnManager.CommitTxn(tx)
 	return user, nil
 }
 
 func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.UpdateProfileRequestDTO) (*entities.User, error) {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+
 	tx, err := s.txnManager.StartTxn()
 	if err != nil {
 		return nil, err
 	}
 	defer s.txnManager.RollbackOnPanic(tx)
 
-	user, err := s.userRepo.FindById(ctx, tx, uuid.MustParse(userID))
+	user, err := s.userRepo.FindById(ctx, tx, userUUID)
 	if err != nil {
 		s.txnManager.AbortTxn(tx)
 		return nil, err
@@ -117,7 +118,7 @@ func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.Up
 		}
 	}
 
-	updatedUser, err := s.userRepo.FindById(ctx, tx, uuid.MustParse(userID))
+	updatedUser, err := s.userRepo.FindById(ctx, tx, userUUID)
 	if err != nil {
 		s.txnManager.AbortTxn(tx)
 		return nil, err
@@ -128,13 +129,18 @@ func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.Up
 }
 
 func (s *userService) GetUserAddresses(ctx context.Context, userID string) ([]dtos.AddressResponseDTO, error) {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+
 	tx, err := s.txnManager.StartTxn()
 	if err != nil {
 		return nil, err
 	}
 	defer s.txnManager.RollbackOnPanic(tx)
 
-	user, err := s.userRepo.FindById(ctx, tx, uuid.MustParse(userID))
+	user, err := s.userRepo.FindById(ctx, tx, userUUID)
 	if err != nil {
 		s.txnManager.AbortTxn(tx)
 		return nil, err
@@ -233,13 +239,18 @@ func (s *userService) GetUserAddresses(ctx context.Context, userID string) ([]dt
 }
 
 func (s *userService) AddUserAddress(ctx context.Context, userID string, req dtos.AddressRequestDTO) (*dtos.AddressResponseDTO, error) {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+
 	tx, err := s.txnManager.StartTxn()
 	if err != nil {
 		return nil, err
 	}
 	defer s.txnManager.RollbackOnPanic(tx)
 
-	user, err := s.userRepo.FindById(ctx, tx, uuid.MustParse(userID))
+	user, err := s.userRepo.FindById(ctx, tx, userUUID)
 	if err != nil {
 		s.txnManager.AbortTxn(tx)
 		return nil, err
@@ -291,23 +302,12 @@ func (s *userService) AddUserAddress(ctx context.Context, userID string, req dto
 	}
 
 	if req.IsDefault {
-		existingAddresses, err := s.addressRepo.FindWithConditions(ctx, tx, map[string]interface{}{
-			"user_id":    userID,
-			"is_default": true,
-			"is_deleted": false,
-		})
-		if err != nil && err != gorm.ErrRecordNotFound {
+		err := tx.Model(&entities.Address{}).
+			Where("user_id = ? AND is_default = ? AND is_deleted = ?", userID, true, false).
+			Update("is_default", false).Error
+		if err != nil {
 			s.txnManager.AbortTxn(tx)
-			return nil, err
-		}
-
-		for _, addr := range existingAddresses {
-			if err := s.addressRepo.UpdateFields(ctx, tx, addr.ID, map[string]interface{}{
-				"is_default": false,
-			}); err != nil {
-				s.txnManager.AbortTxn(tx)
-				return nil, err
-			}
+			return nil, fmt.Errorf("failed to unset default addresses: %w", err)
 		}
 	}
 
@@ -354,13 +354,18 @@ func (s *userService) AddUserAddress(ctx context.Context, userID string, req dto
 }
 
 func (s *userService) UpdateUserAddress(ctx context.Context, userID string, addressID string, req dtos.AddressRequestDTO) (*dtos.AddressResponseDTO, error) {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+
 	tx, err := s.txnManager.StartTxn()
 	if err != nil {
 		return nil, err
 	}
 	defer s.txnManager.RollbackOnPanic(tx)
 
-	user, err := s.userRepo.FindById(ctx, tx, uuid.MustParse(userID))
+	user, err := s.userRepo.FindById(ctx, tx, userUUID)
 	if err != nil {
 		s.txnManager.AbortTxn(tx)
 		return nil, err
@@ -434,23 +439,12 @@ func (s *userService) UpdateUserAddress(ctx context.Context, userID string, addr
 	}
 
 	if req.IsDefault && !address.IsDefault {
-		existingAddresses, err := s.addressRepo.FindWithConditions(ctx, tx, map[string]interface{}{
-			"user_id":    userID,
-			"is_default": true,
-			"is_deleted": false,
-		})
-		if err != nil && err != gorm.ErrRecordNotFound {
+		err := tx.Model(&entities.Address{}).
+			Where("user_id = ? AND is_default = ? AND is_deleted = ?", userID, true, false).
+			Update("is_default", false).Error
+		if err != nil {
 			s.txnManager.AbortTxn(tx)
-			return nil, err
-		}
-
-		for _, addr := range existingAddresses {
-			if err := s.addressRepo.UpdateFields(ctx, tx, addr.ID, map[string]interface{}{
-				"is_default": false,
-			}); err != nil {
-				s.txnManager.AbortTxn(tx)
-				return nil, err
-			}
+			return nil, fmt.Errorf("failed to unset default addresses: %w", err)
 		}
 	}
 
@@ -507,13 +501,18 @@ func (s *userService) UpdateUserAddress(ctx context.Context, userID string, addr
 }
 
 func (s *userService) DeleteUserAddress(ctx context.Context, userID string, addressID string) error {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID format: %w", err)
+	}
+
 	tx, err := s.txnManager.StartTxn()
 	if err != nil {
 		return err
 	}
 	defer s.txnManager.RollbackOnPanic(tx)
 
-	user, err := s.userRepo.FindById(ctx, tx, uuid.MustParse(userID))
+	user, err := s.userRepo.FindById(ctx, tx, userUUID)
 	if err != nil {
 		s.txnManager.AbortTxn(tx)
 		return err

@@ -63,7 +63,11 @@ func (ic *InfobipClient) SendSMS(to, message string) error {
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.WithError(err).Warn("Failed to read response body")
+		body = []byte{}
+	}
 	log.WithFields(log.Fields{
 		"status":   resp.StatusCode,
 		"response": string(body),

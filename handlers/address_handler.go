@@ -29,7 +29,11 @@ func (h *AddressHandler) GetAddresses(ctx *gin.Context) {
 		return
 	}
 
-	userEntity := user.(*entities.User)
+	userEntity, ok := user.(*entities.User)
+	if !ok || userEntity == nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user context"})
+		return
+	}
 	addresses, err := h.userService.GetUserAddresses(ctx, userEntity.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch addresses: %v", err)})
@@ -46,7 +50,11 @@ func (h *AddressHandler) AddAddress(ctx *gin.Context) {
 		return
 	}
 
-	userEntity := user.(*entities.User)
+	userEntity, ok := user.(*entities.User)
+	if !ok || userEntity == nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user context"})
+		return
+	}
 	var req dtos.AddressRequestDTO
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -88,7 +96,11 @@ func (h *AddressHandler) UpdateAddress(ctx *gin.Context) {
 		return
 	}
 
-	userEntity := user.(*entities.User)
+	userEntity, ok := user.(*entities.User)
+	if !ok || userEntity == nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user context"})
+		return
+	}
 
 	addressID := ctx.Param("addressId")
 	if addressID == "" {
@@ -140,7 +152,11 @@ func (h *AddressHandler) DeleteAddress(ctx *gin.Context) {
 		return
 	}
 
-	userEntity := user.(*entities.User)
+	userEntity, ok := user.(*entities.User)
+	if !ok || userEntity == nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user context"})
+		return
+	}
 
 	addressID := ctx.Param("addressId")
 	if addressID == "" {

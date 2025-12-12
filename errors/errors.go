@@ -18,6 +18,10 @@ func (e *AppError) Error() string {
 	return e.Message
 }
 
+func (e *AppError) Unwrap() error {
+	return e.Err
+}
+
 func NewBadRequestError(message string, err error) *AppError {
 	return &AppError{
 		StatusCode: http.StatusBadRequest,

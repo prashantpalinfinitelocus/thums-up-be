@@ -63,7 +63,7 @@ func (s *questionService) SubmitQuestion(ctx context.Context, req dtos.QuestionS
 }
 
 func (s *questionService) GetActiveQuestions(ctx context.Context) ([]dtos.QuestionResponse, error) {
-	questions, err := s.questionRepo.FindActiveQuestions(ctx, s.txnManager.GetDB())
+	questions, err := s.questionRepo.FindActiveQuestions(ctx, s.txnManager.GetDB(), 100, 0)
 	if err != nil {
 		return nil, errors.NewInternalServerError("Failed to get active questions", err)
 	}
@@ -82,7 +82,7 @@ func (s *questionService) GetActiveQuestions(ctx context.Context) ([]dtos.Questi
 }
 
 func (s *questionService) GetQuestionsByLanguage(ctx context.Context, languageID int) ([]dtos.QuestionResponse, error) {
-	questions, err := s.questionRepo.FindByLanguageID(ctx, s.txnManager.GetDB(), languageID)
+	questions, err := s.questionRepo.FindByLanguageID(ctx, s.txnManager.GetDB(), languageID, 100, 0)
 	if err != nil {
 		return nil, errors.NewInternalServerError("Failed to get questions by language", err)
 	}

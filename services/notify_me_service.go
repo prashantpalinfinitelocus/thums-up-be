@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"fmt"
+	stderrors "errors"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -37,8 +37,11 @@ func NewNotifyMeService(
 }
 
 func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeRequest) (*dtos.NotifyMeResponse, bool, error) {
-	existing, _ := s.notifyMeRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), req.PhoneNumber)
-	fmt.Println("existing", existing)
+	existing, err := s.notifyMeRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), req.PhoneNumber)
+	if err != nil && !stderrors.Is(err, gorm.ErrRecordNotFound) {
+		log.WithError(err).Error("Failed to check existing subscription")
+		return nil, false, errors.NewInternalServerError(errors.ErrSubscriptionCheck, err)
+	}
 	if existing != nil {
 		return &dtos.NotifyMeResponse{
 			ID:          existing.ID,
@@ -61,7 +64,7 @@ func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeReques
 		IsNotified:  false,
 	}
 
-	err := s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
 		return s.notifyMeRepo.Create(ctx, tx, notifyMe)
 	})
 	if err != nil {
@@ -80,10 +83,10 @@ func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeReques
 func (s *notifyMeService) GetSubscription(ctx context.Context, phoneNumber string) (*dtos.NotifyMeResponse, error) {
 	notifyMe, err := s.notifyMeRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), phoneNumber)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFoundError("Subscription not found", err)
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.NewNotFoundError(errors.ErrSubscriptionNotFound, err)
 		}
-		return nil, errors.NewInternalServerError("Failed to get subscription", err)
+		return nil, errors.NewInternalServerError(errors.ErrSubscriptionNotFound, err)
 	}
 
 	return &dtos.NotifyMeResponse{
@@ -95,9 +98,9 @@ func (s *notifyMeService) GetSubscription(ctx context.Context, phoneNumber strin
 }
 
 func (s *notifyMeService) GetAllUnnotified(ctx context.Context) ([]dtos.NotifyMeResponse, error) {
-	records, err := s.notifyMeRepo.FindUnnotified(ctx, s.txnManager.GetDB())
+	records, err := s.notifyMeRepo.FindUnnotified(ctx, s.txnManager.GetDB(), 1000, 0)
 	if err != nil {
-		return nil, errors.NewInternalServerError("Failed to get unnotified subscriptions", err)
+		return nil, errors.NewInternalServerError(errors.ErrUnnotifiedFetchFailed, err)
 	}
 
 	responses := make([]dtos.NotifyMeResponse, len(records))
@@ -118,7 +121,7 @@ func (s *notifyMeService) MarkAsNotified(ctx context.Context, id string) error {
 		return s.notifyMeRepo.MarkAsNotified(ctx, tx, id)
 	})
 	if err != nil {
-		return errors.NewInternalServerError("Failed to mark as notified", err)
+		return errors.NewInternalServerError(errors.ErrMarkNotifiedFailed, err)
 	}
 	return nil
 }

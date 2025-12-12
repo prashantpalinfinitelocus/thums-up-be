@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	stderrors "errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +46,8 @@ func (h *QuestionHandler) SubmitQuestion(c *gin.Context) {
 
 	response, err := h.questionService.SubmitQuestion(c.Request.Context(), req, userID.(string))
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
@@ -70,7 +72,8 @@ func (h *QuestionHandler) SubmitQuestion(c *gin.Context) {
 func (h *QuestionHandler) GetActiveQuestions(c *gin.Context) {
 	responses, err := h.questionService.GetActiveQuestions(c.Request.Context())
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,

@@ -2,8 +2,6 @@ package dtos
 
 import (
 	"time"
-
-	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
 )
 
 type AddressRequestDTO struct {
@@ -37,6 +35,19 @@ type UpdateProfileRequestDTO struct {
 	Email *string `json:"email,omitempty"`
 }
 
+type UserProfileDTO struct {
+	ID           string     `json:"id"`
+	PhoneNumber  string     `json:"phone_number"`
+	Name         *string    `json:"name,omitempty"`
+	Email        *string    `json:"email,omitempty"`
+	IsActive     bool       `json:"is_active"`
+	IsVerified   bool       `json:"is_verified"`
+	ReferralCode *string    `json:"referral_code,omitempty"`
+	ReferredBy   *string    `json:"referred_by,omitempty"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+}
+
 type ProfileResponseDTO struct {
-	User entities.User `json:"user"`
+	User UserProfileDTO `json:"user"`
 }

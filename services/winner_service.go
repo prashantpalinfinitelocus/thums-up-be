@@ -54,24 +54,20 @@ func (s *winnerService) SelectWinners(ctx context.Context, req dtos.SelectWinner
 		return nil, errors.NewNotFoundError("No eligible entries found for winner selection", nil)
 	}
 
-	var winners []entities.ThunderSeatWinner
 	now := time.Now()
+	winners := make([]entities.ThunderSeatWinner, len(randomEntries))
+	for i, entry := range randomEntries {
+		winners[i] = entities.ThunderSeatWinner{
+			UserID:        entry.UserID,
+			ThunderSeatID: entry.ID,
+			WeekNumber:    req.WeekNumber,
+			CreatedBy:     "system",
+			CreatedOn:     now,
+		}
+	}
 
 	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
-		for _, entry := range randomEntries {
-			winner := &entities.ThunderSeatWinner{
-				UserID:        entry.UserID,
-				ThunderSeatID: entry.ID,
-				WeekNumber:    req.WeekNumber,
-				CreatedBy:     "system",
-				CreatedOn:     now,
-			}
-			if err := s.winnerRepo.Create(ctx, tx, winner); err != nil {
-				return err
-			}
-			winners = append(winners, *winner)
-		}
-		return nil
+		return tx.Create(&winners).Error
 	})
 	if err != nil {
 		log.WithError(err).Error("Failed to create winners")

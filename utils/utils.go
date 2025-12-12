@@ -1,7 +1,8 @@
 package utils
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"math/big"
 	"strings"
 	"time"
 )
@@ -13,11 +14,14 @@ type SuccessResponse struct {
 }
 
 func GenerateOTP(length int) string {
-	rand.Seed(time.Now().UnixNano())
-	digits := "0123456789"
+	const digits = "0123456789"
 	otp := make([]byte, length)
 	for i := range otp {
-		otp[i] = digits[rand.Intn(len(digits))]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
+		if err != nil {
+			panic(err)
+		}
+		otp[i] = digits[n.Int64()]
 	}
 	return string(otp)
 }
@@ -32,10 +36,13 @@ func FormatPhoneNumber(phoneNumber string) string {
 
 func GenerateReferralCode() string {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	rand.Seed(time.Now().UnixNano())
 	code := make([]byte, 8)
 	for i := range code {
-		code[i] = charset[rand.Intn(len(charset))]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			panic(err)
+		}
+		code[i] = charset[n.Int64()]
 	}
 	return string(code)
 }
