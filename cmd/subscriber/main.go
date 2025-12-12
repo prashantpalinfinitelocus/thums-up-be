@@ -91,7 +91,7 @@ func createMessageHandler() pubsub.MessageHandler {
 		// Add timeout for message processing
 		handlerCtx, cancel := context.WithTimeout(ctx, constants.MESSAGE_HANDLER_TIMEOUT)
 		defer cancel()
-		
+
 		log.WithFields(log.Fields{
 			"message_id":   msg.ID,
 			"publish_time": msg.PublishTime,

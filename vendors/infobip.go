@@ -24,7 +24,7 @@ type InfobipClient struct {
 
 func InitInfobip() *InfobipClient {
 	cfg := config.GetConfig()
-	
+
 	// Create circuit breaker for SMS service
 	cb := circuitbreaker.NewCircuitBreaker(circuitbreaker.Config{
 		Name:             "infobip-sms",
@@ -34,7 +34,7 @@ func InitInfobip() *InfobipClient {
 		FailureThreshold: 5,
 		SuccessThreshold: 2,
 	})
-	
+
 	return &InfobipClient{
 		BaseURL: cfg.InfobipConfig.BaseURL,
 		APIKey:  cfg.InfobipConfig.APIKey,
@@ -101,4 +101,3 @@ func (ic *InfobipClient) sendSMSInternal(ctx context.Context, to, message string
 
 	return nil
 }
-

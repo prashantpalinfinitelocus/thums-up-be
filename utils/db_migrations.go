@@ -35,5 +35,3 @@ func RunDBMigrations(db *gorm.DB) error {
 	log.Info("Database migrations completed")
 	return nil
 }
-
-

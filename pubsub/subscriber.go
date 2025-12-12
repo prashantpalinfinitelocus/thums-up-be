@@ -9,7 +9,7 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	log "github.com/sirupsen/logrus"
-	
+
 	"github.com/Infinite-Locus-Product/thums_up_backend/constants"
 )
 

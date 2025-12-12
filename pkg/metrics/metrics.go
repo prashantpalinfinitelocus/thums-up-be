@@ -72,7 +72,7 @@ func PrometheusMiddleware() gin.HandlerFunc {
 		// Record metrics
 		duration := time.Since(start).Seconds()
 		status := strconv.Itoa(c.Writer.Status())
-		
+
 		httpRequestsTotal.WithLabelValues(c.Request.Method, c.FullPath(), status).Inc()
 		httpRequestDuration.WithLabelValues(c.Request.Method, c.FullPath()).Observe(duration)
 	}
@@ -97,4 +97,3 @@ func RecordCircuitBreakerState(name string, state int) {
 func RecordExternalAPICall(service, status string) {
 	externalAPICallsTotal.WithLabelValues(service, status).Inc()
 }
-

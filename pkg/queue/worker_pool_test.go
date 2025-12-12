@@ -75,7 +75,7 @@ func TestWorkerPool_QueueFull(t *testing.T) {
 
 	// This should fail because queue is full
 	err := wp.Submit(blockingTask)
-	
+
 	// Either ErrQueueFull or context error
 	assert.Error(t, err)
 }
@@ -130,4 +130,3 @@ func TestWorkerPool_Shutdown(t *testing.T) {
 	err := wp.Submit(task)
 	assert.Error(t, err)
 }
-

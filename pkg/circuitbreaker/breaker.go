@@ -38,17 +38,17 @@ var (
 
 // CircuitBreaker implements the circuit breaker pattern
 type CircuitBreaker struct {
-	mu              sync.RWMutex
-	name            string
-	maxRequests     uint32
-	interval        time.Duration
-	timeout         time.Duration
+	mu               sync.RWMutex
+	name             string
+	maxRequests      uint32
+	interval         time.Duration
+	timeout          time.Duration
 	failureThreshold uint32
 	successThreshold uint32
-	
-	state          State
-	counts         Counts
-	expiry         time.Time
+
+	state           State
+	counts          Counts
+	expiry          time.Time
 	lastStateChange time.Time
 }
 
@@ -84,7 +84,7 @@ func NewCircuitBreaker(cfg Config) *CircuitBreaker {
 		expiry:           time.Now().Add(cfg.Interval),
 		lastStateChange:  time.Now(),
 	}
-	
+
 	return cb
 }
 
@@ -220,4 +220,3 @@ func (cb *CircuitBreaker) Reset() {
 	cb.setState(StateClosed, time.Now())
 	log.WithField("circuit_breaker", cb.name).Info("Circuit breaker reset")
 }
-

@@ -67,7 +67,7 @@ func (h *NotifyMeHandler) Subscribe(c *gin.Context) {
 	if created && h.notificationService != nil && h.workerPool != nil {
 		phoneNumber := req.PhoneNumber
 		email := req.Email
-		
+
 		task := func(ctx context.Context) error {
 			if err := h.notificationService.PublishNotifyMeMessage(ctx, phoneNumber, email); err != nil {
 				log.WithError(err).WithFields(log.Fields{
@@ -81,7 +81,7 @@ func (h *NotifyMeHandler) Subscribe(c *gin.Context) {
 			}).Info("Successfully published notify me message")
 			return nil
 		}
-		
+
 		if err := h.workerPool.Submit(task); err != nil {
 			log.WithError(err).Warn("Failed to submit notification task to worker pool")
 			// Don't fail the request if background task submission fails

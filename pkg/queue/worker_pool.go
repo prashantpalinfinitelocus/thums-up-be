@@ -24,11 +24,11 @@ type WorkerPool struct {
 
 // PoolMetrics tracks worker pool statistics
 type PoolMetrics struct {
-	mu              sync.RWMutex
-	tasksSubmitted  int64
-	tasksCompleted  int64
-	tasksFailed     int64
-	tasksRejected   int64
+	mu             sync.RWMutex
+	tasksSubmitted int64
+	tasksCompleted int64
+	tasksFailed    int64
+	tasksRejected  int64
 }
 
 // NewWorkerPool creates a new worker pool
@@ -55,7 +55,7 @@ func (wp *WorkerPool) start() {
 
 func (wp *WorkerPool) worker(id int) {
 	defer wp.wg.Done()
-	
+
 	for {
 		select {
 		case <-wp.ctx.Done():
@@ -84,7 +84,7 @@ func (wp *WorkerPool) worker(id int) {
 // Submit adds a task to the queue
 func (wp *WorkerPool) Submit(task Task) error {
 	wp.metrics.incrementSubmitted()
-	
+
 	select {
 	case wp.tasks <- task:
 		return nil
@@ -101,21 +101,21 @@ func (wp *WorkerPool) Submit(task Task) error {
 func (wp *WorkerPool) Shutdown() {
 	log.Info("Shutting down worker pool...")
 	wp.cancel()
-	
+
 	// Wait for all workers to finish with timeout
 	done := make(chan struct{})
 	go func() {
 		wp.wg.Wait()
 		close(done)
 	}()
-	
+
 	select {
 	case <-done:
 		log.Info("All workers stopped gracefully")
 	case <-time.After(30 * time.Second):
 		log.Warn("Worker pool shutdown timeout, some tasks may not have completed")
 	}
-	
+
 	close(wp.tasks)
 	wp.logMetrics()
 }
@@ -124,7 +124,12 @@ func (wp *WorkerPool) Shutdown() {
 func (wp *WorkerPool) GetMetrics() PoolMetrics {
 	wp.metrics.mu.RLock()
 	defer wp.metrics.mu.RUnlock()
-	return *wp.metrics
+	return PoolMetrics{
+		tasksSubmitted: wp.metrics.tasksSubmitted,
+		tasksCompleted: wp.metrics.tasksCompleted,
+		tasksFailed:    wp.metrics.tasksFailed,
+		tasksRejected:  wp.metrics.tasksRejected,
+	}
 }
 
 func (wp *WorkerPool) logMetrics() {
@@ -162,4 +167,3 @@ func (m *PoolMetrics) incrementRejected() {
 }
 
 var ErrQueueFull = fmt.Errorf("task queue is full")
-

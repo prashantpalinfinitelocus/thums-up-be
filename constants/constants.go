@@ -39,8 +39,8 @@ const (
 	DEFAULT_DB_CONN_MAX_LIFETIME  = 30 * time.Minute
 
 	// Worker pool settings
-	WORKER_POOL_SIZE  = 10
-	TASK_QUEUE_SIZE   = 1000
+	WORKER_POOL_SIZE    = 10
+	TASK_QUEUE_SIZE     = 1000
 	PUBSUB_ACK_DEADLINE = 20 * time.Second
 
 	// Batch settings
@@ -48,9 +48,9 @@ const (
 	FIREBASE_BATCH_SIZE  = 500
 
 	// Timeouts
-	HTTP_CLIENT_TIMEOUT     = 30 * time.Second
+	HTTP_CLIENT_TIMEOUT       = 30 * time.Second
 	GRACEFUL_SHUTDOWN_TIMEOUT = 10 * time.Second
-	MESSAGE_HANDLER_TIMEOUT = 30 * time.Second
+	MESSAGE_HANDLER_TIMEOUT   = 30 * time.Second
 )
 
 var (
