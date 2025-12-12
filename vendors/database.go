@@ -2,7 +2,6 @@ package vendors
 
 import (
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
@@ -10,6 +9,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/config"
+	"github.com/Infinite-Locus-Product/thums_up_backend/constants"
 )
 
 func InitDatabase() *gorm.DB {
@@ -49,10 +49,10 @@ func InitDatabase() *gorm.DB {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
-	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	sqlDB.SetMaxIdleConns(constants.DEFAULT_DB_MAX_IDLE_CONNS)
+	sqlDB.SetMaxOpenConns(constants.DEFAULT_DB_MAX_OPEN_CONNS)
+	sqlDB.SetConnMaxIdleTime(constants.DEFAULT_DB_CONN_MAX_IDLE_TIME)
+	sqlDB.SetConnMaxLifetime(constants.DEFAULT_DB_CONN_MAX_LIFETIME)
 
 	log.Info("Database connected successfully")
 

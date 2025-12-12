@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/config"
+	"github.com/Infinite-Locus-Product/thums_up_backend/constants"
 	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
 	"github.com/Infinite-Locus-Product/thums_up_backend/pubsub"
 	"github.com/Infinite-Locus-Product/thums_up_backend/vendors"
@@ -87,6 +88,10 @@ func startSubscriber() {
 
 func createMessageHandler() pubsub.MessageHandler {
 	return func(ctx context.Context, msg *pubsubpkg.Message) error {
+		// Add timeout for message processing
+		handlerCtx, cancel := context.WithTimeout(ctx, constants.MESSAGE_HANDLER_TIMEOUT)
+		defer cancel()
+		
 		log.WithFields(log.Fields{
 			"message_id":   msg.ID,
 			"publish_time": msg.PublishTime,
@@ -100,6 +105,9 @@ func createMessageHandler() pubsub.MessageHandler {
 		}
 
 		log.WithField("data", data).Debug("Message data")
+
+		// Use handlerCtx if you need to do any work
+		_ = handlerCtx
 
 		return nil
 	}

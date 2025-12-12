@@ -9,7 +9,6 @@ const (
 	ErrInvalidUserContext         = "Invalid user context"
 	
 	ErrUserNotAuthenticated       = "User not authenticated"
-	ErrUserNotFound               = "User not found"
 	ErrUserAlreadyExists          = "User with this phone number already exists"
 	ErrEmailAlreadyInUse          = "Email already in use"
 	ErrInvalidUserID              = "Invalid user ID in token"
@@ -63,15 +62,12 @@ const (
 	ErrAddressAddFailed           = "Failed to add address"
 	ErrAddressUpdateFailed        = "Failed to update address"
 	ErrAddressDeleteFailed        = "Failed to delete address"
-	ErrAddressNotFound            = "Address not found"
 	ErrAddressNotBelongToUser     = "Address does not belong to user"
 	ErrAddressIDRequired          = "Address ID is required"
 	ErrAddressCreationFailed      = "Failed to create address"
 	
 	ErrStateFindFailed            = "Failed to find state"
-	ErrStateNotFound              = "State not found"
 	ErrCityFindFailed             = "Failed to find city"
-	ErrCityNotFound               = "City not found in state"
 	ErrPinCodeFindFailed          = "Failed to find pincode"
 	ErrPinCodeNotFound            = "Pincode not found in city"
 	ErrPinCodeNotDeliverable      = "Pincode is not deliverable in city"

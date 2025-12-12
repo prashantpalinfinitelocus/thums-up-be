@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -70,3 +71,21 @@ func NewTooManyRequestsError(message string, err error) *AppError {
 	}
 }
 
+func NewForbiddenError(message string, err error) *AppError {
+	return &AppError{
+		StatusCode: http.StatusForbidden,
+		Message:    message,
+		Err:        err,
+	}
+}
+
+// Sentinel errors for type checking
+var (
+	ErrStateNotFound       = errors.New("state not found")
+	ErrCityNotFound        = errors.New("city not found")
+	ErrPincodeNotFound     = errors.New("pincode not found")
+	ErrNotDeliverable      = errors.New("pincode not deliverable")
+	ErrUserNotFound        = errors.New("user not found")
+	ErrAddressNotFound     = errors.New("address not found")
+	ErrAddressUnauthorized = errors.New("address does not belong to user")
+)

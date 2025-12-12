@@ -4,13 +4,13 @@ import (
 	"context"
 	stderrors "errors"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/dtos"
 	"github.com/Infinite-Locus-Product/thums_up_backend/errors"
+	"github.com/Infinite-Locus-Product/thums_up_backend/pkg/queue"
 	"github.com/Infinite-Locus-Product/thums_up_backend/services"
 	"github.com/Infinite-Locus-Product/thums_up_backend/utils"
 )
@@ -18,15 +18,18 @@ import (
 type NotifyMeHandler struct {
 	notifyMeService     services.NotifyMeService
 	notificationService services.NotificationService
+	workerPool          *queue.WorkerPool
 }
 
 func NewNotifyMeHandler(
 	notifyMeService services.NotifyMeService,
 	notificationService services.NotificationService,
+	workerPool *queue.WorkerPool,
 ) *NotifyMeHandler {
 	return &NotifyMeHandler{
 		notifyMeService:     notifyMeService,
 		notificationService: notificationService,
+		workerPool:          workerPool,
 	}
 }
 
@@ -60,14 +63,29 @@ func (h *NotifyMeHandler) Subscribe(c *gin.Context) {
 		return
 	}
 
-	if created && h.notificationService != nil {
-		bgCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		go func() {
-			defer cancel()
-			if err := h.notificationService.PublishNotifyMeMessage(bgCtx, req.PhoneNumber, req.Email); err != nil {
-				log.WithError(err).Error("Failed to publish notify me message")
+	// Submit background task to worker pool instead of spawning goroutine
+	if created && h.notificationService != nil && h.workerPool != nil {
+		phoneNumber := req.PhoneNumber
+		email := req.Email
+		
+		task := func(ctx context.Context) error {
+			if err := h.notificationService.PublishNotifyMeMessage(ctx, phoneNumber, email); err != nil {
+				log.WithError(err).WithFields(log.Fields{
+					"phone_number": phoneNumber,
+					"email":        email,
+				}).Error("Failed to publish notify me message")
+				return err
 			}
-		}()
+			log.WithFields(log.Fields{
+				"phone_number": phoneNumber,
+			}).Info("Successfully published notify me message")
+			return nil
+		}
+		
+		if err := h.workerPool.Submit(task); err != nil {
+			log.WithError(err).Warn("Failed to submit notification task to worker pool")
+			// Don't fail the request if background task submission fails
+		}
 	}
 
 	statusCode := http.StatusCreated

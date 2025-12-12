@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -17,9 +16,11 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/config"
+	"github.com/Infinite-Locus-Product/thums_up_backend/constants"
 	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
 	"github.com/Infinite-Locus-Product/thums_up_backend/handlers"
 	"github.com/Infinite-Locus-Product/thums_up_backend/middlewares"
+	"github.com/Infinite-Locus-Product/thums_up_backend/pkg/queue"
 	"github.com/Infinite-Locus-Product/thums_up_backend/repository"
 	"github.com/Infinite-Locus-Product/thums_up_backend/services"
 	"github.com/Infinite-Locus-Product/thums_up_backend/utils"
@@ -27,16 +28,30 @@ import (
 )
 
 var (
-	db             *gorm.DB
-	firebaseClient *vendors.FirebaseClient
-	infobipClient  *vendors.InfobipClient
-	pubsubClient   interface{}
-	gcsService     utils.GCSService
-)
-
-var (
 	portFlag string
 )
+
+// Server encapsulates all dependencies
+type Server struct {
+	db             *gorm.DB
+	cfg            *config.Config
+	firebaseClient *vendors.FirebaseClient
+	infobipClient  *vendors.InfobipClient
+	gcsService     utils.GCSService
+	workerPool     *queue.WorkerPool
+	handlers       *Handlers
+}
+
+// Handlers contains all HTTP handlers
+type Handlers struct {
+	auth        *handlers.AuthHandler
+	notifyMe    *handlers.NotifyMeHandler
+	profile     *handlers.ProfileHandler
+	address     *handlers.AddressHandler
+	question    *handlers.QuestionHandler
+	thunderSeat *handlers.ThunderSeatHandler
+	winner      *handlers.WinnerHandler
+}
 
 var serverCmd = &cobra.Command{
 	Use:   "server",
@@ -54,8 +69,9 @@ func init() {
 func startServer() {
 	cfg := config.GetConfig()
 
-	initVendors()
-	initDatabase()
+	// Initialize server
+	srv := NewServer(cfg)
+	defer srv.Cleanup()
 
 	if cfg.AppEnv == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -67,73 +83,95 @@ func startServer() {
 	router.Use(middlewares.CORSMiddleware())
 	router.Use(middlewares.ErrorHandler())
 
-	setupRoutes(router)
+	srv.setupRoutes(router)
 
 	port := cfg.AppPort
 	if portFlag != "" {
 		port = portFlag
 	}
 
-	srv := &http.Server{
+	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
 		Handler: router,
 	}
 
+	// Start server
 	go func() {
 		log.Infof("Server starting on port %s", port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed to start: %v", err)
 		}
 	}()
 
+	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	log.Info("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), constants.GRACEFUL_SHUTDOWN_TIMEOUT)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := httpServer.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 
 	log.Info("Server exited")
 }
 
-func initVendors() {
-	cfg := config.GetConfig()
+// NewServer creates and initializes a new server instance
+func NewServer(cfg *config.Config) *Server {
+	srv := &Server{
+		cfg: cfg,
+	}
 
-	infobipClient = vendors.InitInfobip()
+	srv.initVendors()
+	srv.initDatabase()
+	srv.initWorkerPool()
+	srv.initHandlers()
 
-	// firebaseClient = vendors.InitFirebase()
+	return srv
+}
 
-	// if cfg.PubSubConfig.ProjectID != "" {
-	// 	pubsubClient = vendors.InitPubSub()
-	// }
+func (s *Server) initVendors() {
+	s.infobipClient = vendors.InitInfobip()
 
+	// Initialize GCS Service
 	var err error
 	credPath := "./gcp-service-account.json"
-	gcsService, err = utils.NewGCSServiceWithCredentials(cfg.GcsConfig.BucketName, cfg.GcsConfig.ProjectID, credPath)
+	s.gcsService, err = utils.NewGCSServiceWithCredentials(
+		s.cfg.GcsConfig.BucketName,
+		s.cfg.GcsConfig.ProjectID,
+		credPath,
+	)
 	if err != nil {
 		log.Warnf("Failed to initialize GCS service: %v", err)
 	} else {
 		log.Info("GCS service initialized successfully")
 	}
+
+	// Initialize Firebase (optional)
+	// s.firebaseClient = vendors.InitFirebase()
 }
 
-func initDatabase() {
-	db = vendors.InitDatabase()
+func (s *Server) initDatabase() {
+	s.db = vendors.InitDatabase()
 
-	if err := utils.RunDBMigrations(db); err != nil {
+	if err := utils.RunDBMigrations(s.db); err != nil {
 		log.Fatalf("Failed to run database migrations: %v", err)
 	}
 }
 
-func setupRoutes(router *gin.Engine) {
-	txnManager := utils.NewTransactionManager(db)
+func (s *Server) initWorkerPool() {
+	s.workerPool = queue.NewWorkerPool(constants.WORKER_POOL_SIZE, constants.TASK_QUEUE_SIZE)
+	log.Info("Worker pool initialized successfully")
+}
 
+func (s *Server) initHandlers() {
+	txnManager := utils.NewTransactionManager(s.db)
+
+	// Initialize repositories
 	userRepo := repository.NewUserRepository()
 	otpRepo := repository.NewOTPRepository()
 	refreshTokenRepo := repository.NewRefreshTokenRepository()
@@ -146,21 +184,27 @@ func setupRoutes(router *gin.Engine) {
 	thunderSeatRepo := repository.NewThunderSeatRepository()
 	winnerRepo := repository.NewWinnerRepository()
 
-	authService := services.NewAuthService(txnManager, userRepo, otpRepo, refreshTokenRepo, infobipClient)
+	// Initialize services
+	authService := services.NewAuthService(txnManager, userRepo, otpRepo, refreshTokenRepo, s.infobipClient)
 	notifyMeService := services.NewNotifyMeService(txnManager, notifyMeRepo)
 	userService := services.NewUserService(txnManager, userRepo, addressRepo, stateRepo, cityRepo, pinCodeRepo)
 	questionService := services.NewQuestionService(txnManager, questionRepo)
 	thunderSeatService := services.NewThunderSeatService(txnManager, thunderSeatRepo, questionRepo)
 	winnerService := services.NewWinnerService(txnManager, winnerRepo, thunderSeatRepo)
 
-	authHandler := handlers.NewAuthHandler(authService)
-	notifyMeHandler := handlers.NewNotifyMeHandler(notifyMeService, nil)
-	profileHandler := handlers.NewProfileHandler(userService)
-	addressHandler := handlers.NewAddressHandler(userService)
-	questionHandler := handlers.NewQuestionHandler(questionService)
-	thunderSeatHandler := handlers.NewThunderSeatHandler(thunderSeatService)
-	winnerHandler := handlers.NewWinnerHandler(winnerService)
+	// Initialize handlers
+	s.handlers = &Handlers{
+		auth:        handlers.NewAuthHandler(authService),
+		notifyMe:    handlers.NewNotifyMeHandler(notifyMeService, nil, s.workerPool),
+		profile:     handlers.NewProfileHandler(userService),
+		address:     handlers.NewAddressHandler(userService),
+		question:    handlers.NewQuestionHandler(questionService),
+		thunderSeat: handlers.NewThunderSeatHandler(thunderSeatService),
+		winner:      handlers.NewWinnerHandler(winnerService),
+	}
+}
 
+func (s *Server) setupRoutes(router *gin.Engine) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "healthy",
@@ -174,64 +218,83 @@ func setupRoutes(router *gin.Engine) {
 	{
 		auth := api.Group("/auth")
 		{
-			auth.POST("/send-otp", authHandler.SendOTP)
-			auth.POST("/verify-otp", authHandler.VerifyOTP)
-			auth.POST("/signup", authHandler.SignUp)
-			auth.POST("/refresh", authHandler.RefreshToken)
+			auth.POST("/send-otp", s.handlers.auth.SendOTP)
+			auth.POST("/verify-otp", s.handlers.auth.VerifyOTP)
+			auth.POST("/signup", s.handlers.auth.SignUp)
+			auth.POST("/refresh", s.handlers.auth.RefreshToken)
 		}
 
 		notifyMe := api.Group("/notify-me")
 		{
-			notifyMe.POST("/subscribe", notifyMeHandler.Subscribe)
-			notifyMe.GET("/:phone", notifyMeHandler.GetSubscription)
+			notifyMe.POST("/subscribe", s.handlers.notifyMe.Subscribe)
+			notifyMe.GET("/:phone", s.handlers.notifyMe.GetSubscription)
 		}
 
+		userRepo := repository.NewUserRepository()
 		profileGroup := api.Group("/profile")
-		profileGroup.Use(middlewares.AuthMiddleware(db, userRepo))
+		profileGroup.Use(middlewares.AuthMiddleware(s.db, userRepo))
 		{
-			profileGroup.GET("/", profileHandler.GetProfile)
-			profileGroup.PATCH("/", profileHandler.UpdateProfile)
+			profileGroup.GET("/", s.handlers.profile.GetProfile)
+			profileGroup.PATCH("/", s.handlers.profile.UpdateProfile)
 
-			profileGroup.POST("/address", addressHandler.AddAddress)
-			profileGroup.GET("/address", addressHandler.GetAddresses)
-			profileGroup.PUT("/address/:addressId", addressHandler.UpdateAddress)
-			profileGroup.DELETE("/address/:addressId", addressHandler.DeleteAddress)
+			profileGroup.POST("/address", s.handlers.address.AddAddress)
+			profileGroup.GET("/address", s.handlers.address.GetAddresses)
+			profileGroup.PUT("/address/:addressId", s.handlers.address.UpdateAddress)
+			profileGroup.DELETE("/address/:addressId", s.handlers.address.DeleteAddress)
 		}
 
 		questions := api.Group("/questions")
 		{
-			questions.GET("/active", questionHandler.GetActiveQuestions)
+			questions.GET("/active", s.handlers.question.GetActiveQuestions)
 
 			questionsAuth := questions.Group("")
-			questionsAuth.Use(middlewares.AuthMiddleware(db, userRepo))
+			questionsAuth.Use(middlewares.AuthMiddleware(s.db, userRepo))
 			{
-				questionsAuth.POST("/", questionHandler.SubmitQuestion)
+				questionsAuth.POST("/", s.handlers.question.SubmitQuestion)
 			}
 		}
 
 		thunderSeat := api.Group("/thunder-seat")
 		{
-			thunderSeat.GET("/current-week", thunderSeatHandler.GetCurrentWeek)
+			thunderSeat.GET("/current-week", s.handlers.thunderSeat.GetCurrentWeek)
 
 			thunderSeatAuth := thunderSeat.Group("")
-			thunderSeatAuth.Use(middlewares.AuthMiddleware(db, userRepo))
+			thunderSeatAuth.Use(middlewares.AuthMiddleware(s.db, userRepo))
 			{
-				thunderSeatAuth.GET("/submissions", thunderSeatHandler.GetUserSubmissions)
-				thunderSeatAuth.POST("/", thunderSeatHandler.SubmitAnswer)
+				thunderSeatAuth.GET("/submissions", s.handlers.thunderSeat.GetUserSubmissions)
+				thunderSeatAuth.POST("/", s.handlers.thunderSeat.SubmitAnswer)
 			}
 		}
 
 		winners := api.Group("/winners")
 		{
-			winners.GET("/", winnerHandler.GetAllWinners)
-			winners.GET("/week/:weekNumber", winnerHandler.GetWinnersByWeek)
+			winners.GET("/", s.handlers.winner.GetAllWinners)
+			winners.GET("/week/:weekNumber", s.handlers.winner.GetWinnersByWeek)
 		}
 
 		admin := api.Group("/admin")
 		admin.Use(middlewares.APIKeyMiddleware())
 		{
-			admin.GET("/notify-me/unnotified", notifyMeHandler.GetAllUnnotified)
-			admin.POST("/winners/select", winnerHandler.SelectWinners)
+			admin.GET("/notify-me/unnotified", s.handlers.notifyMe.GetAllUnnotified)
+			admin.POST("/winners/select", s.handlers.winner.SelectWinners)
 		}
 	}
+}
+
+// Cleanup gracefully shuts down all resources
+func (s *Server) Cleanup() {
+	log.Info("Cleaning up server resources...")
+
+	if s.workerPool != nil {
+		s.workerPool.Shutdown()
+	}
+
+	if s.db != nil {
+		sqlDB, err := s.db.DB()
+		if err == nil {
+			sqlDB.Close()
+		}
+	}
+
+	log.Info("Cleanup complete")
 }

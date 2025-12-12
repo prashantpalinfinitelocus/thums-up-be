@@ -63,7 +63,11 @@ func (s *authService) SendOTP(ctx context.Context, phoneNumber string) error {
 		return errors.NewTooManyRequestsError(errors.ErrOTPTooManyRequests, nil)
 	}
 
-	otp := utils.GenerateOTP(constants.OTP_LENGTH)
+	otp, err := utils.GenerateOTP(constants.OTP_LENGTH)
+	if err != nil {
+		log.WithError(err).Error("Failed to generate OTP")
+		return errors.NewInternalServerError(errors.ErrOTPSendFailed, err)
+	}
 	expiresAt := time.Now().Add(time.Duration(constants.OTP_EXPIRY_MINUTES) * time.Minute)
 
 	otpLog := &entities.OTPLog{
@@ -81,7 +85,7 @@ func (s *authService) SendOTP(ctx context.Context, phoneNumber string) error {
 	message := fmt.Sprintf("Your Thums Up verification code is: %s. Valid for %d minutes.",
 		otp, constants.OTP_EXPIRY_MINUTES)
 
-	if err := s.infobipClient.SendSMS(formattedPhone, message); err != nil {
+	if err := s.infobipClient.SendSMS(ctx, formattedPhone, message); err != nil {
 		log.WithError(err).Error("Failed to send SMS")
 		return errors.NewInternalServerError(errors.ErrOTPSMSFailed, err)
 	}
@@ -99,9 +103,9 @@ func (s *authService) VerifyOTP(ctx context.Context, phoneNumber string, otp str
 	user, err := s.userRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), phoneNumber)
 	if err != nil {
 		if stderrors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.NewNotFoundError(errors.ErrUserNotFound, err)
+			return nil, errors.NewNotFoundError("User not found", err)
 		}
-		return nil, errors.NewInternalServerError(errors.ErrUserNotFound, err)
+		return nil, errors.NewInternalServerError("User not found", err)
 	}
 
 	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
@@ -145,7 +149,11 @@ func (s *authService) SignUp(ctx context.Context, req dtos.SignUpRequest) (*dtos
 		}
 	}
 
-	referralCode := utils.GenerateReferralCode()
+	referralCode, err := utils.GenerateReferralCode()
+	if err != nil {
+		log.WithError(err).Error("Failed to generate referral code")
+		return nil, errors.NewInternalServerError(errors.ErrProfileCreateFailed, err)
+	}
 	user := &entities.User{
 		PhoneNumber:  req.PhoneNumber,
 		Name:         &req.Name,
@@ -196,7 +204,7 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*d
 
 	user, err := s.userRepo.FindByID(ctx, s.txnManager.GetDB(), token.UserID)
 	if err != nil {
-		return nil, errors.NewInternalServerError(errors.ErrUserNotFound, err)
+		return nil, errors.NewInternalServerError("User not found", err)
 	}
 
 	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {

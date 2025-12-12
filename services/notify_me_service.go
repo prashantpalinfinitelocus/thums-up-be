@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/Infinite-Locus-Product/thums_up_backend/constants"
 	"github.com/Infinite-Locus-Product/thums_up_backend/dtos"
 	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
 	"github.com/Infinite-Locus-Product/thums_up_backend/errors"
@@ -53,8 +54,7 @@ func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeReques
 
 	var emailPtr *string
 	if req.Email != "" {
-		emailCopy := req.Email
-		emailPtr = &emailCopy
+		emailPtr = &req.Email
 	}
 
 	notifyMe := &entities.NotifyMe{
@@ -98,19 +98,19 @@ func (s *notifyMeService) GetSubscription(ctx context.Context, phoneNumber strin
 }
 
 func (s *notifyMeService) GetAllUnnotified(ctx context.Context) ([]dtos.NotifyMeResponse, error) {
-	records, err := s.notifyMeRepo.FindUnnotified(ctx, s.txnManager.GetDB(), 1000, 0)
+	records, err := s.notifyMeRepo.FindUnnotified(ctx, s.txnManager.GetDB(), constants.NOTIFY_ME_BATCH_SIZE, 0)
 	if err != nil {
 		return nil, errors.NewInternalServerError(errors.ErrUnnotifiedFetchFailed, err)
 	}
 
-	responses := make([]dtos.NotifyMeResponse, len(records))
-	for i, record := range records {
-		responses[i] = dtos.NotifyMeResponse{
+	responses := make([]dtos.NotifyMeResponse, 0, len(records))
+	for _, record := range records {
+		responses = append(responses, dtos.NotifyMeResponse{
 			ID:          record.ID,
 			PhoneNumber: record.PhoneNumber,
 			Email:       record.Email,
 			IsNotified:  record.IsNotified,
-		}
+		})
 	}
 
 	return responses, nil

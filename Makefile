@@ -1,65 +1,106 @@
-.PHONY: build dev clean up down logs docs rebuild rebuild-no-cache db-up db-down db-setup
+.PHONY: help test test-coverage lint run build clean migrate docker-up docker-down
 
-APP_NAME := thums_up_backend
+# Default target
+.DEFAULT_GOAL := help
 
-build:
-	go build -o main .
+# Variables
+APP_NAME := thums-up-backend
+GO_FILES := $(shell find . -type f -name '*.go' -not -path "./vendor/*")
+MAIN_PATH := ./main.go
 
-dev:
-	go run main.go server
+help: ## Show this help message
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Available targets:'
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-clean:
-	go clean
-	rm -f main
+test: ## Run all tests
+	@echo "Running tests..."
+	go test -v -race ./...
 
-up:
-	docker compose up -d
+test-coverage: ## Run tests with coverage
+	@echo "Running tests with coverage..."
+	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
 
-down:
-	docker compose down
+test-unit: ## Run unit tests only
+	@echo "Running unit tests..."
+	go test -v -short ./...
 
-logs:
-	docker compose logs -f --tail=100
+test-integration: ## Run integration tests
+	@echo "Running integration tests..."
+	go test -v -run Integration ./...
 
-docs:
-	swag init -g cmd/server.go
+lint: ## Run linter
+	@echo "Running linter..."
+	golangci-lint run --timeout=5m
 
-rebuild:
-	docker compose build
-	docker compose up -d
+fmt: ## Format code
+	@echo "Formatting code..."
+	gofmt -s -w $(GO_FILES)
+	goimports -w $(GO_FILES)
 
-rebuild-no-cache:
-	docker compose build --no-cache
-	docker compose up -d
+vet: ## Run go vet
+	@echo "Running go vet..."
+	go vet ./...
 
-build-subscriber:
-	docker compose -f docker-compose.subscriber.yml build
+build: ## Build the application
+	@echo "Building..."
+	go build -o bin/$(APP_NAME) $(MAIN_PATH)
 
-up-subscriber:
-	docker compose -f docker-compose.subscriber.yml up -d
+run: ## Run the application
+	@echo "Running application..."
+	go run $(MAIN_PATH) server
 
-down-subscriber:
-	docker compose -f docker-compose.subscriber.yml down
+run-subscriber: ## Run the pub/sub subscriber
+	@echo "Running subscriber..."
+	go run ./cmd/subscriber/main.go
 
-db-up:
-	docker compose -f docker-compose.db.yml up -d
+clean: ## Clean build artifacts
+	@echo "Cleaning..."
+	rm -rf bin/
+	rm -f coverage.out coverage.html
 
-db-down:
-	docker compose -f docker-compose.db.yml down
+migrate: ## Run database migrations
+	@echo "Running migrations..."
+	go run $(MAIN_PATH) migrate
 
-db-setup:
-	./scripts/setup-database.sh
+docker-up: ## Start docker services
+	@echo "Starting docker services..."
+	docker-compose up -d
 
-db-reset:
-	docker compose -f docker-compose.db.yml down -v
-	docker compose -f docker-compose.db.yml up -d
+docker-down: ## Stop docker services
+	@echo "Stopping docker services..."
+	docker-compose down
 
-strapi-dev:
-	cd strapi && npm run dev
+docker-logs: ## Show docker logs
+	docker-compose logs -f
 
-strapi-build:
-	cd strapi && npm run build
+deps: ## Download dependencies
+	@echo "Downloading dependencies..."
+	go mod download
+	go mod tidy
 
-strapi-install:
-	cd strapi && npm install
+deps-update: ## Update dependencies
+	@echo "Updating dependencies..."
+	go get -u ./...
+	go mod tidy
 
+security: ## Run security checks
+	@echo "Running security checks..."
+	gosec ./...
+
+benchmark: ## Run benchmarks
+	@echo "Running benchmarks..."
+	go test -bench=. -benchmem ./...
+
+install-tools: ## Install development tools
+	@echo "Installing development tools..."
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install golang.org/x/tools/cmd/goimports@latest
+	go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+
+ci: lint test ## Run CI pipeline locally
+
+all: clean deps lint test build ## Run all checks and build

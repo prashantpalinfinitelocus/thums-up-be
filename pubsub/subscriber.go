@@ -9,6 +9,8 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	log "github.com/sirupsen/logrus"
+	
+	"github.com/Infinite-Locus-Product/thums_up_backend/constants"
 )
 
 type Subscriber struct {
@@ -83,7 +85,7 @@ func (s *Subscriber) CreateSubscriptionIfNotExists(ctx context.Context, subscrip
 	topic := s.client.Topic(topicID)
 	_, err = s.client.CreateSubscription(ctx, subscriptionID, pubsub.SubscriptionConfig{
 		Topic:       topic,
-		AckDeadline: 20 * time.Second,
+		AckDeadline: constants.PUBSUB_ACK_DEADLINE,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create subscription: %w", err)

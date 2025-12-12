@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	stderrors "errors"
 	"fmt"
 	"net/http"
 
@@ -84,8 +85,8 @@ func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 
 	updatedUser, err := h.userService.UpdateUser(ctx, userEntity.ID, req)
 	if err != nil {
-		if err.Error() == errors.ErrUserNotFound {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": errors.ErrUserNotFound})
+		if stderrors.Is(err, errors.ErrUserNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
 		if err.Error() == errors.ErrEmailAlreadyInUse {
