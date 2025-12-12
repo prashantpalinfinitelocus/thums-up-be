@@ -136,6 +136,13 @@ func initDatabase() {
 		&entities.OTPLog{},
 		&entities.RefreshToken{},
 		&entities.NotifyMe{},
+		&entities.Address{},
+		&entities.State{},
+		&entities.City{},
+		&entities.PinCode{},
+		&entities.QuestionMaster{},
+		&entities.ThunderSeat{},
+		&entities.ThunderSeatWinner{},
 	)
 
 	log.Info("Database migrations completed")
@@ -148,13 +155,28 @@ func setupRoutes(router *gin.Engine) {
 	otpRepo := repository.NewOTPRepository()
 	refreshTokenRepo := repository.NewRefreshTokenRepository()
 	notifyMeRepo := repository.NewNotifyMeRepository()
+	addressRepo := repository.NewGormRepository[entities.Address]()
+	stateRepo := repository.NewStateRepository()
+	cityRepo := repository.NewCityRepository()
+	pinCodeRepo := repository.NewPinCodeRepository()
+	questionRepo := repository.NewQuestionRepository()
+	thunderSeatRepo := repository.NewThunderSeatRepository()
+	winnerRepo := repository.NewWinnerRepository()
 
 	authService := services.NewAuthService(txnManager, userRepo, otpRepo, refreshTokenRepo, infobipClient)
 	notifyMeService := services.NewNotifyMeService(txnManager, notifyMeRepo)
-	// notificationService := services.NewNotificationService(firebaseClient, nil)
+	userService := services.NewUserService(txnManager, userRepo, addressRepo, stateRepo, cityRepo, pinCodeRepo)
+	questionService := services.NewQuestionService(txnManager, questionRepo)
+	thunderSeatService := services.NewThunderSeatService(txnManager, thunderSeatRepo, questionRepo)
+	winnerService := services.NewWinnerService(txnManager, winnerRepo, thunderSeatRepo)
 
 	authHandler := handlers.NewAuthHandler(authService)
 	notifyMeHandler := handlers.NewNotifyMeHandler(notifyMeService, nil)
+	profileHandler := handlers.NewProfileHandler(userService)
+	addressHandler := handlers.NewAddressHandler(userService)
+	questionHandler := handlers.NewQuestionHandler(questionService)
+	thunderSeatHandler := handlers.NewThunderSeatHandler(thunderSeatService)
+	winnerHandler := handlers.NewWinnerHandler(winnerService)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -181,10 +203,52 @@ func setupRoutes(router *gin.Engine) {
 			notifyMe.GET("/:phone", notifyMeHandler.GetSubscription)
 		}
 
+		profileGroup := api.Group("/profile")
+		profileGroup.Use(middlewares.AuthMiddleware(db, userRepo))
+		{
+			profileGroup.GET("/", profileHandler.GetProfile)
+			profileGroup.PATCH("/", profileHandler.UpdateProfile)
+
+			profileGroup.POST("/address", addressHandler.AddAddress)
+			profileGroup.GET("/address", addressHandler.GetAddresses)
+			profileGroup.PUT("/address/:addressId", addressHandler.UpdateAddress)
+			profileGroup.DELETE("/address/:addressId", addressHandler.DeleteAddress)
+		}
+
+		questions := api.Group("/questions")
+		{
+			questions.GET("/active", questionHandler.GetActiveQuestions)
+
+			questionsAuth := questions.Group("")
+			questionsAuth.Use(middlewares.AuthMiddleware(db, userRepo))
+			{
+				questionsAuth.POST("/", questionHandler.SubmitQuestion)
+			}
+		}
+
+		thunderSeat := api.Group("/thunder-seat")
+		{
+			thunderSeat.GET("/current-week", thunderSeatHandler.GetCurrentWeek)
+
+			thunderSeatAuth := thunderSeat.Group("")
+			thunderSeatAuth.Use(middlewares.AuthMiddleware(db, userRepo))
+			{
+				thunderSeatAuth.GET("/submissions", thunderSeatHandler.GetUserSubmissions)
+				thunderSeatAuth.POST("/", thunderSeatHandler.SubmitAnswer)
+			}
+		}
+
+		winners := api.Group("/winners")
+		{
+			winners.GET("/", winnerHandler.GetAllWinners)
+			winners.GET("/week/:weekNumber", winnerHandler.GetWinnersByWeek)
+		}
+
 		admin := api.Group("/admin")
 		admin.Use(middlewares.APIKeyMiddleware())
 		{
 			admin.GET("/notify-me/unnotified", notifyMeHandler.GetAllUnnotified)
+			admin.POST("/winners/select", winnerHandler.SelectWinners)
 		}
 	}
 }

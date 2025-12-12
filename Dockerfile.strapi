@@ -15,6 +15,9 @@ RUN npm install
 # Apply patches
 RUN npx patch-package
 
+# Ensure any previous gcp-service-account.json artifact is removed so it can be recreated as a file
+RUN rm -rf /srv/app/gcp-service-account.json
+
 # Copy full Strapi project (excluding dist via .dockerignore)
 COPY ./strapi .
 

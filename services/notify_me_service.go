@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -14,15 +15,15 @@ import (
 )
 
 type NotifyMeService interface {
-	Subscribe(ctx context.Context, req dtos.NotifyMeRequest) (*dtos.NotifyMeResponse, error)
+	Subscribe(ctx context.Context, req dtos.NotifyMeRequest) (*dtos.NotifyMeResponse, bool, error)
 	GetSubscription(ctx context.Context, phoneNumber string) (*dtos.NotifyMeResponse, error)
 	GetAllUnnotified(ctx context.Context) ([]dtos.NotifyMeResponse, error)
 	MarkAsNotified(ctx context.Context, id string) error
 }
 
 type notifyMeService struct {
-	txnManager     *utils.TransactionManager
-	notifyMeRepo   repository.NotifyMeRepository
+	txnManager   *utils.TransactionManager
+	notifyMeRepo repository.NotifyMeRepository
 }
 
 func NewNotifyMeService(
@@ -35,21 +36,28 @@ func NewNotifyMeService(
 	}
 }
 
-func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeRequest) (*dtos.NotifyMeResponse, error) {
+func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeRequest) (*dtos.NotifyMeResponse, bool, error) {
 	existing, _ := s.notifyMeRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), req.PhoneNumber)
+	fmt.Println("existing", existing)
 	if existing != nil {
 		return &dtos.NotifyMeResponse{
 			ID:          existing.ID,
 			PhoneNumber: existing.PhoneNumber,
 			Email:       existing.Email,
 			IsNotified:  existing.IsNotified,
-		}, nil
+		}, false, nil
+	}
+
+	var emailPtr *string
+	if req.Email != "" {
+		emailCopy := req.Email
+		emailPtr = &emailCopy
 	}
 
 	notifyMe := &entities.NotifyMe{
 		Name:        req.Name,
 		PhoneNumber: req.PhoneNumber,
-		Email:       req.Email,
+		Email:       emailPtr,
 		IsNotified:  false,
 	}
 
@@ -58,7 +66,7 @@ func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeReques
 	})
 	if err != nil {
 		log.WithError(err).Error("Failed to create notify me subscription")
-		return nil, errors.NewInternalServerError("Failed to subscribe", err)
+		return nil, false, errors.NewInternalServerError("Failed to subscribe", err)
 	}
 
 	return &dtos.NotifyMeResponse{
@@ -66,7 +74,7 @@ func (s *notifyMeService) Subscribe(ctx context.Context, req dtos.NotifyMeReques
 		PhoneNumber: notifyMe.PhoneNumber,
 		Email:       notifyMe.Email,
 		IsNotified:  notifyMe.IsNotified,
-	}, nil
+	}, true, nil
 }
 
 func (s *notifyMeService) GetSubscription(ctx context.Context, phoneNumber string) (*dtos.NotifyMeResponse, error) {
@@ -114,4 +122,3 @@ func (s *notifyMeService) MarkAsNotified(ctx context.Context, id string) error {
 	}
 	return nil
 }
-

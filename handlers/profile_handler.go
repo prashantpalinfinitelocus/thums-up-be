@@ -1,0 +1,80 @@
+package handlers
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/Infinite-Locus-Product/thums_up_backend/dtos"
+	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
+	"github.com/Infinite-Locus-Product/thums_up_backend/services"
+)
+
+type ProfileHandler struct {
+	userService services.UserService
+}
+
+func NewProfileHandler(userService services.UserService) *ProfileHandler {
+	return &ProfileHandler{
+		userService: userService,
+	}
+}
+
+func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
+	user, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userEntity := user.(*entities.User)
+	userProfile, err := h.userService.GetUser(ctx, userEntity.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch user profile: %v", err)})
+		return
+	}
+
+	if userProfile == nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	response := dtos.ProfileResponseDTO{
+		User: *userProfile,
+	}
+
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
+	user, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userEntity := user.(*entities.User)
+
+	var req dtos.UpdateProfileRequestDTO
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid request body: %v", err)})
+		return
+	}
+
+	updatedUser, err := h.userService.UpdateUser(ctx, userEntity.ID, req)
+	if err != nil {
+		if err.Error() == "user not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+		if err.Error() == "email already in use" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Email already in use"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update profile: %v", err)})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, updatedUser)
+}

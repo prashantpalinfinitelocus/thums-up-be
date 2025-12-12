@@ -4,6 +4,7 @@
     "outDir": "dist",
     "rootDir": "./src",
     "baseUrl": "./",
+    "tsBuildInfoFile": "./.cache/tsbuildinfo.server.json",
     "paths": {
       "~/*": ["./src/*"]
     }
