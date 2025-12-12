@@ -126,26 +126,9 @@ func initVendors() {
 func initDatabase() {
 	db = vendors.InitDatabase()
 
-	migrationRunner := utils.NewMigrationRunner(db, "migrations")
-	if err := migrationRunner.Run(); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
+	if err := utils.RunDBMigrations(db); err != nil {
+		log.Fatalf("Failed to run database migrations: %v", err)
 	}
-
-	db.AutoMigrate(
-		&entities.User{},
-		&entities.OTPLog{},
-		&entities.RefreshToken{},
-		&entities.NotifyMe{},
-		&entities.Address{},
-		&entities.State{},
-		&entities.City{},
-		&entities.PinCode{},
-		&entities.QuestionMaster{},
-		&entities.ThunderSeat{},
-		&entities.ThunderSeatWinner{},
-	)
-
-	log.Info("Database migrations completed")
 }
 
 func setupRoutes(router *gin.Engine) {
