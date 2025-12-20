@@ -93,4 +93,3 @@ func (h *QuestionHandler) GetActiveQuestions(c *gin.Context) {
 		Data:    responses,
 	})
 }
-

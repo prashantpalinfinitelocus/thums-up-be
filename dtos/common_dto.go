@@ -24,4 +24,3 @@ type PaginatedResponse struct {
 	Data    interface{}    `json:"data"`
 	Meta    PaginationMeta `json:"meta"`
 }
-

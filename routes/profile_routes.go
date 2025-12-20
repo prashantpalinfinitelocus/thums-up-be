@@ -28,4 +28,3 @@ func SetupProfileRoutes(
 		profileGroup.DELETE("/address/:addressId", addressHandler.DeleteAddress)
 	}
 }
-

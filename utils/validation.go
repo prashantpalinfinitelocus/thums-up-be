@@ -92,4 +92,3 @@ func IsValidPhoneNumber(phone string) bool {
 	matched, _ := regexp.MatchString(`^[0-9]{10}$`, phone)
 	return matched
 }
-

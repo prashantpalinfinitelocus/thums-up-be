@@ -39,4 +39,3 @@ type UserResponse struct {
 	ReferralCode *string `json:"referral_code,omitempty"`
 	IsVerified   bool    `json:"is_verified"`
 }
-

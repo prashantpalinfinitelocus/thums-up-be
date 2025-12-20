@@ -32,4 +32,3 @@ func ErrorHandler() gin.HandlerFunc {
 		}
 	}
 }
-

@@ -47,4 +47,3 @@ func (r *userRepository) FindByReferralCode(ctx context.Context, db *gorm.DB, re
 	}
 	return &user, nil
 }
-

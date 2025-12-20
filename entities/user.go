@@ -12,6 +12,7 @@ type User struct {
 	PhoneNumber  string     `gorm:"type:varchar(15);uniqueIndex;not null" json:"phone_number"`
 	Name         *string    `gorm:"type:varchar(255)" json:"name,omitempty"`
 	Email        *string    `gorm:"type:varchar(255);uniqueIndex" json:"email,omitempty"`
+	AvatarID     *int       `json:"avatar_id,omitempty" gorm:"type:int"`
 	IsActive     bool       `gorm:"default:true" json:"is_active"`
 	IsVerified   bool       `gorm:"default:false" json:"is_verified"`
 	ReferralCode *string    `gorm:"type:varchar(20);uniqueIndex" json:"referral_code,omitempty"`
@@ -32,4 +33,3 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 func (User) TableName() string {
 	return "users"
 }
-

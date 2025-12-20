@@ -43,4 +43,3 @@ func (r *refreshTokenRepository) RevokeByToken(ctx context.Context, db *gorm.DB,
 		Where("token = ?", token).
 		Update("is_revoked", true).Error
 }
-

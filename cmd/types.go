@@ -28,6 +28,7 @@ type Repositories struct {
 	otp          repository.OTPRepository
 	refreshToken repository.RefreshTokenRepository
 	address      repository.GenericRepository[entities.Address]
+	avatar       repository.GenericRepository[entities.Avatar]
 	state        repository.StateRepository
 	city         repository.CityRepository
 	pinCode      repository.PinCodeRepository
@@ -40,6 +41,7 @@ type Handlers struct {
 	auth        *handlers.AuthHandler
 	profile     *handlers.ProfileHandler
 	address     *handlers.AddressHandler
+	avatar      *handlers.AvatarHandler
 	question    *handlers.QuestionHandler
 	thunderSeat *handlers.ThunderSeatHandler
 	winner      *handlers.WinnerHandler

@@ -14,4 +14,3 @@ func SetupAdminRoutes(api *gin.RouterGroup, winnerHandler *handlers.WinnerHandle
 		admin.POST("/winners/select", winnerHandler.SelectWinners)
 	}
 }
-

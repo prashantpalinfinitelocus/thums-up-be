@@ -1,0 +1,167 @@
+package services
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"gorm.io/gorm"
+
+	"github.com/Infinite-Locus-Product/thums_up_backend/dtos"
+	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
+	"github.com/Infinite-Locus-Product/thums_up_backend/repository"
+	"github.com/Infinite-Locus-Product/thums_up_backend/utils"
+)
+
+type AvatarService interface {
+	CreateAvatar(ctx context.Context, req dtos.CreateAvatarRequestDTO, createdBy string) (*dtos.AvatarResponseDTO, error)
+	GetAllAvatars(ctx context.Context, isPublished *bool) ([]dtos.AvatarResponseDTO, error)
+	GetAvatarByID(ctx context.Context, avatarID int) (*dtos.AvatarResponseDTO, error)
+}
+
+type avatarService struct {
+	txnManager *utils.TransactionManager
+	avatarRepo repository.GenericRepository[entities.Avatar]
+	gcsService utils.GCSService
+}
+
+func NewAvatarService(
+	txnManager *utils.TransactionManager,
+	avatarRepo repository.GenericRepository[entities.Avatar],
+	gcsService utils.GCSService,
+) AvatarService {
+	return &avatarService{
+		txnManager: txnManager,
+		avatarRepo: avatarRepo,
+		gcsService: gcsService,
+	}
+}
+
+func (s *avatarService) CreateAvatar(ctx context.Context, req dtos.CreateAvatarRequestDTO, createdBy string) (*dtos.AvatarResponseDTO, error) {
+	tx, err := s.txnManager.StartTxn()
+	if err != nil {
+		return nil, err
+	}
+	defer s.txnManager.RollbackOnPanic(tx)
+
+	now := time.Now()
+	avatar := &entities.Avatar{
+		Name:        req.Name,
+		ImageKey:    req.ImageKey,
+		IsPublished: req.IsPublished,
+		IsActive:    true,
+		IsDeleted:   false,
+		CreatedBy:   createdBy,
+		CreatedOn:   now,
+	}
+
+	if req.IsPublished {
+		avatar.PublishedBy = &createdBy
+		avatar.PublishedOn = &now
+	}
+
+	if err := s.avatarRepo.Create(ctx, tx, avatar); err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to create avatar: %w", err)
+	}
+
+	imageURL := s.gcsService.GetPublicURL(avatar.ImageKey)
+
+	response := &dtos.AvatarResponseDTO{
+		ID:             avatar.ID,
+		Name:           avatar.Name,
+		ImageURL:       imageURL,
+		IsPublished:    avatar.IsPublished,
+		PublishedBy:    avatar.PublishedBy,
+		PublishedOn:    avatar.PublishedOn,
+		IsActive:       avatar.IsActive,
+		CreatedOn:      avatar.CreatedOn,
+		LastModifiedOn: avatar.LastModifiedOn,
+	}
+
+	s.txnManager.CommitTxn(tx)
+	return response, nil
+}
+
+func (s *avatarService) GetAllAvatars(ctx context.Context, isPublished *bool) ([]dtos.AvatarResponseDTO, error) {
+	tx, err := s.txnManager.StartTxn()
+	if err != nil {
+		return nil, err
+	}
+	defer s.txnManager.RollbackOnPanic(tx)
+
+	conditions := map[string]interface{}{
+		"is_deleted": false,
+		"is_active":  true,
+	}
+
+	if isPublished != nil {
+		conditions["is_published"] = *isPublished
+	}
+
+	avatars, err := s.avatarRepo.FindWithConditions(ctx, tx, conditions)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to fetch avatars: %w", err)
+	}
+
+	response := make([]dtos.AvatarResponseDTO, 0, len(avatars))
+	for _, avatar := range avatars {
+		imageURL := s.gcsService.GetPublicURL(avatar.ImageKey)
+		response = append(response, dtos.AvatarResponseDTO{
+			ID:             avatar.ID,
+			Name:           avatar.Name,
+			ImageURL:       imageURL,
+			IsPublished:    avatar.IsPublished,
+			PublishedBy:    avatar.PublishedBy,
+			PublishedOn:    avatar.PublishedOn,
+			IsActive:       avatar.IsActive,
+			CreatedOn:      avatar.CreatedOn,
+			LastModifiedOn: avatar.LastModifiedOn,
+		})
+	}
+
+	s.txnManager.CommitTxn(tx)
+	return response, nil
+}
+
+func (s *avatarService) GetAvatarByID(ctx context.Context, avatarID int) (*dtos.AvatarResponseDTO, error) {
+	tx, err := s.txnManager.StartTxn()
+	if err != nil {
+		return nil, err
+	}
+	defer s.txnManager.RollbackOnPanic(tx)
+
+	avatar, err := s.avatarRepo.FindByID(ctx, tx, avatarID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to fetch avatar: %w", err)
+	}
+
+	if avatar == nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	if avatar.IsDeleted {
+		s.txnManager.AbortTxn(tx)
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	imageURL := s.gcsService.GetPublicURL(avatar.ImageKey)
+
+	response := &dtos.AvatarResponseDTO{
+		ID:             avatar.ID,
+		Name:           avatar.Name,
+		ImageURL:       imageURL,
+		IsPublished:    avatar.IsPublished,
+		PublishedBy:    avatar.PublishedBy,
+		PublishedOn:    avatar.PublishedOn,
+		IsActive:       avatar.IsActive,
+		CreatedOn:      avatar.CreatedOn,
+		LastModifiedOn: avatar.LastModifiedOn,
+	}
+
+	s.txnManager.CommitTxn(tx)
+	return response, nil
+}

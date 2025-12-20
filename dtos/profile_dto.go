@@ -4,6 +4,24 @@ import (
 	"time"
 )
 
+type CreateAvatarRequestDTO struct {
+	Name        string `json:"name" binding:"required"`
+	ImageKey    string `json:"image_key" binding:"required"`
+	IsPublished bool   `json:"is_published"`
+}
+
+type AvatarResponseDTO struct {
+	ID             int        `json:"id"`
+	Name           string     `json:"name"`
+	ImageURL       string     `json:"image_url"`
+	IsPublished    bool       `json:"is_published"`
+	PublishedBy    *string    `json:"published_by,omitempty"`
+	PublishedOn    *time.Time `json:"published_on,omitempty"`
+	IsActive       bool       `json:"is_active"`
+	CreatedOn      time.Time  `json:"created_on"`
+	LastModifiedOn *time.Time `json:"last_modified_on,omitempty"`
+}
+
 type AddressRequestDTO struct {
 	Address1        string  `json:"address1" binding:"required"`
 	Address2        *string `json:"address2,omitempty"`
@@ -31,21 +49,23 @@ type AddressResponseDTO struct {
 }
 
 type UpdateProfileRequestDTO struct {
-	Name  *string `json:"name,omitempty"`
-	Email *string `json:"email,omitempty"`
+	Name     *string `json:"name,omitempty"`
+	Email    *string `json:"email,omitempty"`
+	AvatarID *int    `json:"avatar_id,omitempty"`
 }
 
 type UserProfileDTO struct {
-	ID           string     `json:"id"`
-	PhoneNumber  string     `json:"phone_number"`
-	Name         *string    `json:"name,omitempty"`
-	Email        *string    `json:"email,omitempty"`
-	IsActive     bool       `json:"is_active"`
-	IsVerified   bool       `json:"is_verified"`
-	ReferralCode *string    `json:"referral_code,omitempty"`
-	ReferredBy   *string    `json:"referred_by,omitempty"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
+	ID           string    `json:"id"`
+	PhoneNumber  string    `json:"phone_number"`
+	Name         *string   `json:"name,omitempty"`
+	Email        *string   `json:"email,omitempty"`
+	AvatarImage  *string   `json:"avatar_image,omitempty"`
+	IsActive     bool      `json:"is_active"`
+	IsVerified   bool      `json:"is_verified"`
+	ReferralCode *string   `json:"referral_code,omitempty"`
+	ReferredBy   *string   `json:"referred_by,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type ProfileResponseDTO struct {

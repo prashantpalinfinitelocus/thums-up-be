@@ -60,4 +60,3 @@ func (r *otpRepository) IncrementAttempts(ctx context.Context, db *gorm.DB, phon
 		Where("phone_number = ? AND is_verified = ?", phoneNumber, false).
 		Update("attempts", gorm.Expr("attempts + ?", 1)).Error
 }
-

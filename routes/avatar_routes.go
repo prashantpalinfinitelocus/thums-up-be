@@ -9,20 +9,18 @@ import (
 	"github.com/Infinite-Locus-Product/thums_up_backend/repository"
 )
 
-func SetupQuestionRoutes(
+func SetupAvatarRoutes(
 	api *gin.RouterGroup,
 	db *gorm.DB,
 	userRepo repository.UserRepository,
-	questionHandler *handlers.QuestionHandler,
+	avatarHandler *handlers.AvatarHandler,
 ) {
-	questions := api.Group("/questions")
+	avatarGroup := api.Group("/avatars")
 	{
-		questions.GET("/active", questionHandler.GetActiveQuestions)
+		avatarGroup.GET("", avatarHandler.GetAvatars)
+		avatarGroup.GET("/:avatarId", avatarHandler.GetAvatarByID)
 
-		questionsAuth := questions.Group("")
-		questionsAuth.Use(middlewares.AuthMiddleware(db, userRepo))
-		{
-			questionsAuth.POST("/", questionHandler.SubmitQuestion)
-		}
+		avatarGroup.Use(middlewares.AuthMiddleware(db, userRepo))
+		avatarGroup.POST("", avatarHandler.CreateAvatar)
 	}
 }

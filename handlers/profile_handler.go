@@ -35,7 +35,7 @@ func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": errors.ErrInvalidUserContext})
 		return
 	}
-	userProfile, err := h.userService.GetUser(ctx, userEntity.ID)
+	userProfile, avatarImageURL, err := h.userService.GetUser(ctx, userEntity.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("%s: %v", errors.ErrProfileFetchFailed, err)})
 		return
@@ -52,6 +52,7 @@ func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 			PhoneNumber:  userProfile.PhoneNumber,
 			Name:         userProfile.Name,
 			Email:        userProfile.Email,
+			AvatarImage:  avatarImageURL,
 			IsActive:     userProfile.IsActive,
 			IsVerified:   userProfile.IsVerified,
 			ReferralCode: userProfile.ReferralCode,

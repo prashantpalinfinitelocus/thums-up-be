@@ -104,4 +104,3 @@ func (mr *MigrationRunner) runMigration(filename string) error {
 	log.WithField("migration", filename).Info("Migration completed successfully")
 	return nil
 }
-

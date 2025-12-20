@@ -15,4 +15,3 @@ func SetupAuthRoutes(api *gin.RouterGroup, authHandler *handlers.AuthHandler) {
 		auth.POST("/refresh", authHandler.RefreshToken)
 	}
 }
-

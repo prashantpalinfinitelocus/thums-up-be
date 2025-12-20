@@ -99,4 +99,3 @@ func (s *questionService) GetQuestionsByLanguage(ctx context.Context, languageID
 
 	return responses, nil
 }
-

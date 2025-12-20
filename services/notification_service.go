@@ -84,4 +84,3 @@ func (s *notificationService) PublishNotifyMeMessage(ctx context.Context, phoneN
 	log.Info("Notify me message published successfully")
 	return nil
 }
-

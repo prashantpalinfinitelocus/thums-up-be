@@ -29,4 +29,3 @@ func (rt *RefreshToken) BeforeCreate(tx *gorm.DB) error {
 func (RefreshToken) TableName() string {
 	return "refresh_tokens"
 }
-

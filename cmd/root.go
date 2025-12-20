@@ -34,4 +34,3 @@ func initLogging() {
 func Execute() error {
 	return rootCmd.Execute()
 }
-

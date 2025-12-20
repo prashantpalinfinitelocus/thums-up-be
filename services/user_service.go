@@ -16,7 +16,7 @@ import (
 )
 
 type UserService interface {
-	GetUser(ctx context.Context, userID string) (*entities.User, error)
+	GetUser(ctx context.Context, userID string) (*entities.User, *string, error)
 	UpdateUser(ctx context.Context, userID string, req dtos.UpdateProfileRequestDTO) (*entities.User, error)
 	GetUserAddresses(ctx context.Context, userID string) ([]dtos.AddressResponseDTO, error)
 	AddUserAddress(ctx context.Context, userID string, req dtos.AddressRequestDTO) (*dtos.AddressResponseDTO, error)
@@ -31,6 +31,8 @@ type userService struct {
 	stateRepo   repository.StateRepository
 	cityRepo    repository.CityRepository
 	pinCodeRepo repository.PinCodeRepository
+	avatarRepo  repository.GenericRepository[entities.Avatar]
+	gcsService  utils.GCSService
 }
 
 func NewUserService(
@@ -40,6 +42,8 @@ func NewUserService(
 	stateRepo repository.StateRepository,
 	cityRepo repository.CityRepository,
 	pinCodeRepo repository.PinCodeRepository,
+	avatarRepo repository.GenericRepository[entities.Avatar],
+	gcsService utils.GCSService,
 ) UserService {
 	return &userService{
 		txnManager:  txnManager,
@@ -48,25 +52,45 @@ func NewUserService(
 		stateRepo:   stateRepo,
 		cityRepo:    cityRepo,
 		pinCodeRepo: pinCodeRepo,
+		avatarRepo:  avatarRepo,
+		gcsService:  gcsService,
 	}
 }
 
-func (s *userService) GetUser(ctx context.Context, userID string) (*entities.User, error) {
+func (s *userService) GetUser(ctx context.Context, userID string) (*entities.User, *string, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid user ID format: %w", err)
+		return nil, nil, fmt.Errorf("invalid user ID format: %w", err)
 	}
 
-	user, err := s.userRepo.FindById(ctx, s.txnManager.GetDB(), userUUID)
+	tx, err := s.txnManager.StartTxn()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	defer s.txnManager.RollbackOnPanic(tx)
+
+	user, err := s.userRepo.FindById(ctx, tx, userUUID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, nil, err
 	}
 
 	if user == nil {
-		return nil, fmt.Errorf("user not found")
+		s.txnManager.AbortTxn(tx)
+		return nil, nil, fmt.Errorf("user not found")
 	}
 
-	return user, nil
+	var avatarImageURL *string
+	if user.AvatarID != nil {
+		avatar, err := s.avatarRepo.FindByID(ctx, tx, *user.AvatarID)
+		if err == nil && avatar != nil && !avatar.IsDeleted && avatar.IsActive {
+			imageURL := s.gcsService.GetPublicURL(avatar.ImageKey)
+			avatarImageURL = &imageURL
+		}
+	}
+
+	s.txnManager.CommitTxn(tx)
+	return user, avatarImageURL, nil
 }
 
 func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.UpdateProfileRequestDTO) (*entities.User, error) {
@@ -109,6 +133,19 @@ func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.Up
 			return nil, fmt.Errorf("email already in use")
 		}
 		updateFields["email"] = *req.Email
+	}
+
+	if req.AvatarID != nil {
+		avatar, err := s.avatarRepo.FindByID(ctx, tx, *req.AvatarID)
+		if err != nil {
+			s.txnManager.AbortTxn(tx)
+			return nil, fmt.Errorf("failed to fetch avatar: %v", err)
+		}
+		if avatar == nil || avatar.IsDeleted || !avatar.IsActive {
+			s.txnManager.AbortTxn(tx)
+			return nil, fmt.Errorf("avatar not found or not available")
+		}
+		updateFields["avatar_id"] = *req.AvatarID
 	}
 
 	if len(updateFields) > 0 {

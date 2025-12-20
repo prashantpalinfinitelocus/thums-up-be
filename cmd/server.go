@@ -138,6 +138,7 @@ func (s *Server) initRepositories() {
 		otp:          repository.NewOTPRepository(),
 		refreshToken: repository.NewRefreshTokenRepository(),
 		address:      repository.NewGormRepository[entities.Address](),
+		avatar:       repository.NewGormRepository[entities.Avatar](),
 		state:        repository.NewStateRepository(),
 		city:         repository.NewCityRepository(),
 		pinCode:      repository.NewPinCodeRepository(),
@@ -166,6 +167,14 @@ func (s *Server) initHandlers() {
 		s.repositories.state,
 		s.repositories.city,
 		s.repositories.pinCode,
+		s.repositories.avatar,
+		s.gcsService,
+	)
+
+	avatarService := services.NewAvatarService(
+		txnManager,
+		s.repositories.avatar,
+		s.gcsService,
 	)
 
 	questionService := services.NewQuestionService(
@@ -189,6 +198,7 @@ func (s *Server) initHandlers() {
 		auth:        handlers.NewAuthHandler(authService),
 		profile:     handlers.NewProfileHandler(userService),
 		address:     handlers.NewAddressHandler(userService),
+		avatar:      handlers.NewAvatarHandler(avatarService),
 		question:    handlers.NewQuestionHandler(questionService),
 		thunderSeat: handlers.NewThunderSeatHandler(thunderSeatService),
 		winner:      handlers.NewWinnerHandler(winnerService),

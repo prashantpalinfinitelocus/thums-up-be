@@ -19,4 +19,3 @@ func SetupHealthAndDocs(router *gin.Engine) {
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
-

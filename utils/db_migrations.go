@@ -22,6 +22,7 @@ func RunDBMigrations(db *gorm.DB) error {
 		&entities.RefreshToken{},
 		&entities.NotifyMe{},
 		&entities.Address{},
+		&entities.Avatar{},
 		&entities.State{},
 		&entities.City{},
 		&entities.PinCode{},

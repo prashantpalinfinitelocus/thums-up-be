@@ -50,5 +50,12 @@ func (s *Server) setupAPIRoutes(router *gin.Engine) {
 
 	routes.SetupWinnerRoutes(api, s.handlers.winner)
 
+	routes.SetupAvatarRoutes(
+		api,
+		s.db,
+		s.repositories.user,
+		s.handlers.avatar,
+	)
+
 	routes.SetupAdminRoutes(api, s.handlers.winner)
 }

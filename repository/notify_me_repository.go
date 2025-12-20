@@ -52,4 +52,3 @@ func (r *notifyMeRepository) MarkAsNotified(ctx context.Context, db *gorm.DB, id
 			"notified_at": gorm.Expr("NOW()"),
 		}).Error
 }
-

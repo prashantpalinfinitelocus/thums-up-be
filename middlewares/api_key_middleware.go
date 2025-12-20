@@ -25,4 +25,3 @@ func APIKeyMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
