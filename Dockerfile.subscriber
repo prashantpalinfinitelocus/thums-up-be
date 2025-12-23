@@ -19,6 +19,7 @@ COPY ./pubsub ./pubsub
 COPY ./dtos ./dtos
 COPY ./errors ./errors
 COPY ./repository ./repository
+COPY ./pkg ./pkg
 
 RUN CGO_ENABLED=0 go build -o /app/subscriber -ldflags="-w -s" ./cmd/subscriber/main.go
 

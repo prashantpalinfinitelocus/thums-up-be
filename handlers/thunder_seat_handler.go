@@ -24,6 +24,21 @@ func NewThunderSeatHandler(thunderSeatService services.ThunderSeatService) *Thun
 	}
 }
 
+// SubmitAnswer godoc
+// @Summary Submit Thunder Seat answer
+// @Description Submit an answer to a Thunder Seat question for the current week with optional media file (audio/video). Requires authentication.
+// @Tags Thunder Seat
+// @Accept multipart/form-data
+// @Produce json
+// @Security Bearer
+// @Param question_id formData int true "Question ID"
+// @Param answer formData string true "Answer text"
+// @Param media_file formData file false "Optional media file (audio/video, max 100MB)"
+// @Success 201 {object} dtos.SuccessResponse{data=dtos.ThunderSeatResponse} "Answer submitted successfully"
+// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
+// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dtos.ErrorResponse "Failed to submit answer"
+// @Router /thunder-seat [post]
 func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -38,8 +53,9 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	}
 	userID := userEntity.ID
 
+	// Bind form data
 	var req dtos.ThunderSeatSubmitRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		validationErrors := utils.FormatValidationErrors(err)
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 			Success: false,
@@ -49,7 +65,29 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		return
 	}
 
-	response, err := h.thunderSeatService.SubmitAnswer(c.Request.Context(), req, userID)
+	// Get optional media file
+	mediaFile, err := c.FormFile("media_file")
+	if err != nil && err != http.ErrMissingFile {
+		log.WithError(err).Error("Failed to get media file from request")
+		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Success: false,
+			Error:   "Failed to process media file",
+		})
+		return
+	}
+
+	// Validate media file if present
+	if mediaFile != nil {
+		if err := utils.ValidateMediaFile(mediaFile); err != nil {
+			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+				Success: false,
+				Error:   err.Error(),
+			})
+			return
+		}
+	}
+
+	response, err := h.thunderSeatService.SubmitAnswer(c.Request.Context(), req, userID, mediaFile)
 	if err != nil {
 		var appErr *errors.AppError
 		if stderrors.As(err, &appErr) {
@@ -74,6 +112,17 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	})
 }
 
+// GetUserSubmissions godoc
+// @Summary Get user's Thunder Seat submissions
+// @Description Retrieve all Thunder Seat answer submissions for the authenticated user. Requires authentication.
+// @Tags Thunder Seat
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} dtos.SuccessResponse{data=[]dtos.ThunderSeatResponse} "Submissions retrieved successfully"
+// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dtos.ErrorResponse "Failed to get submissions"
+// @Router /thunder-seat/submissions [get]
 func (h *ThunderSeatHandler) GetUserSubmissions(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -108,6 +157,16 @@ func (h *ThunderSeatHandler) GetUserSubmissions(c *gin.Context) {
 	})
 }
 
+// GetCurrentWeek godoc
+// @Summary Get current contest week information
+// @Description Retrieve the current active contest week details including dates and winner count
+// @Tags Thunder Seat
+// @Accept json
+// @Produce json
+// @Success 200 {object} dtos.SuccessResponse{data=dtos.CurrentWeekResponse} "Current week retrieved successfully"
+// @Failure 404 {object} dtos.ErrorResponse "No active contest week"
+// @Failure 500 {object} dtos.ErrorResponse "Failed to get active contest week"
+// @Router /thunder-seat/current-week [get]
 func (h *ThunderSeatHandler) GetCurrentWeek(c *gin.Context) {
 	response, err := h.thunderSeatService.GetCurrentWeek(c.Request.Context())
 	if err != nil {
@@ -119,10 +178,10 @@ func (h *ThunderSeatHandler) GetCurrentWeek(c *gin.Context) {
 			})
 			return
 		}
-		log.WithError(err).Error("Failed to get current week")
+		log.WithError(err).Error("Failed to get active contest week")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
-			Error:   errors.ErrCurrentWeekFailed,
+			Error:   "Failed to get active contest week",
 		})
 		return
 	}

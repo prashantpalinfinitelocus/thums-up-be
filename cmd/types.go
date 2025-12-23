@@ -35,6 +35,7 @@ type Repositories struct {
 	question     repository.QuestionRepository
 	thunderSeat  repository.ThunderSeatRepository
 	winner       repository.WinnerRepository
+	contestWeek  repository.ContestWeekRepository
 }
 
 type Handlers struct {
@@ -45,4 +46,5 @@ type Handlers struct {
 	question    *handlers.QuestionHandler
 	thunderSeat *handlers.ThunderSeatHandler
 	winner      *handlers.WinnerHandler
+	contestWeek *handlers.ContestWeekHandler
 }

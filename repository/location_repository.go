@@ -107,7 +107,7 @@ func (r *cityRepository) FindByIDs(ctx context.Context, tx *gorm.DB, ids []int) 
 
 func (r *pinCodeRepository) FindByPincodeAndCityID(ctx context.Context, tx *gorm.DB, pincode int, cityID int) (*entities.PinCode, error) {
 	var pinCode entities.PinCode
-	err := tx.WithContext(ctx).Table("pin_code").Where("pincode = ? AND city_id = ?", pincode, cityID).First(&pinCode).Error
+	err := tx.WithContext(ctx).Table("pin_codes").Where("pincode = ? AND city_id = ?", pincode, cityID).First(&pinCode).Error
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (r *pinCodeRepository) FindByPincodeAndCityID(ctx context.Context, tx *gorm
 
 func (r *pinCodeRepository) FindByID(ctx context.Context, tx *gorm.DB, id int) (*entities.PinCode, error) {
 	var pinCode entities.PinCode
-	err := tx.WithContext(ctx).Table("pin_code").Where("id = ?", id).First(&pinCode).Error
+	err := tx.WithContext(ctx).Table("pin_codes").Where("id = ?", id).First(&pinCode).Error
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (r *pinCodeRepository) FindByID(ctx context.Context, tx *gorm.DB, id int) (
 
 func (r *pinCodeRepository) IsDeliverable(ctx context.Context, tx *gorm.DB, pincode int, cityID int) (bool, error) {
 	var count int64
-	err := tx.WithContext(ctx).Table("pin_code").
+	err := tx.WithContext(ctx).Table("pin_codes").
 		Where("pincode = ? AND city_id = ? AND is_deliverable = true", pincode, cityID).
 		Count(&count).Error
 	if err != nil {
@@ -136,7 +136,7 @@ func (r *pinCodeRepository) IsDeliverable(ctx context.Context, tx *gorm.DB, pinc
 
 func (r *pinCodeRepository) FindByIDs(ctx context.Context, tx *gorm.DB, ids []int) ([]entities.PinCode, error) {
 	var pincodes []entities.PinCode
-	err := tx.WithContext(ctx).Table("pin_code").Where("id IN ?", ids).Find(&pincodes).Error
+	err := tx.WithContext(ctx).Table("pin_codes").Where("id IN ?", ids).Find(&pincodes).Error
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (r *pinCodeRepository) FindByIDs(ctx context.Context, tx *gorm.DB, ids []in
 
 func (r *pinCodeRepository) FindByPincode(ctx context.Context, tx *gorm.DB, pincode int) (*entities.PinCode, error) {
 	var pinCode entities.PinCode
-	err := tx.WithContext(ctx).Table("pin_code").Where("pincode = ?", pincode).First(&pinCode).Error
+	err := tx.WithContext(ctx).Table("pin_codes").Where("pincode = ?", pincode).First(&pinCode).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil

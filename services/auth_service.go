@@ -94,33 +94,118 @@ func (s *authService) SendOTP(ctx context.Context, phoneNumber string) error {
 }
 
 func (s *authService) VerifyOTP(ctx context.Context, phoneNumber string, otp string) (*dtos.TokenResponse, error) {
-	valid, err := s.otpRepo.VerifyOTP(ctx, s.txnManager.GetDB(), phoneNumber, otp)
-	if err != nil || !valid {
-		s.otpRepo.IncrementAttempts(ctx, s.txnManager.GetDB(), phoneNumber)
-		return nil, errors.NewUnauthorizedError(errors.ErrOTPInvalidOrExpired, err)
-	}
-
-	user, err := s.userRepo.FindByPhoneNumber(ctx, s.txnManager.GetDB(), phoneNumber)
-	if err != nil {
-		if stderrors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.NewNotFoundError("User not found", err)
+	// Start main transaction
+	var tokenResponse *dtos.TokenResponse
+	err := s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+		// Step 1: Check verification rate limiting
+		rateLimitCount, err := s.otpRepo.CountRecentAttempts(ctx, tx, phoneNumber,
+			time.Duration(constants.VERIFY_OTP_RATE_LIMIT_DURATION_MINUTES)*time.Minute)
+		if err != nil {
+			log.WithError(err).Error("Failed to check verification rate limit")
+			return errors.NewInternalServerError("Failed to check rate limit", err)
 		}
-		return nil, errors.NewInternalServerError("User not found", err)
-	}
+		if rateLimitCount >= constants.VERIFY_OTP_MAX_ATTEMPTS {
+			return errors.NewTooManyRequestsError(
+				"Too many verification attempts. Please try again after 5 minutes.", nil)
+		}
 
-	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
-		return tx.Model(&entities.OTPLog{}).
-			Where("phone_number = ? AND otp = ?", phoneNumber, otp).
+		// Step 2: Verify OTP
+		isValid, err := s.otpRepo.VerifyOTP(ctx, tx, phoneNumber, otp)
+		if err != nil || !isValid {
+			// Handle failed verification in a separate goroutine with its own transaction
+			go s.handleFailedOTPAttempt(context.Background(), phoneNumber)
+			
+			if err != nil {
+				return errors.NewUnauthorizedError(errors.ErrOTPInvalidOrExpired, err)
+			}
+			return errors.NewUnauthorizedError("Invalid OTP", nil)
+		}
+
+		// Step 3: Mark OTP as verified
+		if err := tx.Model(&entities.OTPLog{}).
+			Where("phone_number = ? AND otp = ? AND is_verified = ?", phoneNumber, otp, false).
 			Updates(map[string]interface{}{
 				"is_verified": true,
 				"verified_at": time.Now(),
-			}).Error
-	})
-	if err != nil {
-		return nil, errors.NewInternalServerError(errors.ErrOTPVerifyFailed, err)
-	}
+			}).Error; err != nil {
+			log.WithError(err).Error("Failed to mark OTP as verified")
+			return errors.NewInternalServerError(errors.ErrOTPVerifyFailed, err)
+		}
 
-	tokenResponse, err := s.generateTokens(ctx, user)
+		// Step 4: Check if user exists
+		user, err := s.userRepo.FindByPhoneNumber(ctx, tx, phoneNumber)
+		if err != nil {
+			if stderrors.Is(err, gorm.ErrRecordNotFound) {
+				// User doesn't exist - generate temporary token for signup flow
+				tempToken, err := s.generateTempAccessToken(phoneNumber)
+				if err != nil {
+					return errors.NewInternalServerError("Failed to generate temp access token", err)
+				}
+
+				tokenResponse = &dtos.TokenResponse{
+					AccessToken:  tempToken,
+					RefreshToken: "",
+					ExpiresIn:    int64(5 * 60), // 5 minutes in seconds
+					TokenType:    "temp",
+					PhoneNumber:  phoneNumber,
+				}
+				return nil
+			}
+			return errors.NewInternalServerError("Failed to fetch user", err)
+		}
+
+		// Step 5: User exists - generate full token pair
+		accessToken, err := s.generateAccessToken(user)
+		if err != nil {
+			return errors.NewInternalServerError(errors.ErrTokenGenerationFailed, err)
+		}
+
+		// Generate refresh token
+		refreshTokenString := uuid.New().String()
+		expiresAt := time.Now().Add(time.Duration(s.cfg.JwtConfig.RefreshTokenExpiry) * time.Second)
+
+		refreshToken := &entities.RefreshToken{
+			UserID:    user.ID,
+			Token:     refreshTokenString,
+			ExpiresAt: expiresAt,
+			IsRevoked: false,
+		}
+
+		// Step 6: Store refresh token
+		if err := s.refreshTokenRepo.Create(ctx, tx, refreshToken); err != nil {
+			return errors.NewInternalServerError("Failed to store refresh token", err)
+		}
+
+		// Step 7: Track login count (optional - log error but don't fail)
+		if err := s.createOrIncrementLoginCount(ctx, tx, user.ID, user.PhoneNumber); err != nil {
+			log.WithError(err).Error("Failed to create/increment login count")
+		}
+
+		// Build token response
+		name := ""
+		if user.Name != nil {
+			name = *user.Name
+		}
+
+		email := ""
+		if user.Email != nil {
+			email = *user.Email
+		}
+
+		tokenResponse = &dtos.TokenResponse{
+			AccessToken:  accessToken,
+			RefreshToken: refreshTokenString,
+			ExpiresIn:    int64(s.cfg.JwtConfig.AccessTokenExpiry),
+			TokenType:    "Bearer",
+			UserID:       user.ID,
+			PhoneNumber:  user.PhoneNumber,
+			Name:         name,
+			Email:        email,
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +335,11 @@ func (s *authService) generateTokens(ctx context.Context, user *entities.User) (
 		name = *user.Name
 	}
 
+	email := ""
+	if user.Email != nil {
+		email = *user.Email
+	}
+
 	return &dtos.TokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshTokenString,
@@ -258,6 +348,7 @@ func (s *authService) generateTokens(ctx context.Context, user *entities.User) (
 		UserID:       user.ID,
 		PhoneNumber:  user.PhoneNumber,
 		Name:         name,
+		Email:        email,
 	}, nil
 }
 
@@ -271,4 +362,84 @@ func (s *authService) generateAccessToken(user *entities.User) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.cfg.JwtConfig.SecretKey))
+}
+
+// handleFailedOTPAttempt increments the OTP attempts counter in a separate transaction
+// This ensures attempt tracking even if the main transaction fails
+func (s *authService) handleFailedOTPAttempt(ctx context.Context, phoneNumber string) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Errorf("Panic recovered in handleFailedOTPAttempt: %v", r)
+		}
+	}()
+
+	err := s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+		return s.otpRepo.IncrementAttempts(ctx, tx, phoneNumber)
+	})
+
+	if err != nil {
+		log.WithError(err).Errorf("Failed to increment OTP attempts for phone: %s", phoneNumber)
+	} else {
+		log.Infof("Successfully incremented OTP attempts for phone: %s", phoneNumber)
+	}
+}
+
+// generateTempAccessToken creates a temporary JWT token for users who haven't completed signup
+func (s *authService) generateTempAccessToken(phoneNumber string) (string, error) {
+	claims := jwt.MapClaims{
+		"phone":      phoneNumber,
+		"token_type": "temp",
+		"purpose":    "signup",
+		"exp":        time.Now().Add(5 * time.Minute).Unix(),
+		"iat":        time.Now().Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(s.cfg.JwtConfig.SecretKey))
+}
+
+// createOrIncrementLoginCount tracks user login activity
+// This is optional and doesn't fail the main flow if it encounters errors
+func (s *authService) createOrIncrementLoginCount(ctx context.Context, tx *gorm.DB, userID, phoneNumber string) error {
+	// Check if login count record exists
+	type LoginCount struct {
+		ID          string    `gorm:"primaryKey"`
+		UserID      string    `gorm:"column:user_id"`
+		PhoneNumber string    `gorm:"column:phone_number"`
+		Count       int       `gorm:"column:count"`
+		LastLogin   time.Time `gorm:"column:last_login"`
+		CreatedAt   time.Time `gorm:"column:created_at"`
+		UpdatedAt   time.Time `gorm:"column:updated_at"`
+	}
+
+	var loginCount LoginCount
+	err := tx.WithContext(ctx).Table("login_counts").
+		Where("user_id = ?", userID).
+		First(&loginCount).Error
+
+	if err != nil {
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			// Create new login count record
+			newLoginCount := LoginCount{
+				ID:          uuid.New().String(),
+				UserID:      userID,
+				PhoneNumber: phoneNumber,
+				Count:       1,
+				LastLogin:   time.Now(),
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			}
+			return tx.WithContext(ctx).Table("login_counts").Create(&newLoginCount).Error
+		}
+		return err
+	}
+
+	// Update existing login count
+	return tx.WithContext(ctx).Table("login_counts").
+		Where("user_id = ?", userID).
+		Updates(map[string]interface{}{
+			"count":      gorm.Expr("count + ?", 1),
+			"last_login": time.Now(),
+			"updated_at": time.Now(),
+		}).Error
 }

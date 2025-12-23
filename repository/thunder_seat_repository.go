@@ -13,6 +13,7 @@ type ThunderSeatRepository interface {
 	FindByQuestionID(ctx context.Context, db *gorm.DB, questionID int) ([]entities.ThunderSeat, error)
 	CheckUserSubmission(ctx context.Context, db *gorm.DB, userID string, questionID int) (*entities.ThunderSeat, error)
 	GetRandomEntries(ctx context.Context, db *gorm.DB, limit int, excludeUserIDs []string) ([]entities.ThunderSeat, error)
+	GetRandomEntriesByWeek(ctx context.Context, db *gorm.DB, weekNumber int, limit int, excludeUserIDs []string) ([]entities.ThunderSeat, error)
 }
 
 type thunderSeatRepository struct {
@@ -54,7 +55,25 @@ func (r *thunderSeatRepository) CheckUserSubmission(ctx context.Context, db *gor
 
 func (r *thunderSeatRepository) GetRandomEntries(ctx context.Context, db *gorm.DB, limit int, excludeUserIDs []string) ([]entities.ThunderSeat, error) {
 	var entries []entities.ThunderSeat
-	query := db.WithContext(ctx).Order("RANDOM()").Limit(limit)
+	query := db.WithContext(ctx).Order("RANDOM()").Limit(limit).Distinct("user_id")
+
+	if len(excludeUserIDs) > 0 {
+		query = query.Where("user_id NOT IN ?", excludeUserIDs)
+	}
+
+	if err := query.Find(&entries).Error; err != nil {
+		return nil, err
+	}
+	return entries, nil
+}
+
+func (r *thunderSeatRepository) GetRandomEntriesByWeek(ctx context.Context, db *gorm.DB, weekNumber int, limit int, excludeUserIDs []string) ([]entities.ThunderSeat, error) {
+	var entries []entities.ThunderSeat
+	query := db.WithContext(ctx).
+		Where("week_number = ?", weekNumber).
+		Order("RANDOM()").
+		Limit(limit).
+		Distinct("user_id")
 
 	if len(excludeUserIDs) > 0 {
 		query = query.Where("user_id NOT IN ?", excludeUserIDs)

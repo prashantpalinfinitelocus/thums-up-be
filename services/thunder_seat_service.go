@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	stderrors "errors"
+	"fmt"
+	"mime/multipart"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -16,7 +18,7 @@ import (
 )
 
 type ThunderSeatService interface {
-	SubmitAnswer(ctx context.Context, req dtos.ThunderSeatSubmitRequest, userID string) (*dtos.ThunderSeatResponse, error)
+	SubmitAnswer(ctx context.Context, req dtos.ThunderSeatSubmitRequest, userID string, mediaFile *multipart.FileHeader) (*dtos.ThunderSeatResponse, error)
 	GetUserSubmissions(ctx context.Context, userID string) ([]dtos.ThunderSeatResponse, error)
 	GetCurrentWeek(ctx context.Context) (*dtos.CurrentWeekResponse, error)
 }
@@ -25,21 +27,40 @@ type thunderSeatService struct {
 	txnManager      *utils.TransactionManager
 	thunderSeatRepo repository.ThunderSeatRepository
 	questionRepo    repository.QuestionRepository
+	contestWeekRepo repository.ContestWeekRepository
+	gcsService      utils.GCSService
 }
 
 func NewThunderSeatService(
 	txnManager *utils.TransactionManager,
 	thunderSeatRepo repository.ThunderSeatRepository,
 	questionRepo repository.QuestionRepository,
+	contestWeekRepo repository.ContestWeekRepository,
+	gcsService utils.GCSService,
 ) ThunderSeatService {
 	return &thunderSeatService{
 		txnManager:      txnManager,
 		thunderSeatRepo: thunderSeatRepo,
 		questionRepo:    questionRepo,
+		contestWeekRepo: contestWeekRepo,
+		gcsService:      gcsService,
 	}
 }
 
-func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderSeatSubmitRequest, userID string) (*dtos.ThunderSeatResponse, error) {
+func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderSeatSubmitRequest, userID string, mediaFile *multipart.FileHeader) (*dtos.ThunderSeatResponse, error) {
+	activeWeek, err := s.contestWeekRepo.FindActiveWeek(ctx, s.txnManager.GetDB())
+	if err != nil {
+		return nil, errors.NewInternalServerError("Failed to get active contest week", err)
+	}
+	if activeWeek == nil {
+		return nil, errors.NewBadRequestError("No active contest week found", nil)
+	}
+
+	now := time.Now()
+	if now.Before(activeWeek.StartDate) || now.After(activeWeek.EndDate) {
+		return nil, errors.NewBadRequestError("Submissions are not allowed outside the active contest week period", nil)
+	}
+
 	question, err := s.questionRepo.FindByID(ctx, s.txnManager.GetDB(), req.QuestionID)
 	if err != nil {
 		return nil, errors.NewInternalServerError("Failed to verify question", err)
@@ -57,14 +78,28 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 		return nil, errors.NewBadRequestError("You have already submitted an answer for this question", nil)
 	}
 
-	now := time.Now()
 	thunderSeat := &entities.ThunderSeat{
 		UserID:     userID,
 		QuestionID: req.QuestionID,
-		WeekNumber: req.WeekNumber,
+		WeekNumber: activeWeek.WeekNumber,
 		Answer:     req.Answer,
 		CreatedBy:  userID,
 		CreatedOn:  now,
+	}
+
+	// Upload media file to GCS if provided
+	if mediaFile != nil {
+		folderPath := fmt.Sprintf("thunder-seat/%s/week-%d", userID, activeWeek.WeekNumber)
+		mediaURL, mediaKey, err := s.gcsService.UploadFile(ctx, mediaFile, folderPath)
+		if err != nil {
+			log.WithError(err).Error("Failed to upload media file to GCS")
+			return nil, errors.NewInternalServerError("Failed to upload media file", err)
+		}
+
+		mediaType := utils.GetMediaType(mediaFile)
+		thunderSeat.MediaURL = &mediaURL
+		thunderSeat.MediaKey = &mediaKey
+		thunderSeat.MediaType = &mediaType
 	}
 
 	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
@@ -72,6 +107,14 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 	})
 	if err != nil {
 		log.WithError(err).Error("Failed to submit thunder seat answer")
+
+		// Cleanup uploaded file if database operation fails
+		if thunderSeat.MediaURL != nil {
+			if deleteErr := s.gcsService.DeleteFile(ctx, *thunderSeat.MediaURL); deleteErr != nil {
+				log.WithError(deleteErr).Error("Failed to cleanup uploaded file after database error")
+			}
+		}
+
 		return nil, errors.NewInternalServerError("Failed to submit answer", err)
 	}
 
@@ -81,6 +124,8 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 		QuestionID: thunderSeat.QuestionID,
 		WeekNumber: thunderSeat.WeekNumber,
 		Answer:     thunderSeat.Answer,
+		MediaURL:   thunderSeat.MediaURL,
+		MediaType:  thunderSeat.MediaType,
 		CreatedOn:  thunderSeat.CreatedOn.Format(time.RFC3339),
 	}, nil
 }
@@ -99,6 +144,8 @@ func (s *thunderSeatService) GetUserSubmissions(ctx context.Context, userID stri
 			QuestionID: sub.QuestionID,
 			WeekNumber: sub.WeekNumber,
 			Answer:     sub.Answer,
+			MediaURL:   sub.MediaURL,
+			MediaType:  sub.MediaType,
 			CreatedOn:  sub.CreatedOn.Format(time.RFC3339),
 		}
 	}
@@ -107,20 +154,19 @@ func (s *thunderSeatService) GetUserSubmissions(ctx context.Context, userID stri
 }
 
 func (s *thunderSeatService) GetCurrentWeek(ctx context.Context) (*dtos.CurrentWeekResponse, error) {
-	now := time.Now()
-
-	year, week := now.ISOWeek()
-	weekNumber := (year * 100) + week
-
-	startOfWeek := now.AddDate(0, 0, -int(now.Weekday())+1)
-	startOfWeek = time.Date(startOfWeek.Year(), startOfWeek.Month(), startOfWeek.Day(), 0, 0, 0, 0, startOfWeek.Location())
-
-	endOfWeek := startOfWeek.AddDate(0, 0, 6)
-	endOfWeek = time.Date(endOfWeek.Year(), endOfWeek.Month(), endOfWeek.Day(), 23, 59, 59, 0, endOfWeek.Location())
+	activeWeek, err := s.contestWeekRepo.FindActiveWeek(ctx, s.txnManager.GetDB())
+	if err != nil {
+		return nil, errors.NewInternalServerError("Failed to get active contest week", err)
+	}
+	if activeWeek == nil {
+		return nil, errors.NewNotFoundError("No active contest week found", nil)
+	}
 
 	return &dtos.CurrentWeekResponse{
-		WeekNumber: weekNumber,
-		StartDate:  startOfWeek.Format("2006-01-02"),
-		EndDate:    endOfWeek.Format("2006-01-02"),
+		WeekNumber:  activeWeek.WeekNumber,
+		StartDate:   activeWeek.StartDate.Format("2006-01-02"),
+		EndDate:     activeWeek.EndDate.Format("2006-01-02"),
+		WinnerCount: activeWeek.WinnerCount,
+		IsActive:    activeWeek.IsActive,
 	}, nil
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "github.com/Infinite-Locus-Product/thums_up_backend/docs"
 )
 
 func SetupHealthAndDocs(router *gin.Engine) {

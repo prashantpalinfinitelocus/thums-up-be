@@ -23,6 +23,19 @@ func NewQuestionHandler(questionService services.QuestionService) *QuestionHandl
 	}
 }
 
+// SubmitQuestion godoc
+// @Summary Submit a new question
+// @Description Submit a new question with text and language. Requires authentication.
+// @Tags Questions
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body dtos.QuestionSubmitRequest true "Question text and language ID"
+// @Success 201 {object} dtos.SuccessResponse{data=dtos.QuestionResponse} "Question submitted successfully"
+// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
+// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dtos.ErrorResponse "Failed to submit question"
+// @Router /questions [post]
 func (h *QuestionHandler) SubmitQuestion(c *gin.Context) {
 	var req dtos.QuestionSubmitRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -69,6 +82,15 @@ func (h *QuestionHandler) SubmitQuestion(c *gin.Context) {
 	})
 }
 
+// GetActiveQuestions godoc
+// @Summary Get active questions
+// @Description Retrieve all active questions
+// @Tags Questions
+// @Accept json
+// @Produce json
+// @Success 200 {object} dtos.SuccessResponse{data=[]dtos.QuestionResponse} "Questions retrieved successfully"
+// @Failure 500 {object} dtos.ErrorResponse "Failed to get active questions"
+// @Router /questions/active [get]
 func (h *QuestionHandler) GetActiveQuestions(c *gin.Context) {
 	responses, err := h.questionService.GetActiveQuestions(c.Request.Context())
 	if err != nil {

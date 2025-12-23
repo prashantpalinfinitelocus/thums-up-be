@@ -1,37 +1,45 @@
 package entities
 
-type State struct {
-	ID        int    `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name      string `gorm:"type:varchar(255);not null" json:"name"`
-	IsActive  bool   `gorm:"default:true" json:"is_active"`
-	IsDeleted bool   `gorm:"default:false" json:"is_deleted"`
-}
+import (
+	"time"
+)
 
-func (State) TableName() string {
-	return "state"
+type State struct {
+	ID             int        `json:"id" gorm:"primaryKey;autoIncrement"`
+	CountryID      int        `json:"country_id" gorm:"type:int;not null"`
+	ShortName      string     `json:"short_name" gorm:"type:text;not null"`
+	Name           string     `json:"name" gorm:"type:text;not null"`
+	IsActive       bool       `json:"is_active" gorm:"type:bool;not null"`
+	IsDeleted      bool       `json:"is_deleted" gorm:"type:bool;not null"`
+	CreatedBy      string     `json:"created_by" gorm:"type:text;not null"`
+	CreatedOn      time.Time  `json:"created_on" gorm:"type:timestamp;not null"`
+	LastModifiedBy *string    `json:"last_modified_by" gorm:"type:text"`
+	LastModifiedOn *time.Time `json:"last_modified_on" gorm:"type:timestamp"`
 }
 
 type City struct {
-	ID        int    `gorm:"primaryKey;autoIncrement" json:"id"`
-	StateID   int    `gorm:"not null;index" json:"state_id"`
-	Name      string `gorm:"type:varchar(255);not null" json:"name"`
-	IsActive  bool   `gorm:"default:true" json:"is_active"`
-	IsDeleted bool   `gorm:"default:false" json:"is_deleted"`
-}
-
-func (City) TableName() string {
-	return "city"
+	ID             int        `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name           string     `json:"name" gorm:"type:text;not null"`
+	StateID        int        `json:"state_id" gorm:"type:int;not null"`
+	IsActive       bool       `json:"is_active" gorm:"type:bool;not null"`
+	IsDeleted      bool       `json:"is_deleted" gorm:"type:bool;not null"`
+	CreatedBy      string     `json:"created_by" gorm:"type:text;not null"`
+	CreatedOn      time.Time  `json:"created_on" gorm:"type:timestamp;not null"`
+	LastModifiedBy *string    `json:"last_modified_by" gorm:"type:text"`
+	LastModifiedOn *time.Time `json:"last_modified_on" gorm:"type:timestamp"`
 }
 
 type PinCode struct {
-	ID            int  `gorm:"primaryKey;autoIncrement" json:"id"`
-	CityID        int  `gorm:"not null;index" json:"city_id"`
-	Pincode       int  `gorm:"not null" json:"pincode"`
-	IsDeliverable bool `gorm:"default:false" json:"is_deliverable"`
-	IsActive      bool `gorm:"default:true" json:"is_active"`
-	IsDeleted     bool `gorm:"default:false" json:"is_deleted"`
-}
-
-func (PinCode) TableName() string {
-	return "pin_code"
+	ID              int        `json:"id" gorm:"primaryKey;autoIncrement"`
+	Pincode         int        `json:"pincode" gorm:"type:int;not null"`
+	IsBlackList     bool       `json:"is_black_list" gorm:"type:bool;not null"`
+	CityID          int        `json:"city_id" gorm:"type:int;not null"`
+	IsDeliverable   bool       `json:"is_deliverable" gorm:"type:bool;not null"`
+	DeliveryCharges float64    `json:"delivery_charges" gorm:"type:float8;not null"`
+	IsActive        bool       `json:"is_active" gorm:"type:bool;not null"`
+	IsDeleted       bool       `json:"is_deleted" gorm:"type:bool;not null"`
+	CreatedBy       string     `json:"created_by" gorm:"type:text;not null"`
+	CreatedOn       time.Time  `json:"created_on" gorm:"type:timestamp;not null"`
+	LastModifiedBy  *string    `json:"last_modified_by" gorm:"type:text"`
+	LastModifiedOn  *time.Time `json:"last_modified_on" gorm:"type:timestamp"`
 }

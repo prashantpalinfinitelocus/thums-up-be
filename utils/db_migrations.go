@@ -29,6 +29,7 @@ func RunDBMigrations(db *gorm.DB) error {
 		&entities.QuestionMaster{},
 		&entities.ThunderSeat{},
 		&entities.ThunderSeatWinner{},
+		&entities.ContestWeek{},
 	); err != nil {
 		return fmt.Errorf("failed to run GORM automigrations: %w", err)
 	}

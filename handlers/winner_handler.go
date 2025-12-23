@@ -24,6 +24,19 @@ func NewWinnerHandler(winnerService services.WinnerService) *WinnerHandler {
 	}
 }
 
+// SelectWinners godoc
+// @Summary Select winners for a week
+// @Description Admin endpoint to select winners for a specific contest week. Requires API key authentication.
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security APIKey
+// @Param request body dtos.SelectWinnersRequest true "Week number"
+// @Success 201 {object} dtos.SuccessResponse{data=[]dtos.WinnerResponse} "Winners selected successfully"
+// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
+// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dtos.ErrorResponse "Failed to select winners"
+// @Router /admin/winners/select [post]
 func (h *WinnerHandler) SelectWinners(c *gin.Context) {
 	var req dtos.SelectWinnersRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -61,6 +74,17 @@ func (h *WinnerHandler) SelectWinners(c *gin.Context) {
 	})
 }
 
+// GetWinnersByWeek godoc
+// @Summary Get winners by week
+// @Description Retrieve all winners for a specific contest week
+// @Tags Winners
+// @Accept json
+// @Produce json
+// @Param weekNumber path int true "Week number"
+// @Success 200 {object} dtos.SuccessResponse{data=[]dtos.WinnerResponse} "Winners retrieved successfully"
+// @Failure 400 {object} dtos.ErrorResponse "Invalid week number"
+// @Failure 500 {object} dtos.ErrorResponse "Failed to get winners"
+// @Router /winners/week/{weekNumber} [get]
 func (h *WinnerHandler) GetWinnersByWeek(c *gin.Context) {
 	weekNumberStr := c.Param("weekNumber")
 	weekNumber, err := strconv.Atoi(weekNumberStr)
@@ -96,6 +120,18 @@ func (h *WinnerHandler) GetWinnersByWeek(c *gin.Context) {
 	})
 }
 
+// GetAllWinners godoc
+// @Summary Get all winners with pagination
+// @Description Retrieve all winners with pagination support
+// @Tags Winners
+// @Accept json
+// @Produce json
+// @Param limit query int true "Number of items per page" minimum(1) maximum(100)
+// @Param offset query int false "Number of items to skip" minimum(0) default(0)
+// @Success 200 {object} dtos.PaginatedResponse{data=[]dtos.WinnerResponse} "Winners retrieved successfully"
+// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
+// @Failure 500 {object} dtos.ErrorResponse "Failed to get all winners"
+// @Router /winners [get]
 func (h *WinnerHandler) GetAllWinners(c *gin.Context) {
 	var req dtos.AllWinnersRequest
 	if err := c.ShouldBindQuery(&req); err != nil {

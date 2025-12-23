@@ -3,12 +3,14 @@ package constants
 import "time"
 
 const (
-	OTP_LENGTH             = 6
-	OTP_EXPIRY_MINUTES     = 5
-	MAX_OTP_ATTEMPTS       = 5
-	OTP_COOLDOWN_MINUTES   = 2
-	MAX_VERIFICATION_TRIES = 3
-	VERIFICATION_LOCKOUT   = 15
+	OTP_LENGTH                             = 6
+	OTP_EXPIRY_MINUTES                     = 5
+	MAX_OTP_ATTEMPTS                       = 5
+	OTP_COOLDOWN_MINUTES                   = 2
+	MAX_VERIFICATION_TRIES                 = 3
+	VERIFICATION_LOCKOUT                   = 15
+	VERIFY_OTP_MAX_ATTEMPTS                = 10
+	VERIFY_OTP_RATE_LIMIT_DURATION_MINUTES = 5
 
 	NOTIFICATION_CATEGORY = "thums_up_notification"
 

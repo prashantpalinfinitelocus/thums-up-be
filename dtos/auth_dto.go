@@ -25,6 +25,7 @@ type TokenResponse struct {
 	UserID       string `json:"user_id"`
 	PhoneNumber  string `json:"phone_number"`
 	Name         string `json:"name"`
+	Email        string `json:"email"`
 }
 
 type RefreshTokenRequest struct {

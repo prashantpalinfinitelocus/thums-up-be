@@ -145,6 +145,7 @@ func (s *Server) initRepositories() {
 		question:     repository.NewQuestionRepository(),
 		thunderSeat:  repository.NewThunderSeatRepository(),
 		winner:       repository.NewWinnerRepository(),
+		contestWeek:  repository.NewContestWeekRepository(),
 	}
 	log.Debug("All repositories initialized")
 }
@@ -182,16 +183,24 @@ func (s *Server) initHandlers() {
 		s.repositories.question,
 	)
 
+	contestWeekService := services.NewContestWeekService(
+		txnManager,
+		s.repositories.contestWeek,
+	)
+
 	thunderSeatService := services.NewThunderSeatService(
 		txnManager,
 		s.repositories.thunderSeat,
 		s.repositories.question,
+		s.repositories.contestWeek,
+		s.gcsService,
 	)
 
 	winnerService := services.NewWinnerService(
 		txnManager,
 		s.repositories.winner,
 		s.repositories.thunderSeat,
+		s.repositories.contestWeek,
 	)
 
 	s.handlers = &Handlers{
@@ -202,6 +211,7 @@ func (s *Server) initHandlers() {
 		question:    handlers.NewQuestionHandler(questionService),
 		thunderSeat: handlers.NewThunderSeatHandler(thunderSeatService),
 		winner:      handlers.NewWinnerHandler(winnerService),
+		contestWeek: handlers.NewContestWeekHandler(contestWeekService),
 	}
 
 	log.Debug("All handlers initialized")

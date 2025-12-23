@@ -24,27 +24,47 @@ type winnerService struct {
 	txnManager      *utils.TransactionManager
 	winnerRepo      repository.WinnerRepository
 	thunderSeatRepo repository.ThunderSeatRepository
+	contestWeekRepo repository.ContestWeekRepository
 }
 
 func NewWinnerService(
 	txnManager *utils.TransactionManager,
 	winnerRepo repository.WinnerRepository,
 	thunderSeatRepo repository.ThunderSeatRepository,
+	contestWeekRepo repository.ContestWeekRepository,
 ) WinnerService {
 	return &winnerService{
 		txnManager:      txnManager,
 		winnerRepo:      winnerRepo,
 		thunderSeatRepo: thunderSeatRepo,
+		contestWeekRepo: contestWeekRepo,
 	}
 }
 
 func (s *winnerService) SelectWinners(ctx context.Context, req dtos.SelectWinnersRequest) ([]dtos.WinnerResponse, error) {
-	existingWinnerUserIDs, err := s.winnerRepo.GetWinnerUserIDs(ctx, s.txnManager.GetDB(), req.WeekNumber)
+	contestWeek, err := s.contestWeekRepo.FindByWeekNumber(ctx, s.txnManager.GetDB(), req.WeekNumber)
+	if err != nil {
+		return nil, errors.NewInternalServerError("Failed to get contest week", err)
+	}
+	if contestWeek == nil {
+		return nil, errors.NewNotFoundError("Contest week not found", nil)
+	}
+
+	existingWinners, err := s.winnerRepo.FindByWeekNumber(ctx, s.txnManager.GetDB(), req.WeekNumber)
 	if err != nil {
 		return nil, errors.NewInternalServerError("Failed to get existing winners", err)
 	}
+	if len(existingWinners) >= contestWeek.WinnerCount {
+		return nil, errors.NewBadRequestError("Winners already selected for this week", nil)
+	}
 
-	randomEntries, err := s.thunderSeatRepo.GetRandomEntries(ctx, s.txnManager.GetDB(), req.NumberOfWinners, existingWinnerUserIDs)
+	existingWinnerUserIDs, err := s.winnerRepo.GetWinnerUserIDs(ctx, s.txnManager.GetDB(), req.WeekNumber)
+	if err != nil {
+		return nil, errors.NewInternalServerError("Failed to get existing winner IDs", err)
+	}
+
+	remainingSlots := contestWeek.WinnerCount - len(existingWinners)
+	randomEntries, err := s.thunderSeatRepo.GetRandomEntriesByWeek(ctx, s.txnManager.GetDB(), req.WeekNumber, remainingSlots, existingWinnerUserIDs)
 	if err != nil {
 		log.WithError(err).Error("Failed to get random entries")
 		return nil, errors.NewInternalServerError("Failed to select random entries", err)

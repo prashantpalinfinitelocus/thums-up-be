@@ -1,23 +1,24 @@
 package dtos
 
 type ThunderSeatSubmitRequest struct {
-	WeekNumber int    `json:"week_number" binding:"required"`
-	QuestionID int    `json:"question_id" binding:"required"`
-	Answer     string `json:"answer" binding:"required"`
+	QuestionID int    `form:"question_id" binding:"required"`
+	Answer     string `form:"answer" binding:"required"`
+	// File will be handled separately in the handler using c.FormFile("media_file")
 }
 
 type ThunderSeatResponse struct {
-	ID         int    `json:"id"`
-	UserID     string `json:"user_id"`
-	QuestionID int    `json:"question_id"`
-	WeekNumber int    `json:"week_number"`
-	Answer     string `json:"answer"`
-	CreatedOn  string `json:"created_on"`
+	ID         int     `json:"id"`
+	UserID     string  `json:"user_id"`
+	QuestionID int     `json:"question_id"`
+	WeekNumber int     `json:"week_number"`
+	Answer     string  `json:"answer"`
+	MediaURL   *string `json:"media_url,omitempty"`
+	MediaType  *string `json:"media_type,omitempty"`
+	CreatedOn  string  `json:"created_on"`
 }
 
 type SelectWinnersRequest struct {
-	WeekNumber      int `json:"week_number" binding:"required"`
-	NumberOfWinners int `json:"number_of_winners" binding:"required,min=1"`
+	WeekNumber int `json:"week_number" binding:"required"`
 }
 
 type WinnerResponse struct {
@@ -29,12 +30,35 @@ type WinnerResponse struct {
 }
 
 type CurrentWeekResponse struct {
-	WeekNumber int    `json:"week_number"`
-	StartDate  string `json:"start_date"`
-	EndDate    string `json:"end_date"`
+	WeekNumber  int    `json:"week_number"`
+	StartDate   string `json:"start_date"`
+	EndDate     string `json:"end_date"`
+	WinnerCount int    `json:"winner_count"`
+	IsActive    bool   `json:"is_active"`
 }
 
 type AllWinnersRequest struct {
 	Limit  int `form:"limit" binding:"required,min=1,max=100"`
 	Offset int `form:"offset" binding:"min=0"`
+}
+
+type ContestWeekRequest struct {
+	WeekNumber  int    `json:"week_number" binding:"required,min=1"`
+	StartDate   string `json:"start_date" binding:"required"`
+	EndDate     string `json:"end_date" binding:"required"`
+	WinnerCount int    `json:"winner_count" binding:"required,min=1"`
+}
+
+type ContestWeekResponse struct {
+	ID          int    `json:"id"`
+	WeekNumber  int    `json:"week_number"`
+	StartDate   string `json:"start_date"`
+	EndDate     string `json:"end_date"`
+	WinnerCount int    `json:"winner_count"`
+	IsActive    bool   `json:"is_active"`
+	CreatedOn   string `json:"created_on"`
+}
+
+type ActivateWeekRequest struct {
+	WeekNumber int `json:"week_number" binding:"required"`
 }
