@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/dtos"
@@ -18,6 +19,7 @@ type WinnerService interface {
 	SelectWinners(ctx context.Context, req dtos.SelectWinnersRequest) ([]dtos.WinnerResponse, error)
 	GetWinnersByWeek(ctx context.Context, weekNumber int) ([]dtos.WinnerResponse, error)
 	GetAllWinners(ctx context.Context, limit, offset int) ([]dtos.WinnerResponse, int64, error)
+	SubmitWinnerKYC(ctx context.Context, userID string, req dtos.WinnerKYCRequest) error
 }
 
 type winnerService struct {
@@ -25,6 +27,9 @@ type winnerService struct {
 	winnerRepo      repository.WinnerRepository
 	thunderSeatRepo repository.ThunderSeatRepository
 	contestWeekRepo repository.ContestWeekRepository
+	userRepo        repository.UserRepository
+	userAadharRepo  repository.UserAadharCardRepository
+	userFriendRepo  repository.UserFriendRepository
 }
 
 func NewWinnerService(
@@ -32,12 +37,18 @@ func NewWinnerService(
 	winnerRepo repository.WinnerRepository,
 	thunderSeatRepo repository.ThunderSeatRepository,
 	contestWeekRepo repository.ContestWeekRepository,
+	userRepo repository.UserRepository,
+	userAadharRepo repository.UserAadharCardRepository,
+	userFriendRepo repository.UserFriendRepository,
 ) WinnerService {
 	return &winnerService{
 		txnManager:      txnManager,
 		winnerRepo:      winnerRepo,
 		thunderSeatRepo: thunderSeatRepo,
 		contestWeekRepo: contestWeekRepo,
+		userRepo:        userRepo,
+		userAadharRepo:  userAadharRepo,
+		userFriendRepo:  userFriendRepo,
 	}
 }
 
@@ -147,3 +158,135 @@ func (s *winnerService) GetAllWinners(ctx context.Context, limit, offset int) ([
 
 	return responses, total, nil
 }
+
+// SubmitWinnerKYC stores winner's aadhar details and optional friends' details.
+// It assumes the caller has already verified authentication; this method will
+// verify that the user is actually a winner.
+func (s *winnerService) SubmitWinnerKYC(ctx context.Context, userID string, req dtos.WinnerKYCRequest) error {
+	tx, err := s.txnManager.StartTxn()
+	if err != nil {
+		return err
+	}
+	defer s.txnManager.RollbackOnPanic(tx)
+
+	// Verify user exists
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return errors.NewBadRequestError("Invalid user ID format", err)
+	}
+
+	user, err := s.userRepo.FindById(ctx, tx, userUUID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return errors.NewInternalServerError("Failed to fetch user", err)
+	}
+	if user == nil {
+		s.txnManager.AbortTxn(tx)
+		return errors.NewNotFoundError("User not found", nil)
+	}
+
+	// Ensure user is a winner (any week)
+	winners, err := s.winnerRepo.FindByUserID(ctx, tx, userID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return errors.NewInternalServerError("Failed to verify winner", err)
+	}
+	if len(winners) == 0 {
+		s.txnManager.AbortTxn(tx)
+		return errors.NewBadRequestError("User is not a winner", nil)
+	}
+
+	// Update email if different
+	if req.UserEmail != "" {
+		if user.Email == nil || *user.Email != req.UserEmail {
+			fields := map[string]interface{}{
+				"email": req.UserEmail,
+			}
+			if err := s.userRepo.UpdateFields(ctx, tx, userID, fields); err != nil {
+				s.txnManager.AbortTxn(tx)
+				return errors.NewInternalServerError("Failed to update user email", err)
+			}
+		}
+	}
+
+	// Update name if provided and different
+	if req.UserName != "" {
+		if user.Name == nil || *user.Name != req.UserName {
+			fields := map[string]interface{}{
+				"name": req.UserName,
+			}
+			if err := s.userRepo.UpdateFields(ctx, tx, userID, fields); err != nil {
+				s.txnManager.AbortTxn(tx)
+				return errors.NewInternalServerError("Failed to update user name", err)
+			}
+		}
+	}
+
+	// Upsert user's aadhar card
+	existingCard, err := s.userAadharRepo.FindByUserID(ctx, tx, userID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return errors.NewInternalServerError("Failed to fetch user aadhar card", err)
+	}
+
+	now := time.Now()
+	if existingCard == nil {
+		card := &entities.UserAadharCard{
+			UserID:         userID,
+			AadharNumber:   req.AadharNumber,
+			AadharFrontKey: req.AadharFront,
+			AadharBackKey:  req.AadharBack,
+			IsDeleted:      false,
+			CreatedBy:      userID,
+			CreatedOn:      now,
+		}
+		if err := s.userAadharRepo.Create(ctx, tx, card); err != nil {
+			s.txnManager.AbortTxn(tx)
+			return errors.NewInternalServerError("Failed to save user aadhar card", err)
+		}
+	} else {
+		existingCard.AadharNumber = req.AadharNumber
+		existingCard.AadharFrontKey = req.AadharFront
+		existingCard.AadharBackKey = req.AadharBack
+		existingCard.LastModifiedBy = &userID
+		existingCard.LastModifiedOn = &now
+
+		if err := s.userAadharRepo.Update(ctx, tx, existingCard); err != nil {
+			s.txnManager.AbortTxn(tx)
+			return errors.NewInternalServerError("Failed to update user aadhar card", err)
+		}
+	}
+
+	// Replace friends list (soft-delete existing then insert new)
+	if err := s.userFriendRepo.DeleteByUserID(ctx, tx, userID); err != nil {
+		s.txnManager.AbortTxn(tx)
+		return errors.NewInternalServerError("Failed to clear existing friends", err)
+	}
+
+	if len(req.Friends) > 0 {
+		friends := make([]entities.UserFriend, 0, len(req.Friends))
+		for _, f := range req.Friends {
+			friends = append(friends, entities.UserFriend{
+				UserID:         userID,
+				FriendUUID:     f.UUID,
+				FriendName:     f.Name,
+				AadharNumber:   f.AadharNumber,
+				AadharFrontKey: f.AadharFront,
+				AadharBackKey:  f.AadharBack,
+				IsDeleted:      false,
+				CreatedBy:      userID,
+				CreatedOn:      now,
+			})
+		}
+
+		if err := s.userFriendRepo.CreateMany(ctx, tx, friends); err != nil {
+			s.txnManager.AbortTxn(tx)
+			return errors.NewInternalServerError("Failed to save winner friends", err)
+		}
+	}
+
+	s.txnManager.CommitTxn(tx)
+	return nil
+}
+

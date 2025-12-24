@@ -58,6 +58,15 @@ definitions:
       state:
         type: string
     type: object
+  dtos.AnswerQuestionsRequestDTO:
+    properties:
+      answer_id:
+        type: integer
+      question_id:
+        type: integer
+      question_number:
+        type: integer
+    type: object
   dtos.AvatarResponseDTO:
     properties:
       created_on:
@@ -126,6 +135,42 @@ definitions:
     - image_key
     - name
     type: object
+  dtos.CreateOptionDTO:
+    properties:
+      display_order:
+        type: integer
+      id:
+        description: Nullable for creation
+        type: integer
+      is_active:
+        type: boolean
+      option_text:
+        type: string
+    type: object
+  dtos.CreateQuestionDTO:
+    properties:
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      language_id:
+        type: integer
+      options:
+        items:
+          $ref: '#/definitions/dtos.CreateOptionDTO'
+        type: array
+      ques_point:
+        type: integer
+      question_text:
+        type: string
+    type: object
+  dtos.CreateQuestionsRequestDTO:
+    properties:
+      questions:
+        items:
+          $ref: '#/definitions/dtos.CreateQuestionDTO'
+        type: array
+    type: object
   dtos.CurrentWeekResponse:
     properties:
       end_date:
@@ -146,6 +191,25 @@ definitions:
         type: string
       success:
         type: boolean
+    type: object
+  dtos.GetQuestionByTextRequestDTO:
+    properties:
+      language_id:
+        type: integer
+      question_text:
+        type: string
+    required:
+    - language_id
+    - question_text
+    type: object
+  dtos.OptionDTO:
+    properties:
+      display_order:
+        type: integer
+      id:
+        type: integer
+      option_text:
+        type: string
     type: object
   dtos.PaginatedResponse:
     properties:
@@ -181,6 +245,23 @@ definitions:
         type: integer
       question_text:
         type: string
+    type: object
+  dtos.QuestionResponseDTO:
+    properties:
+      id:
+        type: integer
+      language_id:
+        type: integer
+      options:
+        items:
+          $ref: '#/definitions/dtos.OptionDTO'
+        type: array
+      ques_point:
+        type: integer
+      question_text:
+        type: string
+      selected_option:
+        type: integer
     type: object
   dtos.QuestionSubmitRequest:
     properties:
@@ -249,6 +330,10 @@ definitions:
         type: string
       id:
         type: integer
+      media_type:
+        type: string
+      media_url:
+        type: string
       question_id:
         type: integer
       user_id:
@@ -256,19 +341,11 @@ definitions:
       week_number:
         type: integer
     type: object
-  dtos.ThunderSeatSubmitRequest:
-    properties:
-      answer:
-        type: string
-      question_id:
-        type: integer
-    required:
-    - answer
-    - question_id
-    type: object
   dtos.TokenResponse:
     properties:
       access_token:
+        type: string
+      email:
         type: string
       expires_in:
         type: integer
@@ -330,6 +407,49 @@ definitions:
     required:
     - otp
     - phone_number
+    type: object
+  dtos.WinnerFriendDTO:
+    properties:
+      aadhar_back:
+        type: string
+      aadhar_front:
+        type: string
+      aadhar_number:
+        type: string
+      name:
+        type: string
+      uuid:
+        type: string
+    required:
+    - aadhar_back
+    - aadhar_front
+    - aadhar_number
+    - name
+    - uuid
+    type: object
+  dtos.WinnerKYCRequest:
+    properties:
+      aadhar_back:
+        type: string
+      aadhar_front:
+        type: string
+      aadhar_number:
+        type: string
+      friends:
+        items:
+          $ref: '#/definitions/dtos.WinnerFriendDTO'
+        maxItems: 10
+        type: array
+      user_email:
+        type: string
+      user_name:
+        type: string
+    required:
+    - aadhar_back
+    - aadhar_front
+    - aadhar_number
+    - user_email
+    - user_name
     type: object
   dtos.WinnerResponse:
     properties:
@@ -1119,6 +1239,172 @@ paths:
       summary: Update an existing address
       tags:
       - Profile
+  /profile/questions:
+    get:
+      consumes:
+      - application/json
+      description: Get all active questions with user's answers
+      parameters:
+      - description: Language ID
+        in: query
+        name: language_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Questions retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dtos.QuestionResponseDTO'
+                  type: array
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to fetch questions
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get Questions
+      tags:
+      - Questions
+    post:
+      consumes:
+      - application/json
+      description: Submit answers to multiple questions
+      parameters:
+      - description: Answer Questions Request
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/dtos.AnswerQuestionsRequestDTO'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Answers submitted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to submit answers
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Answer Questions
+      tags:
+      - Questions
+  /profile/questions/create:
+    post:
+      consumes:
+      - application/json
+      description: Create or update questions and options
+      parameters:
+      - description: Create Questions Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateQuestionsRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Questions created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to create questions
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create Questions
+      tags:
+      - Questions
+  /profile/questions/text:
+    post:
+      consumes:
+      - application/json
+      description: Get a question by its text and language ID
+      parameters:
+      - description: Get Question By Text Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.GetQuestionByTextRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Question retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.QuestionResponseDTO'
+              type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Question not found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get Question By Text
+      tags:
+      - Questions
   /questions:
     post:
       consumes:
@@ -1189,16 +1475,24 @@ paths:
   /thunder-seat:
     post:
       consumes:
-      - application/json
-      description: Submit an answer to a Thunder Seat question for the current week.
-        Requires authentication.
+      - multipart/form-data
+      description: Submit an answer to a Thunder Seat question for the current week
+        with optional media file (audio/video). Requires authentication.
       parameters:
-      - description: Question ID and answer
-        in: body
-        name: request
+      - description: Question ID
+        in: formData
+        name: question_id
         required: true
-        schema:
-          $ref: '#/definitions/dtos.ThunderSeatSubmitRequest'
+        type: integer
+      - description: Answer text
+        in: formData
+        name: answer
+        required: true
+        type: string
+      - description: Optional media file (audio/video, max 100MB)
+        in: formData
+        name: media_file
+        type: file
       produces:
       - application/json
       responses:
@@ -1332,6 +1626,48 @@ paths:
           schema:
             $ref: '#/definitions/dtos.ErrorResponse'
       summary: Get all winners with pagination
+      tags:
+      - Winners
+  /winners/kyc:
+    post:
+      consumes:
+      - application/json
+      description: After being selected as a winner, user submits their details and
+        friends' information.
+      parameters:
+      - description: Winner KYC details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.WinnerKYCRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: KYC submitted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to submit KYC
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Submit winner KYC details
       tags:
       - Winners
   /winners/week/{weekNumber}:

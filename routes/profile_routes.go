@@ -15,6 +15,7 @@ func SetupProfileRoutes(
 	userRepo repository.UserRepository,
 	profileHandler *handlers.ProfileHandler,
 	addressHandler *handlers.AddressHandler,
+	questionHandler *handlers.QuestionHandler,
 ) {
 	profileGroup := api.Group("/profile")
 	profileGroup.Use(middlewares.AuthMiddleware(db, userRepo))
@@ -26,5 +27,11 @@ func SetupProfileRoutes(
 		profileGroup.GET("/address", addressHandler.GetAddresses)
 		profileGroup.PUT("/address/:addressId", addressHandler.UpdateAddress)
 		profileGroup.DELETE("/address/:addressId", addressHandler.DeleteAddress)
+
+		// Question operations
+		profileGroup.GET("/questions", questionHandler.GetQuestions)
+		profileGroup.POST("/questions/text", questionHandler.GetQuestionByID)
+		profileGroup.POST("/questions", questionHandler.AnswerQuestions)
+		profileGroup.POST("/questions/create", questionHandler.CreateQuestions)
 	}
 }

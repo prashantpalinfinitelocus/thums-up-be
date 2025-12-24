@@ -1217,6 +1217,284 @@
                 }
             }
         },
+        "/profile/questions": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get all active questions with user's answers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Questions"
+                ],
+                "summary": "Get Questions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Language ID",
+                        "name": "language_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Questions retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dtos.QuestionResponseDTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to fetch questions",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Submit answers to multiple questions",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Questions"
+                ],
+                "summary": "Answer Questions",
+                "parameters": [
+                    {
+                        "description": "Answer Questions Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dtos.AnswerQuestionsRequestDTO"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Answers submitted successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to submit answers",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/questions/create": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create or update questions and options",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Questions"
+                ],
+                "summary": "Create Questions",
+                "parameters": [
+                    {
+                        "description": "Create Questions Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.CreateQuestionsRequestDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Questions created successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create questions",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/questions/text": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get a question by its text and language ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Questions"
+                ],
+                "summary": "Get Question By Text",
+                "parameters": [
+                    {
+                        "description": "Get Question By Text Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetQuestionByTextRequestDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Question retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.QuestionResponseDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Question not found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/questions": {
             "post": {
                 "security": [
@@ -1337,9 +1615,9 @@
                         "Bearer": []
                     }
                 ],
-                "description": "Submit an answer to a Thunder Seat question for the current week. Requires authentication.",
+                "description": "Submit an answer to a Thunder Seat question for the current week with optional media file (audio/video). Requires authentication.",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -1350,13 +1628,24 @@
                 "summary": "Submit Thunder Seat answer",
                 "parameters": [
                     {
-                        "description": "Question ID and answer",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dtos.ThunderSeatSubmitRequest"
-                        }
+                        "type": "integer",
+                        "description": "Question ID",
+                        "name": "question_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Answer text",
+                        "name": "answer",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Optional media file (audio/video, max 100MB)",
+                        "name": "media_file",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -1570,6 +1859,75 @@
                 }
             }
         },
+        "/winners/kyc": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "After being selected as a winner, user submits their details and friends' information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Winners"
+                ],
+                "summary": "Submit winner KYC details",
+                "parameters": [
+                    {
+                        "description": "Winner KYC details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.WinnerKYCRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "KYC submitted successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Validation failed",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to submit KYC",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/winners/week/{weekNumber}": {
             "get": {
                 "description": "Retrieve all winners for a specific contest week",
@@ -1718,6 +2076,20 @@
                 }
             }
         },
+        "dtos.AnswerQuestionsRequestDTO": {
+            "type": "object",
+            "properties": {
+                "answer_id": {
+                    "type": "integer"
+                },
+                "question_id": {
+                    "type": "integer"
+                },
+                "question_number": {
+                    "type": "integer"
+                }
+            }
+        },
         "dtos.AvatarResponseDTO": {
             "type": "object",
             "properties": {
@@ -1819,6 +2191,61 @@
                 }
             }
         },
+        "dtos.CreateOptionDTO": {
+            "type": "object",
+            "properties": {
+                "display_order": {
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "Nullable for creation",
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "option_text": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.CreateQuestionDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "language_id": {
+                    "type": "integer"
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.CreateOptionDTO"
+                    }
+                },
+                "ques_point": {
+                    "type": "integer"
+                },
+                "question_text": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.CreateQuestionsRequestDTO": {
+            "type": "object",
+            "properties": {
+                "questions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.CreateQuestionDTO"
+                    }
+                }
+            }
+        },
         "dtos.CurrentWeekResponse": {
             "type": "object",
             "properties": {
@@ -1848,6 +2275,35 @@
                 },
                 "success": {
                     "type": "boolean"
+                }
+            }
+        },
+        "dtos.GetQuestionByTextRequestDTO": {
+            "type": "object",
+            "required": [
+                "language_id",
+                "question_text"
+            ],
+            "properties": {
+                "language_id": {
+                    "type": "integer"
+                },
+                "question_text": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.OptionDTO": {
+            "type": "object",
+            "properties": {
+                "display_order": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "option_text": {
+                    "type": "string"
                 }
             }
         },
@@ -1902,6 +2358,32 @@
                 },
                 "question_text": {
                     "type": "string"
+                }
+            }
+        },
+        "dtos.QuestionResponseDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "language_id": {
+                    "type": "integer"
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.OptionDTO"
+                    }
+                },
+                "ques_point": {
+                    "type": "integer"
+                },
+                "question_text": {
+                    "type": "string"
+                },
+                "selected_option": {
+                    "type": "integer"
                 }
             }
         },
@@ -2005,6 +2487,12 @@
                 "id": {
                     "type": "integer"
                 },
+                "media_type": {
+                    "type": "string"
+                },
+                "media_url": {
+                    "type": "string"
+                },
                 "question_id": {
                     "type": "integer"
                 },
@@ -2016,25 +2504,13 @@
                 }
             }
         },
-        "dtos.ThunderSeatSubmitRequest": {
-            "type": "object",
-            "required": [
-                "answer",
-                "question_id"
-            ],
-            "properties": {
-                "answer": {
-                    "type": "string"
-                },
-                "question_id": {
-                    "type": "integer"
-                }
-            }
-        },
         "dtos.TokenResponse": {
             "type": "object",
             "properties": {
                 "access_token": {
+                    "type": "string"
+                },
+                "email": {
                     "type": "string"
                 },
                 "expires_in": {
@@ -2125,6 +2601,67 @@
                     "type": "string",
                     "maxLength": 10,
                     "minLength": 10
+                }
+            }
+        },
+        "dtos.WinnerFriendDTO": {
+            "type": "object",
+            "required": [
+                "aadhar_back",
+                "aadhar_front",
+                "aadhar_number",
+                "name",
+                "uuid"
+            ],
+            "properties": {
+                "aadhar_back": {
+                    "type": "string"
+                },
+                "aadhar_front": {
+                    "type": "string"
+                },
+                "aadhar_number": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.WinnerKYCRequest": {
+            "type": "object",
+            "required": [
+                "aadhar_back",
+                "aadhar_front",
+                "aadhar_number",
+                "user_email",
+                "user_name"
+            ],
+            "properties": {
+                "aadhar_back": {
+                    "type": "string"
+                },
+                "aadhar_front": {
+                    "type": "string"
+                },
+                "aadhar_number": {
+                    "type": "string"
+                },
+                "friends": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                        "$ref": "#/definitions/dtos.WinnerFriendDTO"
+                    }
+                },
+                "user_email": {
+                    "type": "string"
+                },
+                "user_name": {
+                    "type": "string"
                 }
             }
         },

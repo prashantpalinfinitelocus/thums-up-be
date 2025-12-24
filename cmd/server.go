@@ -134,18 +134,24 @@ func (s *Server) initWorkerPool() {
 
 func (s *Server) initRepositories() {
 	s.repositories = &Repositories{
-		user:         repository.NewUserRepository(),
-		otp:          repository.NewOTPRepository(),
-		refreshToken: repository.NewRefreshTokenRepository(),
-		address:      repository.NewGormRepository[entities.Address](),
-		avatar:       repository.NewGormRepository[entities.Avatar](),
-		state:        repository.NewStateRepository(),
-		city:         repository.NewCityRepository(),
-		pinCode:      repository.NewPinCodeRepository(),
-		question:     repository.NewQuestionRepository(),
-		thunderSeat:  repository.NewThunderSeatRepository(),
-		winner:       repository.NewWinnerRepository(),
-		contestWeek:  repository.NewContestWeekRepository(),
+		user:                   repository.NewUserRepository(),
+		otp:                    repository.NewOTPRepository(),
+		refreshToken:           repository.NewRefreshTokenRepository(),
+		address:                repository.NewGormRepository[entities.Address](),
+		avatar:                 repository.NewGormRepository[entities.Avatar](),
+		state:                  repository.NewStateRepository(),
+		city:                   repository.NewCityRepository(),
+		pinCode:                repository.NewPinCodeRepository(),
+		question:               repository.NewQuestionRepository(),
+		questionMasterLanguage: repository.NewQuestionMasterLanguageRepository(s.db),
+		optionMaster:           repository.NewOptionMasterRepository(s.db),
+		optionMasterLanguage:   repository.NewOptionMasterLanguageRepository(s.db),
+		userQuestionAnswer:     repository.NewUserQuestionAnswerRepository(s.db),
+		thunderSeat:            repository.NewThunderSeatRepository(),
+		winner:                 repository.NewWinnerRepository(),
+		contestWeek:            repository.NewContestWeekRepository(),
+		userAadharCard:         repository.NewUserAadharCardRepository(),
+		userFriend:             repository.NewUserFriendRepository(),
 	}
 	log.Debug("All repositories initialized")
 }
@@ -170,6 +176,11 @@ func (s *Server) initHandlers() {
 		s.repositories.pinCode,
 		s.repositories.avatar,
 		s.gcsService,
+		s.repositories.userQuestionAnswer,
+		s.repositories.question,
+		s.repositories.questionMasterLanguage,
+		s.repositories.optionMaster,
+		s.repositories.optionMasterLanguage,
 	)
 
 	avatarService := services.NewAvatarService(
@@ -181,6 +192,8 @@ func (s *Server) initHandlers() {
 	questionService := services.NewQuestionService(
 		txnManager,
 		s.repositories.question,
+		s.repositories.userQuestionAnswer,
+		s.repositories.optionMaster,
 	)
 
 	contestWeekService := services.NewContestWeekService(
@@ -201,6 +214,9 @@ func (s *Server) initHandlers() {
 		s.repositories.winner,
 		s.repositories.thunderSeat,
 		s.repositories.contestWeek,
+		s.repositories.user,
+		s.repositories.userAadharCard,
+		s.repositories.userFriend,
 	)
 
 	s.handlers = &Handlers{
@@ -208,7 +224,7 @@ func (s *Server) initHandlers() {
 		profile:     handlers.NewProfileHandler(userService),
 		address:     handlers.NewAddressHandler(userService),
 		avatar:      handlers.NewAvatarHandler(avatarService),
-		question:    handlers.NewQuestionHandler(questionService),
+		question:    handlers.NewQuestionHandler(questionService, userService),
 		thunderSeat: handlers.NewThunderSeatHandler(thunderSeatService),
 		winner:      handlers.NewWinnerHandler(winnerService),
 		contestWeek: handlers.NewContestWeekHandler(contestWeekService),

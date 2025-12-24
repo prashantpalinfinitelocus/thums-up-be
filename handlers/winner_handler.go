@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/dtos"
+	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
 	"github.com/Infinite-Locus-Product/thums_up_backend/errors"
 	"github.com/Infinite-Locus-Product/thums_up_backend/services"
 	"github.com/Infinite-Locus-Product/thums_up_backend/utils"
@@ -179,3 +180,71 @@ func (h *WinnerHandler) GetAllWinners(c *gin.Context) {
 		},
 	})
 }
+
+// SubmitWinnerKYC godoc
+// @Summary Submit winner KYC details
+// @Description After being selected as a winner, user submits their details and friends' information.
+// @Tags Winners
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body dtos.WinnerKYCRequest true "Winner KYC details"
+// @Success 200 {object} dtos.SuccessResponse{data=string} "KYC submitted successfully"
+// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
+// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dtos.ErrorResponse "Failed to submit KYC"
+// @Router /winners/kyc [post]
+func (h *WinnerHandler) SubmitWinnerKYC(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
+			Success: false,
+			Error:   errors.ErrUserNotAuthenticated,
+		})
+		return
+	}
+
+	userEntity, ok := user.(*entities.User)
+	if !ok || userEntity == nil {
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Success: false,
+			Error:   errors.ErrInvalidUserContext,
+		})
+		return
+	}
+
+	var req dtos.WinnerKYCRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		validationErrors := utils.FormatValidationErrors(err)
+		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Success: false,
+			Error:   "Validation failed",
+			Details: validationErrors,
+		})
+		return
+	}
+
+	if err := h.winnerService.SubmitWinnerKYC(c.Request.Context(), userEntity.ID, req); err != nil {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
+			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
+				Success: false,
+				Error:   appErr.Message,
+			})
+			return
+		}
+
+		log.WithError(err).Error("Failed to submit winner KYC")
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Success: false,
+			Error:   "Failed to submit KYC",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dtos.SuccessResponse{
+		Success: true,
+		Data:    "KYC submitted successfully",
+	})
+}
+

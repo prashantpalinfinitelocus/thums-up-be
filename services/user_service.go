@@ -22,17 +22,26 @@ type UserService interface {
 	AddUserAddress(ctx context.Context, userID string, req dtos.AddressRequestDTO) (*dtos.AddressResponseDTO, error)
 	UpdateUserAddress(ctx context.Context, userID string, addressID string, req dtos.AddressRequestDTO) (*dtos.AddressResponseDTO, error)
 	DeleteUserAddress(ctx context.Context, userID string, addressID string) error
+	GetQuestions(ctx context.Context, userID string, languageID int) ([]dtos.QuestionResponseDTO, error)
+	GetQuestionIDByText(ctx context.Context, questionText string, languageID int) (int, error)
+	GetQuestionByID(ctx context.Context, questionID int, languageID int) (*dtos.QuestionResponseDTO, error)
+	AnswerQuestions(ctx context.Context, userID string, answers []dtos.AnswerQuestionsRequestDTO) error
 }
 
 type userService struct {
-	txnManager  *utils.TransactionManager
-	userRepo    repository.UserRepository
-	addressRepo repository.GenericRepository[entities.Address]
-	stateRepo   repository.StateRepository
-	cityRepo    repository.CityRepository
-	pinCodeRepo repository.PinCodeRepository
-	avatarRepo  repository.GenericRepository[entities.Avatar]
-	gcsService  utils.GCSService
+	txnManager                  *utils.TransactionManager
+	userRepo                    repository.UserRepository
+	addressRepo                 repository.GenericRepository[entities.Address]
+	stateRepo                   repository.StateRepository
+	cityRepo                    repository.CityRepository
+	pinCodeRepo                 repository.PinCodeRepository
+	avatarRepo                  repository.GenericRepository[entities.Avatar]
+	gcsService                  utils.GCSService
+	questionAnswerRepo          repository.UserQuestionAnswerRepository
+	questionMasterRepo          repository.QuestionRepository
+	questionMasterLanguageRepo   repository.QuestionMasterLanguageRepository
+	optionMasterRepo            repository.OptionMasterRepository
+	optionMasterLanguageRepo    repository.OptionMasterLanguageRepository
 }
 
 func NewUserService(
@@ -44,16 +53,26 @@ func NewUserService(
 	pinCodeRepo repository.PinCodeRepository,
 	avatarRepo repository.GenericRepository[entities.Avatar],
 	gcsService utils.GCSService,
+	questionAnswerRepo repository.UserQuestionAnswerRepository,
+	questionMasterRepo repository.QuestionRepository,
+	questionMasterLanguageRepo repository.QuestionMasterLanguageRepository,
+	optionMasterRepo repository.OptionMasterRepository,
+	optionMasterLanguageRepo repository.OptionMasterLanguageRepository,
 ) UserService {
 	return &userService{
-		txnManager:  txnManager,
-		userRepo:    userRepo,
-		addressRepo: addressRepo,
-		stateRepo:   stateRepo,
-		cityRepo:    cityRepo,
-		pinCodeRepo: pinCodeRepo,
-		avatarRepo:  avatarRepo,
-		gcsService:  gcsService,
+		txnManager:                txnManager,
+		userRepo:                  userRepo,
+		addressRepo:               addressRepo,
+		stateRepo:                 stateRepo,
+		cityRepo:                  cityRepo,
+		pinCodeRepo:               pinCodeRepo,
+		avatarRepo:                avatarRepo,
+		gcsService:                gcsService,
+		questionAnswerRepo:        questionAnswerRepo,
+		questionMasterRepo:        questionMasterRepo,
+		questionMasterLanguageRepo: questionMasterLanguageRepo,
+		optionMasterRepo:          optionMasterRepo,
+		optionMasterLanguageRepo:  optionMasterLanguageRepo,
 	}
 }
 
@@ -616,6 +635,314 @@ func (s *userService) DeleteUserAddress(ctx context.Context, userID string, addr
 					return err
 				}
 			}
+		}
+	}
+
+	s.txnManager.CommitTxn(tx)
+	return nil
+}
+
+func (s *userService) GetQuestions(ctx context.Context, userID string, languageID int) ([]dtos.QuestionResponseDTO, error) {
+	tx, err := s.txnManager.StartTxn()
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, err
+	}
+	defer s.txnManager.RollbackOnPanic(tx)
+
+	// Step 1: Fetch all active questions from question_master
+	questions, err := s.questionMasterRepo.FindActive(ctx, tx)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to get questions: %v", err)
+	}
+
+	// Step 2: Get question details from question_master_language table based on question ID and language ID
+	questionLanguageMap := make(map[int]string)
+	for _, question := range questions {
+		questionLanguage, err := s.questionMasterLanguageRepo.FindByQuestionMasterIDAndLanguageID(ctx, tx, question.ID, languageID)
+		if err != nil {
+			s.txnManager.AbortTxn(tx)
+			return nil, fmt.Errorf("failed to get question language text for question %d: %v", question.ID, err)
+		}
+		if questionLanguage != nil {
+			questionLanguageMap[question.ID] = questionLanguage.QuestionText
+		} else {
+			questionLanguageMap[question.ID] = question.QuestionText // fallback to original text
+		}
+	}
+
+	// Step 3: Fetch options from option_master table using question IDs
+	questionIDs := make([]int, 0)
+	for _, q := range questions {
+		questionIDs = append(questionIDs, q.ID)
+	}
+	options, err := s.optionMasterRepo.FindByQuestionIDs(ctx, tx, questionIDs)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to get options: %v", err)
+	}
+
+	// Step 4: Fetch option details from option_master_language table based on option ID and language ID
+	optionLanguageMap := make(map[int]string)
+	optionIDs := make([]int, 0)
+	for _, opt := range options {
+		optionIDs = append(optionIDs, opt.ID)
+	}
+	optionLanguages, err := s.optionMasterLanguageRepo.FindByOptionMasterIDsAndLanguageID(ctx, tx, optionIDs, languageID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to get option language texts: %v", err)
+	}
+	for _, optLang := range optionLanguages {
+		optionLanguageMap[optLang.OptionMasterID] = optLang.OptionText
+	}
+
+	// Step 5: Fetch all user questions from user_question_answer table
+	userAnswers, err := s.questionAnswerRepo.FindByUserID(ctx, tx, userID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to get user answers: %v", err)
+	}
+
+	// Create a map of user answers for quick lookup
+	userAnswerMap := make(map[int]entities.UserQuestionAnswer)
+	for _, ans := range userAnswers {
+		userAnswerMap[ans.QuestionMasterID] = ans
+	}
+
+	// Step 6: Fill options accordingly and construct response
+	response := make([]dtos.QuestionResponseDTO, 0)
+	for _, question := range questions {
+		// Get question text (language-specific or fallback)
+		questionText := questionLanguageMap[question.ID]
+
+		// Get options for this question
+		var questionOptions []dtos.OptionDTO
+		for _, opt := range options {
+			if opt.QuestionMasterID == question.ID {
+				// Get option text (language-specific or fallback)
+				optionText := opt.OptionText
+				if langText, exists := optionLanguageMap[opt.ID]; exists {
+					optionText = langText
+				}
+
+				questionOptions = append(questionOptions, dtos.OptionDTO{
+					ID:           opt.ID,
+					OptionText:   optionText,
+					DisplayOrder: opt.DisplayOrder,
+				})
+			}
+		}
+
+		// Check if user has answered this question
+		var selectedOption *int
+		if userAnswer, exists := userAnswerMap[question.ID]; exists {
+			selectedOption = &userAnswer.OptionID
+		}
+
+		response = append(response, dtos.QuestionResponseDTO{
+			ID:             question.ID,
+			QuestionText:   questionText,
+			LanguageID:     languageID,
+			QuesPoint:      question.QuesPoint,
+			Options:        questionOptions,
+			SelectedOption: selectedOption,
+		})
+	}
+
+	s.txnManager.CommitTxn(tx)
+	return response, nil
+}
+
+func (s *userService) GetQuestionIDByText(ctx context.Context, questionText string, languageID int) (int, error) {
+	tx, err := s.txnManager.StartTxn()
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return 0, err
+	}
+	defer s.txnManager.RollbackOnPanic(tx)
+
+	questionLanguage, err := s.questionMasterLanguageRepo.FindByQuestionTextAndLanguageID(ctx, tx, questionText, languageID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return 0, fmt.Errorf("failed to search question in language table: %v", err)
+	}
+	if questionLanguage != nil {
+		s.txnManager.CommitTxn(tx)
+		return questionLanguage.QuestionMasterID, nil
+	}
+
+	question, err := s.questionMasterRepo.FindByQuestionTextAndLanguageID(ctx, tx, questionText, languageID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return 0, fmt.Errorf("failed to search question in master table: %v", err)
+	}
+	if question != nil {
+		s.txnManager.CommitTxn(tx)
+		return question.ID, nil
+	}
+
+	s.txnManager.AbortTxn(tx)
+	return 0, fmt.Errorf("question not found")
+}
+
+func (s *userService) GetQuestionByID(ctx context.Context, questionID int, languageID int) (*dtos.QuestionResponseDTO, error) {
+	tx, err := s.txnManager.StartTxn()
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, err
+	}
+	defer s.txnManager.RollbackOnPanic(tx)
+
+	question, err := s.questionMasterRepo.FindByIDTx(ctx, tx, questionID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to get question: %v", err)
+	}
+	if question == nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("question not found")
+	}
+
+	questionLanguage, err := s.questionMasterLanguageRepo.FindByQuestionMasterIDAndLanguageID(ctx, tx, question.ID, languageID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to get question language text: %v", err)
+	}
+
+	questionText := question.QuestionText
+	if questionLanguage != nil {
+		questionText = questionLanguage.QuestionText
+	}
+
+	options, err := s.optionMasterRepo.FindByQuestionID(ctx, tx, questionID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to get options: %v", err)
+	}
+
+	optionIDs := make([]int, 0)
+	for _, opt := range options {
+		optionIDs = append(optionIDs, opt.ID)
+	}
+
+	optionLanguages, err := s.optionMasterLanguageRepo.FindByOptionMasterIDsAndLanguageID(ctx, tx, optionIDs, languageID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to get option language texts: %v", err)
+	}
+
+	optionLanguageMap := make(map[int]string)
+	for _, optLang := range optionLanguages {
+		optionLanguageMap[optLang.OptionMasterID] = optLang.OptionText
+	}
+
+	var questionOptions []dtos.OptionDTO
+	for _, opt := range options {
+		optionText := opt.OptionText
+		if langText, exists := optionLanguageMap[opt.ID]; exists {
+			optionText = langText
+		}
+
+		questionOptions = append(questionOptions, dtos.OptionDTO{
+			ID:           opt.ID,
+			OptionText:   optionText,
+			DisplayOrder: opt.DisplayOrder,
+		})
+	}
+
+	response := &dtos.QuestionResponseDTO{
+		ID:           question.ID,
+		QuestionText: questionText,
+		LanguageID:   languageID,
+		QuesPoint:    question.QuesPoint,
+		Options:      questionOptions,
+	}
+
+	s.txnManager.CommitTxn(tx)
+	return response, nil
+}
+
+func (s *userService) AnswerQuestions(ctx context.Context, userID string, answers []dtos.AnswerQuestionsRequestDTO) error {
+	tx, err := s.txnManager.StartTxn()
+	if err != nil {
+		return err
+	}
+	defer s.txnManager.RollbackOnPanic(tx)
+
+	// First verify if user exists
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	user, err := s.userRepo.FindById(ctx, tx, userUUID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return err
+	}
+
+	if user == nil {
+		s.txnManager.AbortTxn(tx)
+		return fmt.Errorf("user not found")
+	}
+
+	// Check existing answers before creating new ones
+	existingAnswers, err := s.questionAnswerRepo.FindByUserID(ctx, tx, userID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return fmt.Errorf("failed to get existing answers: %v", err)
+	}
+
+	// Create a map of existing answers for quick lookup
+	existingAnswerMap := make(map[int]entities.UserQuestionAnswer)
+	for _, ans := range existingAnswers {
+		existingAnswerMap[ans.QuestionMasterID] = ans
+	}
+
+	// Process each answer
+	now := time.Now()
+	newAnswers := make([]entities.UserQuestionAnswer, 0)
+	updatedAnswers := make([]entities.UserQuestionAnswer, 0)
+
+	for _, answer := range answers {
+		if existingAnswer, exists := existingAnswerMap[answer.QuestionID]; exists {
+			// Question already answered, just update the option ID
+			existingAnswer.OptionID = answer.AnswerID
+			existingAnswer.LastModifiedBy = &userID
+			existingAnswer.LastModifiedOn = &now
+			updatedAnswers = append(updatedAnswers, existingAnswer)
+		} else {
+			// New answer, create it
+			newAnswer := entities.UserQuestionAnswer{
+				UserID:           userID,
+				QuestionMasterID: answer.QuestionID,
+				OptionID:         answer.AnswerID,
+				SelectedAnswer:   true,
+				IsActive:         true,
+				IsDeleted:        false,
+				CreatedBy:        userID,
+				CreatedOn:        now,
+			}
+			newAnswers = append(newAnswers, newAnswer)
+		}
+	}
+
+	// Update existing answers
+	for _, answer := range updatedAnswers {
+		if err := s.questionAnswerRepo.Update(ctx, tx, &answer); err != nil {
+			s.txnManager.AbortTxn(tx)
+			return fmt.Errorf("failed to update existing answer: %v", err)
+		}
+	}
+
+	// Save new answers
+	if len(newAnswers) > 0 {
+		if err := s.questionAnswerRepo.CreateMany(ctx, tx, newAnswers); err != nil {
+			s.txnManager.AbortTxn(tx)
+			return fmt.Errorf("failed to save new answers: %v", err)
 		}
 	}
 

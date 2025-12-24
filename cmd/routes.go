@@ -32,6 +32,7 @@ func (s *Server) setupAPIRoutes(router *gin.Engine) {
 		s.repositories.user,
 		s.handlers.profile,
 		s.handlers.address,
+		s.handlers.question,
 	)
 
 	routes.SetupQuestionRoutes(
@@ -48,7 +49,12 @@ func (s *Server) setupAPIRoutes(router *gin.Engine) {
 		s.handlers.thunderSeat,
 	)
 
-	routes.SetupWinnerRoutes(api, s.handlers.winner)
+	routes.SetupWinnerRoutes(
+		api,
+		s.db,
+		s.repositories.user,
+		s.handlers.winner,
+	)
 
 	routes.SetupContestWeekRoutes(
 		api,

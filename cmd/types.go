@@ -24,18 +24,24 @@ type Server struct {
 }
 
 type Repositories struct {
-	user         repository.UserRepository
-	otp          repository.OTPRepository
-	refreshToken repository.RefreshTokenRepository
-	address      repository.GenericRepository[entities.Address]
-	avatar       repository.GenericRepository[entities.Avatar]
-	state        repository.StateRepository
-	city         repository.CityRepository
-	pinCode      repository.PinCodeRepository
-	question     repository.QuestionRepository
-	thunderSeat  repository.ThunderSeatRepository
-	winner       repository.WinnerRepository
-	contestWeek  repository.ContestWeekRepository
+	user                   repository.UserRepository
+	otp                    repository.OTPRepository
+	refreshToken           repository.RefreshTokenRepository
+	address                repository.GenericRepository[entities.Address]
+	avatar                 repository.GenericRepository[entities.Avatar]
+	state                  repository.StateRepository
+	city                   repository.CityRepository
+	pinCode                repository.PinCodeRepository
+	question               repository.QuestionRepository
+	questionMasterLanguage repository.QuestionMasterLanguageRepository
+	optionMaster           repository.OptionMasterRepository
+	optionMasterLanguage   repository.OptionMasterLanguageRepository
+	userQuestionAnswer     repository.UserQuestionAnswerRepository
+	thunderSeat            repository.ThunderSeatRepository
+	winner                 repository.WinnerRepository
+	contestWeek            repository.ContestWeekRepository
+	userAadharCard         repository.UserAadharCardRepository
+	userFriend             repository.UserFriendRepository
 }
 
 type Handlers struct {
