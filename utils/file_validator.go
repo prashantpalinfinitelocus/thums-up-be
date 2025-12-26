@@ -39,12 +39,28 @@ var (
 		"video/x-flv",     // .flv
 	}
 
+	AllowedImageTypes = []string{
+		"image/jpeg",      // .jpg, .jpeg
+		"image/jpg",       // .jpg
+		"image/png",       // .png
+		"image/gif",       // .gif
+		"image/webp",      // .webp
+		"image/svg+xml",   // .svg
+		"image/bmp",       // .bmp
+		"image/x-icon",    // .ico
+		"image/vnd.microsoft.icon", // .ico
+	}
+
 	AllowedAudioExtensions = []string{
 		".mp3", ".wav", ".aac", ".m4a", ".ogg", ".webm", ".flac",
 	}
 
 	AllowedVideoExtensions = []string{
 		".mp4", ".mpeg", ".mpg", ".mov", ".avi", ".webm", ".ogv", ".3gp", ".3g2", ".wmv", ".flv",
+	}
+
+	AllowedImageExtensions = []string{
+		".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".ico",
 	}
 )
 
@@ -143,6 +159,61 @@ func GetMediaType(file *multipart.FileHeader) string {
 	}
 
 	return "unknown"
+}
+
+func ValidateImageFile(file *multipart.FileHeader) error {
+	if file == nil {
+		return &FileValidationError{
+			Message: "Image file is required",
+		}
+	}
+
+	// Check file size
+	if file.Size > MaxFileSize {
+		return &FileValidationError{
+			Message: fmt.Sprintf("File size exceeds maximum allowed size of 100MB. Current size: %.2fMB", float64(file.Size)/(1024*1024)),
+		}
+	}
+
+	// Check if file size is 0
+	if file.Size == 0 {
+		return &FileValidationError{
+			Message: "File is empty",
+		}
+	}
+
+	// Get content type
+	contentType := file.Header.Get("Content-Type")
+
+	// Get file extension
+	filename := strings.ToLower(file.Filename)
+
+	// Check if it's a valid image file
+	if !isValidImageFile(contentType, filename) {
+		return &FileValidationError{
+			Message: "Invalid file type. Only image files are allowed. Supported formats: jpg, jpeg, png, gif, webp, svg, bmp, ico",
+		}
+	}
+
+	return nil
+}
+
+func isValidImageFile(contentType, filename string) bool {
+	// Check by content type
+	for _, allowedType := range AllowedImageTypes {
+		if contentType == allowedType {
+			return true
+		}
+	}
+
+	// Check by extension as fallback
+	for _, ext := range AllowedImageExtensions {
+		if strings.HasSuffix(filename, ext) {
+			return true
+		}
+	}
+
+	return false
 }
 
 

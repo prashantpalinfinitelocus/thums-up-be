@@ -123,18 +123,6 @@ definitions:
       winner_count:
         type: integer
     type: object
-  dtos.CreateAvatarRequestDTO:
-    properties:
-      image_key:
-        type: string
-      is_published:
-        type: boolean
-      name:
-        type: string
-    required:
-    - image_key
-    - name
-    type: object
   dtos.CreateOptionDTO:
     properties:
       display_order:
@@ -201,6 +189,11 @@ definitions:
     required:
     - language_id
     - question_text
+    type: object
+  dtos.OTPResponse:
+    properties:
+      otp:
+        type: string
     type: object
   dtos.OptionDTO:
     properties:
@@ -564,7 +557,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send a one-time password to the provided phone number for authentication
+      description: Send a one-time password to the provided phone number for authentication.
+        Returns the OTP in the response (for development/testing purposes when SMS
+        service is not configured).
       parameters:
       - description: Phone number
         in: body
@@ -578,9 +573,18 @@ paths:
         "200":
           description: OTP sent successfully
           schema:
-            $ref: '#/definitions/dtos.SuccessResponse'
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.OTPResponse'
+              type: object
         "400":
           description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "429":
+          description: Too many OTP requests
           schema:
             $ref: '#/definitions/dtos.ErrorResponse'
         "500":
@@ -704,15 +708,23 @@ paths:
       - Avatars
     post:
       consumes:
-      - application/json
-      description: Create a new avatar with name and image key. Requires authentication.
+      - multipart/form-data
+      description: Create a new avatar with name and image file. Requires authentication.
       parameters:
-      - description: Avatar details
-        in: body
-        name: request
+      - description: Avatar name
+        in: formData
+        name: name
         required: true
-        schema:
-          $ref: '#/definitions/dtos.CreateAvatarRequestDTO'
+        type: string
+      - description: Avatar image file (jpg, jpeg, png, gif, webp, svg, bmp, ico)
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Whether the avatar is published
+        in: formData
+        name: is_published
+        type: boolean
       produces:
       - application/json
       responses:

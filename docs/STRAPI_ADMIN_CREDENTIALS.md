@@ -120,3 +120,8 @@ docker exec thums_up_postgres_strapi psql -U prashantpal -d strapi-cms -c "SELEC
 
 
 
+
+
+
+
+

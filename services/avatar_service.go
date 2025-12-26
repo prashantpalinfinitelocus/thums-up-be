@@ -3,8 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
+	"mime/multipart"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/dtos"
@@ -14,7 +16,7 @@ import (
 )
 
 type AvatarService interface {
-	CreateAvatar(ctx context.Context, req dtos.CreateAvatarRequestDTO, createdBy string) (*dtos.AvatarResponseDTO, error)
+	CreateAvatar(ctx context.Context, req dtos.CreateAvatarRequestDTO, imageFile *multipart.FileHeader, createdBy string) (*dtos.AvatarResponseDTO, error)
 	GetAllAvatars(ctx context.Context, isPublished *bool) ([]dtos.AvatarResponseDTO, error)
 	GetAvatarByID(ctx context.Context, avatarID int) (*dtos.AvatarResponseDTO, error)
 }
@@ -37,17 +39,26 @@ func NewAvatarService(
 	}
 }
 
-func (s *avatarService) CreateAvatar(ctx context.Context, req dtos.CreateAvatarRequestDTO, createdBy string) (*dtos.AvatarResponseDTO, error) {
+func (s *avatarService) CreateAvatar(ctx context.Context, req dtos.CreateAvatarRequestDTO, imageFile *multipart.FileHeader, createdBy string) (*dtos.AvatarResponseDTO, error) {
 	tx, err := s.txnManager.StartTxn()
 	if err != nil {
 		return nil, err
 	}
 	defer s.txnManager.RollbackOnPanic(tx)
 
+	// Upload image file to GCS
+	folderPath := fmt.Sprintf("avatars/%s", createdBy)
+	imageURL, imageKey, err := s.gcsService.UploadFile(ctx, imageFile, folderPath)
+	if err != nil {
+		log.WithError(err).Error("Failed to upload avatar image to GCS")
+		s.txnManager.AbortTxn(tx)
+		return nil, fmt.Errorf("failed to upload avatar image: %w", err)
+	}
+
 	now := time.Now()
 	avatar := &entities.Avatar{
 		Name:        req.Name,
-		ImageKey:    req.ImageKey,
+		ImageKey:    imageKey,
 		IsPublished: req.IsPublished,
 		IsActive:    true,
 		IsDeleted:   false,
@@ -62,10 +73,12 @@ func (s *avatarService) CreateAvatar(ctx context.Context, req dtos.CreateAvatarR
 
 	if err := s.avatarRepo.Create(ctx, tx, avatar); err != nil {
 		s.txnManager.AbortTxn(tx)
+		// Cleanup uploaded file if database operation fails
+		if deleteErr := s.gcsService.DeleteFile(ctx, imageURL); deleteErr != nil {
+			log.WithError(deleteErr).Error("Failed to cleanup uploaded avatar image after database error")
+		}
 		return nil, fmt.Errorf("failed to create avatar: %w", err)
 	}
-
-	imageURL := s.gcsService.GetPublicURL(avatar.ImageKey)
 
 	response := &dtos.AvatarResponseDTO{
 		ID:             avatar.ID,

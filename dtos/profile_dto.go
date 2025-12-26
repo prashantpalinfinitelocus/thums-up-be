@@ -5,9 +5,8 @@ import (
 )
 
 type CreateAvatarRequestDTO struct {
-	Name        string `json:"name" binding:"required"`
-	ImageKey    string `json:"image_key" binding:"required"`
-	IsPublished bool   `json:"is_published"`
+	Name        string `form:"name" binding:"required"`
+	IsPublished bool   `form:"is_published"`
 }
 
 type AvatarResponseDTO struct {

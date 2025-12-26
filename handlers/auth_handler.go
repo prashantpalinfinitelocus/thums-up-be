@@ -25,13 +25,14 @@ func NewAuthHandler(authService services.AuthService) *AuthHandler {
 
 // SendOTP godoc
 // @Summary Send OTP to phone number
-// @Description Send a one-time password to the provided phone number for authentication
+// @Description Send a one-time password to the provided phone number for authentication. Returns the OTP in the response (for development/testing purposes when SMS service is not configured).
 // @Tags Authentication
 // @Accept json
 // @Produce json
 // @Param request body dtos.SendOTPRequest true "Phone number"
-// @Success 200 {object} dtos.SuccessResponse "OTP sent successfully"
+// @Success 200 {object} dtos.SuccessResponse{data=dtos.OTPResponse} "OTP sent successfully"
 // @Failure 400 {object} dtos.ErrorResponse "Validation failed"
+// @Failure 429 {object} dtos.ErrorResponse "Too many OTP requests"
 // @Failure 500 {object} dtos.ErrorResponse "Failed to send OTP"
 // @Router /auth/send-otp [post]
 func (h *AuthHandler) SendOTP(c *gin.Context) {
@@ -46,7 +47,8 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 		return
 	}
 
-	if err := h.authService.SendOTP(c.Request.Context(), req.PhoneNumber); err != nil {
+	otp, err := h.authService.SendOTP(c.Request.Context(), req.PhoneNumber)
+	if err != nil {
 		var appErr *errors.AppError
 		if stderrors.As(err, &appErr) {
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
@@ -66,7 +68,7 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, dtos.SuccessResponse{
 		Success: true,
 		Message: "OTP sent successfully",
-		Data:    nil,
+		Data:    dtos.OTPResponse{OTP: otp},
 	})
 }
 

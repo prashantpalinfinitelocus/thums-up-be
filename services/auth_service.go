@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	stderrors "errors"
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -22,7 +21,7 @@ import (
 )
 
 type AuthService interface {
-	SendOTP(ctx context.Context, phoneNumber string) error
+	SendOTP(ctx context.Context, phoneNumber string) (string, error)
 	VerifyOTP(ctx context.Context, phoneNumber string, otp string) (*dtos.TokenResponse, error)
 	SignUp(ctx context.Context, req dtos.SignUpRequest) (*dtos.TokenResponse, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*dtos.TokenResponse, error)
@@ -54,19 +53,19 @@ func NewAuthService(
 	}
 }
 
-func (s *authService) SendOTP(ctx context.Context, phoneNumber string) error {
-	formattedPhone := utils.FormatPhoneNumber(phoneNumber)
+func (s *authService) SendOTP(ctx context.Context, phoneNumber string) (string, error) {
+	// formattedPhone := utils.FormatPhoneNumber(phoneNumber)
 
 	count, err := s.otpRepo.CountRecentAttempts(ctx, s.txnManager.GetDB(), phoneNumber,
 		time.Duration(constants.OTP_COOLDOWN_MINUTES)*time.Minute)
 	if err == nil && count >= constants.MAX_OTP_ATTEMPTS {
-		return errors.NewTooManyRequestsError(errors.ErrOTPTooManyRequests, nil)
+		return "", errors.NewTooManyRequestsError(errors.ErrOTPTooManyRequests, nil)
 	}
 
 	otp, err := utils.GenerateOTP(constants.OTP_LENGTH)
 	if err != nil {
 		log.WithError(err).Error("Failed to generate OTP")
-		return errors.NewInternalServerError(errors.ErrOTPSendFailed, err)
+		return "", errors.NewInternalServerError(errors.ErrOTPSendFailed, err)
 	}
 	expiresAt := time.Now().Add(time.Duration(constants.OTP_EXPIRY_MINUTES) * time.Minute)
 
@@ -79,18 +78,18 @@ func (s *authService) SendOTP(ctx context.Context, phoneNumber string) error {
 
 	if err := s.otpRepo.Create(ctx, s.txnManager.GetDB(), otpLog); err != nil {
 		log.WithError(err).Error("Failed to save OTP")
-		return errors.NewInternalServerError(errors.ErrOTPSendFailed, err)
+		return "", errors.NewInternalServerError(errors.ErrOTPSendFailed, err)
 	}
 
-	message := fmt.Sprintf("Your Thums Up verification code is: %s. Valid for %d minutes.",
-		otp, constants.OTP_EXPIRY_MINUTES)
+	// message := fmt.Sprintf("Your Thums Up verification code is: %s. Valid for %d minutes.",
+	// 	otp, constants.OTP_EXPIRY_MINUTES)
 
-	if err := s.infobipClient.SendSMS(ctx, formattedPhone, message); err != nil {
-		log.WithError(err).Error("Failed to send SMS")
-		return errors.NewInternalServerError(errors.ErrOTPSMSFailed, err)
-	}
+	// if err := s.infobipClient.SendSMS(ctx, formattedPhone, message); err != nil {
+	// 	log.WithError(err).Error("Failed to send SMS")
+	// 	return "", errors.NewInternalServerError(errors.ErrOTPSMSFailed, err)
+	// }
 
-	return nil
+	return otp, nil
 }
 
 func (s *authService) VerifyOTP(ctx context.Context, phoneNumber string, otp string) (*dtos.TokenResponse, error) {
@@ -114,7 +113,7 @@ func (s *authService) VerifyOTP(ctx context.Context, phoneNumber string, otp str
 		if err != nil || !isValid {
 			// Handle failed verification in a separate goroutine with its own transaction
 			go s.handleFailedOTPAttempt(context.Background(), phoneNumber)
-			
+
 			if err != nil {
 				return errors.NewUnauthorizedError(errors.ErrOTPInvalidOrExpired, err)
 			}

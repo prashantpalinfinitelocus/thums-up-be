@@ -13,6 +13,7 @@ import (
 	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
 	"github.com/Infinite-Locus-Product/thums_up_backend/errors"
 	"github.com/Infinite-Locus-Product/thums_up_backend/services"
+	"github.com/Infinite-Locus-Product/thums_up_backend/utils"
 )
 
 type AvatarHandler struct {
@@ -27,12 +28,14 @@ func NewAvatarHandler(avatarService services.AvatarService) *AvatarHandler {
 
 // CreateAvatar godoc
 // @Summary Create a new avatar
-// @Description Create a new avatar with name and image key. Requires authentication.
+// @Description Create a new avatar with name and image file. Requires authentication.
 // @Tags Avatars
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
 // @Security Bearer
-// @Param request body dtos.CreateAvatarRequestDTO true "Avatar details"
+// @Param name formData string true "Avatar name"
+// @Param image formData file true "Avatar image file (jpg, jpeg, png, gif, webp, svg, bmp, ico)"
+// @Param is_published formData bool false "Whether the avatar is published"
 // @Success 201 {object} dtos.AvatarResponseDTO "Avatar created successfully"
 // @Failure 400 {object} map[string]string "Validation failed"
 // @Failure 401 {object} map[string]string "Unauthorized"
@@ -51,13 +54,27 @@ func (h *AvatarHandler) CreateAvatar(ctx *gin.Context) {
 		return
 	}
 
+	// Bind form data
 	var req dtos.CreateAvatarRequestDTO
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("%s: %v", errors.ErrInvalidRequestBody, err)})
 		return
 	}
 
-	avatar, err := h.avatarService.CreateAvatar(ctx, req, userEntity.ID)
+	// Get image file
+	imageFile, err := ctx.FormFile("image")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
+		return
+	}
+
+	// Validate image file
+	if err := utils.ValidateImageFile(imageFile); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	avatar, err := h.avatarService.CreateAvatar(ctx, req, imageFile, userEntity.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create avatar: %v", err)})
 		return

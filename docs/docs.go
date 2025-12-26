@@ -160,7 +160,7 @@ const docTemplate = `{
         },
         "/auth/send-otp": {
             "post": {
-                "description": "Send a one-time password to the provided phone number for authentication",
+                "description": "Send a one-time password to the provided phone number for authentication. Returns the OTP in the response (for development/testing purposes when SMS service is not configured).",
                 "consumes": [
                     "application/json"
                 ],
@@ -186,11 +186,29 @@ const docTemplate = `{
                     "200": {
                         "description": "OTP sent successfully",
                         "schema": {
-                            "$ref": "#/definitions/dtos.SuccessResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.OTPResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "Validation failed",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many OTP requests",
                         "schema": {
                             "$ref": "#/definitions/dtos.ErrorResponse"
                         }
@@ -386,9 +404,9 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Create a new avatar with name and image key. Requires authentication.",
+                "description": "Create a new avatar with name and image file. Requires authentication.",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -399,13 +417,24 @@ const docTemplate = `{
                 "summary": "Create a new avatar",
                 "parameters": [
                     {
-                        "description": "Avatar details",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dtos.CreateAvatarRequestDTO"
-                        }
+                        "type": "string",
+                        "description": "Avatar name",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Avatar image file (jpg, jpeg, png, gif, webp, svg, bmp, ico)",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the avatar is published",
+                        "name": "is_published",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -2179,24 +2208,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dtos.CreateAvatarRequestDTO": {
-            "type": "object",
-            "required": [
-                "image_key",
-                "name"
-            ],
-            "properties": {
-                "image_key": {
-                    "type": "string"
-                },
-                "is_published": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
         "dtos.CreateOptionDTO": {
             "type": "object",
             "properties": {
@@ -2295,6 +2306,14 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "question_text": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.OTPResponse": {
+            "type": "object",
+            "properties": {
+                "otp": {
                     "type": "string"
                 }
             }
