@@ -133,7 +133,6 @@ func (s *questionService) CreateQuestions(ctx context.Context, userID string, re
 				return fmt.Errorf("question with id %d not found", *qDTO.ID)
 			}
 			q.QuestionText = qDTO.QuestionText
-			q.QuesPoint = qDTO.QuesPoint
 			q.LanguageID = qDTO.LanguageID
 			q.IsActive = isActive
 
@@ -149,7 +148,6 @@ func (s *questionService) CreateQuestions(ctx context.Context, userID string, re
 		} else {
 			q := &entities.QuestionMaster{
 				QuestionText: qDTO.QuestionText,
-				QuesPoint:    qDTO.QuesPoint,
 				LanguageID:   qDTO.LanguageID,
 				IsActive:     isActive,
 				IsDeleted:    false,

@@ -13,7 +13,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "107.178.113.26:8080",
     "basePath": "/api/v1",
     "paths": {
         "/admin/winners/select": {

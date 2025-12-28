@@ -29,19 +29,19 @@ type UserService interface {
 }
 
 type userService struct {
-	txnManager                  *utils.TransactionManager
-	userRepo                    repository.UserRepository
-	addressRepo                 repository.GenericRepository[entities.Address]
-	stateRepo                   repository.StateRepository
-	cityRepo                    repository.CityRepository
-	pinCodeRepo                 repository.PinCodeRepository
-	avatarRepo                  repository.GenericRepository[entities.Avatar]
-	gcsService                  utils.GCSService
-	questionAnswerRepo          repository.UserQuestionAnswerRepository
-	questionMasterRepo          repository.QuestionRepository
-	questionMasterLanguageRepo   repository.QuestionMasterLanguageRepository
-	optionMasterRepo            repository.OptionMasterRepository
-	optionMasterLanguageRepo    repository.OptionMasterLanguageRepository
+	txnManager                 *utils.TransactionManager
+	userRepo                   repository.UserRepository
+	addressRepo                repository.GenericRepository[entities.Address]
+	stateRepo                  repository.StateRepository
+	cityRepo                   repository.CityRepository
+	pinCodeRepo                repository.PinCodeRepository
+	avatarRepo                 repository.GenericRepository[entities.Avatar]
+	gcsService                 utils.GCSService
+	questionAnswerRepo         repository.UserQuestionAnswerRepository
+	questionMasterRepo         repository.QuestionRepository
+	questionMasterLanguageRepo repository.QuestionMasterLanguageRepository
+	optionMasterRepo           repository.OptionMasterRepository
+	optionMasterLanguageRepo   repository.OptionMasterLanguageRepository
 }
 
 func NewUserService(
@@ -60,19 +60,19 @@ func NewUserService(
 	optionMasterLanguageRepo repository.OptionMasterLanguageRepository,
 ) UserService {
 	return &userService{
-		txnManager:                txnManager,
-		userRepo:                  userRepo,
-		addressRepo:               addressRepo,
-		stateRepo:                 stateRepo,
-		cityRepo:                  cityRepo,
-		pinCodeRepo:               pinCodeRepo,
-		avatarRepo:                avatarRepo,
-		gcsService:                gcsService,
-		questionAnswerRepo:        questionAnswerRepo,
-		questionMasterRepo:        questionMasterRepo,
+		txnManager:                 txnManager,
+		userRepo:                   userRepo,
+		addressRepo:                addressRepo,
+		stateRepo:                  stateRepo,
+		cityRepo:                   cityRepo,
+		pinCodeRepo:                pinCodeRepo,
+		avatarRepo:                 avatarRepo,
+		gcsService:                 gcsService,
+		questionAnswerRepo:         questionAnswerRepo,
+		questionMasterRepo:         questionMasterRepo,
 		questionMasterLanguageRepo: questionMasterLanguageRepo,
-		optionMasterRepo:          optionMasterRepo,
-		optionMasterLanguageRepo:  optionMasterLanguageRepo,
+		optionMasterRepo:           optionMasterRepo,
+		optionMasterLanguageRepo:   optionMasterLanguageRepo,
 	}
 }
 
@@ -745,7 +745,6 @@ func (s *userService) GetQuestions(ctx context.Context, userID string, languageI
 			ID:             question.ID,
 			QuestionText:   questionText,
 			LanguageID:     languageID,
-			QuesPoint:      question.QuesPoint,
 			Options:        questionOptions,
 			SelectedOption: selectedOption,
 		})
@@ -856,7 +855,6 @@ func (s *userService) GetQuestionByID(ctx context.Context, questionID int, langu
 		ID:           question.ID,
 		QuestionText: questionText,
 		LanguageID:   languageID,
-		QuesPoint:    question.QuesPoint,
 		Options:      questionOptions,
 	}
 
