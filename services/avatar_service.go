@@ -40,6 +40,10 @@ func NewAvatarService(
 }
 
 func (s *avatarService) CreateAvatar(ctx context.Context, req dtos.CreateAvatarRequestDTO, imageFile *multipart.FileHeader, createdBy string) (*dtos.AvatarResponseDTO, error) {
+	if s.gcsService == nil {
+		return nil, fmt.Errorf("GCS service is not initialized")
+	}
+
 	tx, err := s.txnManager.StartTxn()
 	if err != nil {
 		return nil, err
@@ -120,7 +124,12 @@ func (s *avatarService) GetAllAvatars(ctx context.Context, isPublished *bool) ([
 
 	response := make([]dtos.AvatarResponseDTO, 0, len(avatars))
 	for _, avatar := range avatars {
-		imageURL := s.gcsService.GetPublicURL(avatar.ImageKey)
+		var imageURL string
+		if s.gcsService != nil {
+			// Reconstruct full path: avatars/{userID}/{filename}
+			fullPath := fmt.Sprintf("avatars/%s/%s", avatar.CreatedBy, avatar.ImageKey)
+			imageURL = s.gcsService.GetPublicURL(fullPath)
+		}
 		response = append(response, dtos.AvatarResponseDTO{
 			ID:             avatar.ID,
 			Name:           avatar.Name,
@@ -161,7 +170,12 @@ func (s *avatarService) GetAvatarByID(ctx context.Context, avatarID int) (*dtos.
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	imageURL := s.gcsService.GetPublicURL(avatar.ImageKey)
+	var imageURL string
+	if s.gcsService != nil {
+		// Reconstruct full path: avatars/{userID}/{filename}
+		fullPath := fmt.Sprintf("avatars/%s/%s", avatar.CreatedBy, avatar.ImageKey)
+		imageURL = s.gcsService.GetPublicURL(fullPath)
+	}
 
 	response := &dtos.AvatarResponseDTO{
 		ID:             avatar.ID,
