@@ -27,6 +27,7 @@ func RunDBMigrations(db *gorm.DB) error {
 		&entities.City{},
 		&entities.PinCode{},
 		&entities.QuestionMaster{},
+		&entities.OptionMaster{},
 		&entities.ThunderSeat{},
 		&entities.ThunderSeatWinner{},
 		&entities.ContestWeek{},
