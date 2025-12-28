@@ -94,12 +94,21 @@ func (s *Server) initVendors() {
 	log.Info("Infobip client initialized")
 
 	if err := s.initGCSService(); err != nil {
-		log.Warnf("Failed to initialize GCS service: %v", err)
+		log.Fatalf("Failed to initialize GCS service (required): %v", err)
 	}
 }
 
 func (s *Server) initGCSService() error {
+	if s.cfg.GcsConfig.BucketName == "" {
+		return fmt.Errorf("GCP_BUCKET_NAME is not set in configuration")
+	}
+	if s.cfg.GcsConfig.ProjectID == "" {
+		return fmt.Errorf("GCP_PROJECT_ID is not set in configuration")
+	}
+
 	credPath := "./gcp-service-account.json"
+	log.Infof("Initializing GCS service with bucket: %s, project: %s", s.cfg.GcsConfig.BucketName, s.cfg.GcsConfig.ProjectID)
+
 	gcsService, err := utils.NewGCSServiceWithCredentials(
 		s.cfg.GcsConfig.BucketName,
 		s.cfg.GcsConfig.ProjectID,
@@ -226,7 +235,7 @@ func (s *Server) initHandlers() {
 		avatar:      handlers.NewAvatarHandler(avatarService),
 		question:    handlers.NewQuestionHandler(questionService, userService),
 		thunderSeat: handlers.NewThunderSeatHandler(thunderSeatService),
-		winner:      handlers.NewWinnerHandler(winnerService),
+		winner:      handlers.NewWinnerHandler(winnerService, s.gcsService),
 		contestWeek: handlers.NewContestWeekHandler(contestWeekService),
 	}
 
