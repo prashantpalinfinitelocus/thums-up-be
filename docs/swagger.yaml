@@ -401,49 +401,6 @@ definitions:
     - otp
     - phone_number
     type: object
-  dtos.WinnerFriendDTO:
-    properties:
-      aadhar_back:
-        type: string
-      aadhar_front:
-        type: string
-      aadhar_number:
-        type: string
-      name:
-        type: string
-      uuid:
-        type: string
-    required:
-    - aadhar_back
-    - aadhar_front
-    - aadhar_number
-    - name
-    - uuid
-    type: object
-  dtos.WinnerKYCRequest:
-    properties:
-      aadhar_back:
-        type: string
-      aadhar_front:
-        type: string
-      aadhar_number:
-        type: string
-      friends:
-        items:
-          $ref: '#/definitions/dtos.WinnerFriendDTO'
-        maxItems: 10
-        type: array
-      user_email:
-        type: string
-      user_name:
-        type: string
-    required:
-    - aadhar_back
-    - aadhar_front
-    - aadhar_number
-    - user_email
-    - user_name
-    type: object
   dtos.WinnerResponse:
     properties:
       created_on:
@@ -1643,16 +1600,39 @@ paths:
   /winners/kyc:
     post:
       consumes:
-      - application/json
+      - multipart/form-data
       description: After being selected as a winner, user submits their details and
         friends' information.
       parameters:
-      - description: Winner KYC details
-        in: body
-        name: request
+      - description: User name
+        in: formData
+        name: user_name
         required: true
-        schema:
-          $ref: '#/definitions/dtos.WinnerKYCRequest'
+        type: string
+      - description: User email
+        in: formData
+        name: user_email
+        required: true
+        type: string
+      - description: Aadhar number
+        in: formData
+        name: aadhar_number
+        required: true
+        type: string
+      - description: Aadhar front image
+        in: formData
+        name: aadhar_front
+        required: true
+        type: file
+      - description: Aadhar back image
+        in: formData
+        name: aadhar_back
+        required: true
+        type: file
+      - description: Friends JSON array
+        in: formData
+        name: friends
+        type: string
       produces:
       - application/json
       responses:
