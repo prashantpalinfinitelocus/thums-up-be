@@ -175,11 +175,6 @@ func (s *authService) VerifyOTP(ctx context.Context, phoneNumber string, otp str
 			return errors.NewInternalServerError("Failed to store refresh token", err)
 		}
 
-		// Step 7: Track login count (optional - log error but don't fail)
-		if err := s.createOrIncrementLoginCount(ctx, tx, user.ID, user.PhoneNumber); err != nil {
-			log.WithError(err).Error("Failed to create/increment login count")
-		}
-
 		// Build token response
 		name := ""
 		if user.Name != nil {
@@ -395,50 +390,4 @@ func (s *authService) generateTempAccessToken(phoneNumber string) (string, error
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.cfg.JwtConfig.SecretKey))
-}
-
-// createOrIncrementLoginCount tracks user login activity
-// This is optional and doesn't fail the main flow if it encounters errors
-func (s *authService) createOrIncrementLoginCount(ctx context.Context, tx *gorm.DB, userID, phoneNumber string) error {
-	// Check if login count record exists
-	type LoginCount struct {
-		ID          string    `gorm:"primaryKey"`
-		UserID      string    `gorm:"column:user_id"`
-		PhoneNumber string    `gorm:"column:phone_number"`
-		Count       int       `gorm:"column:count"`
-		LastLogin   time.Time `gorm:"column:last_login"`
-		CreatedAt   time.Time `gorm:"column:created_at"`
-		UpdatedAt   time.Time `gorm:"column:updated_at"`
-	}
-
-	var loginCount LoginCount
-	err := tx.WithContext(ctx).Table("login_counts").
-		Where("user_id = ?", userID).
-		First(&loginCount).Error
-
-	if err != nil {
-		if stderrors.Is(err, gorm.ErrRecordNotFound) {
-			// Create new login count record
-			newLoginCount := LoginCount{
-				ID:          uuid.New().String(),
-				UserID:      userID,
-				PhoneNumber: phoneNumber,
-				Count:       1,
-				LastLogin:   time.Now(),
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
-			}
-			return tx.WithContext(ctx).Table("login_counts").Create(&newLoginCount).Error
-		}
-		return err
-	}
-
-	// Update existing login count
-	return tx.WithContext(ctx).Table("login_counts").
-		Where("user_id = ?", userID).
-		Updates(map[string]interface{}{
-			"count":      gorm.Expr("count + ?", 1),
-			"last_login": time.Now(),
-			"updated_at": time.Now(),
-		}).Error
 }
