@@ -13,6 +13,7 @@ type Config struct {
 	AppEnv         string
 	AppPort        string
 	AllowedOrigins string
+	SwaggerHost    string
 	DbConfig       DatabaseConfig
 	InfobipConfig  InfobipConfig
 	JwtConfig      JwtConfig
@@ -80,6 +81,7 @@ func loadConfig() (*Config, error) {
 		AppEnv:         getEnv("APP_ENV", "development"),
 		AppPort:        getEnv("APP_PORT", "8080"),
 		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "*"),
+		SwaggerHost:    getEnv("SWAGGER_HOST", "localhost:8080"),
 
 		DbConfig: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),

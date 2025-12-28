@@ -5,6 +5,7 @@ import "time"
 type QuestionMaster struct {
 	ID             int        `gorm:"column:id;primaryKey;autoIncrement"`
 	QuestionText   string     `gorm:"column:question_text;type:text"`
+	QuesPoint      int        `gorm:"column:ques_point;not null"`
 	LanguageID     int        `gorm:"column:language_id;not null"`
 	IsActive       bool       `gorm:"column:is_active;not null"`
 	IsDeleted      bool       `gorm:"column:is_deleted;not null"`

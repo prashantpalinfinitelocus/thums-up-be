@@ -103,7 +103,9 @@ func (s *userService) GetUser(ctx context.Context, userID string) (*entities.Use
 	if user.AvatarID != nil {
 		avatar, err := s.avatarRepo.FindByID(ctx, tx, *user.AvatarID)
 		if err == nil && avatar != nil && !avatar.IsDeleted && avatar.IsActive {
-			imageURL := s.gcsService.GetPublicURL(avatar.ImageKey)
+			// Reconstruct full path: avatars/{userID}/{filename}
+			fullPath := fmt.Sprintf("avatars/%s/%s", avatar.CreatedBy, avatar.ImageKey)
+			imageURL := s.gcsService.GetPublicURL(fullPath)
 			avatarImageURL = &imageURL
 		}
 	}
