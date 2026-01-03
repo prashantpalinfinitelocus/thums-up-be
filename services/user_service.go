@@ -169,6 +169,14 @@ func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.Up
 		updateFields["avatar_id"] = *req.AvatarID
 	}
 
+	if req.SharingPlatform != nil {
+		updateFields["sharing_platform"] = *req.SharingPlatform
+	}
+
+	if req.PlatformUserName != nil {
+		updateFields["platform_user_name"] = *req.PlatformUserName
+	}
+
 	if len(updateFields) > 0 {
 		if err := s.userRepo.UpdateFields(ctx, tx, userID, updateFields); err != nil {
 			s.txnManager.AbortTxn(tx)

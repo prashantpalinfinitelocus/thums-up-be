@@ -42,15 +42,17 @@ type Repositories struct {
 	contestWeek            repository.ContestWeekRepository
 	userAadharCard         repository.UserAadharCardRepository
 	userFriend             repository.UserFriendRepository
+	loginCount             repository.LoginCountRepository
 }
 
 type Handlers struct {
-	auth        *handlers.AuthHandler
-	profile     *handlers.ProfileHandler
-	address     *handlers.AddressHandler
-	avatar      *handlers.AvatarHandler
-	question    *handlers.QuestionHandler
-	thunderSeat *handlers.ThunderSeatHandler
-	winner      *handlers.WinnerHandler
-	contestWeek *handlers.ContestWeekHandler
+	auth          *handlers.AuthHandler
+	profile       *handlers.ProfileHandler
+	address       *handlers.AddressHandler
+	avatar        *handlers.AvatarHandler
+	question      *handlers.QuestionHandler
+	thunderSeat   *handlers.ThunderSeatHandler
+	winner        *handlers.WinnerHandler
+	contestWeek   *handlers.ContestWeekHandler
+	websiteStatus *handlers.WebsiteStatusHandler
 }

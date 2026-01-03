@@ -27,20 +27,21 @@ func NewAvatarHandler(avatarService services.AvatarService) *AvatarHandler {
 }
 
 // CreateAvatar godoc
-// @Summary Create a new avatar
-// @Description Create a new avatar with name and image file. Requires authentication.
-// @Tags Avatars
-// @Accept multipart/form-data
-// @Produce json
-// @Security Bearer
-// @Param name formData string true "Avatar name"
-// @Param image formData file true "Avatar image file (jpg, jpeg, png, gif, webp, svg, bmp, ico)"
-// @Param is_published formData bool false "Whether the avatar is published"
-// @Success 201 {object} dtos.AvatarResponseDTO "Avatar created successfully"
-// @Failure 400 {object} map[string]string "Validation failed"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 500 {object} map[string]string "Failed to create avatar"
-// @Router /avatars [post]
+//
+//	@Summary		Create a new avatar
+//	@Description	Create a new avatar with name and image file. Requires authentication.
+//	@Tags			Avatars
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			name			formData	string					true	"Avatar name"
+//	@Param			image			formData	file					true	"Avatar image file (jpg, jpeg, png, gif, webp, svg, bmp, ico)"
+//	@Param			is_published	formData	bool					false	"Whether the avatar is published"
+//	@Success		201				{object}	dtos.AvatarResponseDTO	"Avatar created successfully"
+//	@Failure		400				{object}	map[string]string		"Validation failed"
+//	@Failure		401				{object}	map[string]string		"Unauthorized"
+//	@Failure		500				{object}	map[string]string		"Failed to create avatar"
+//	@Router			/avatars [post]
 func (h *AvatarHandler) CreateAvatar(ctx *gin.Context) {
 	user, exists := ctx.Get("user")
 	if !exists {
@@ -84,16 +85,17 @@ func (h *AvatarHandler) CreateAvatar(ctx *gin.Context) {
 }
 
 // GetAvatars godoc
-// @Summary Get all avatars
-// @Description Retrieve all avatars, optionally filtered by publication status
-// @Tags Avatars
-// @Accept json
-// @Produce json
-// @Param is_published query bool false "Filter by publication status"
-// @Success 200 {object} map[string][]dtos.AvatarResponseDTO "Avatars retrieved successfully"
-// @Failure 400 {object} map[string]string "Invalid is_published parameter"
-// @Failure 500 {object} map[string]string "Failed to fetch avatars"
-// @Router /avatars [get]
+//
+//	@Summary		Get all avatars
+//	@Description	Retrieve all avatars, optionally filtered by publication status
+//	@Tags			Avatars
+//	@Accept			json
+//	@Produce		json
+//	@Param			is_published	query		bool								false	"Filter by publication status"
+//	@Success		200				{object}	map[string][]dtos.AvatarResponseDTO	"Avatars retrieved successfully"
+//	@Failure		400				{object}	map[string]string					"Invalid is_published parameter"
+//	@Failure		500				{object}	map[string]string					"Failed to fetch avatars"
+//	@Router			/avatars [get]
 func (h *AvatarHandler) GetAvatars(ctx *gin.Context) {
 	var isPublished *bool
 	if publishedParam := ctx.Query("is_published"); publishedParam != "" {
@@ -115,17 +117,18 @@ func (h *AvatarHandler) GetAvatars(ctx *gin.Context) {
 }
 
 // GetAvatarByID godoc
-// @Summary Get avatar by ID
-// @Description Retrieve a specific avatar by its ID
-// @Tags Avatars
-// @Accept json
-// @Produce json
-// @Param avatarId path int true "Avatar ID"
-// @Success 200 {object} dtos.AvatarResponseDTO "Avatar retrieved successfully"
-// @Failure 400 {object} map[string]string "Invalid avatar ID"
-// @Failure 404 {object} map[string]string "Avatar not found"
-// @Failure 500 {object} map[string]string "Failed to fetch avatar"
-// @Router /avatars/{avatarId} [get]
+//
+//	@Summary		Get avatar by ID
+//	@Description	Retrieve a specific avatar by its ID
+//	@Tags			Avatars
+//	@Accept			json
+//	@Produce		json
+//	@Param			avatarId	path		int						true	"Avatar ID"
+//	@Success		200			{object}	dtos.AvatarResponseDTO	"Avatar retrieved successfully"
+//	@Failure		400			{object}	map[string]string		"Invalid avatar ID"
+//	@Failure		404			{object}	map[string]string		"Avatar not found"
+//	@Failure		500			{object}	map[string]string		"Failed to fetch avatar"
+//	@Router			/avatars/{avatarId} [get]
 func (h *AvatarHandler) GetAvatarByID(ctx *gin.Context) {
 	avatarIDStr := ctx.Param("avatarId")
 	avatarID, err := strconv.Atoi(avatarIDStr)

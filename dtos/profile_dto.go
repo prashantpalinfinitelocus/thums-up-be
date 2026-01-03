@@ -48,9 +48,11 @@ type AddressResponseDTO struct {
 }
 
 type UpdateProfileRequestDTO struct {
-	Name     *string `json:"name,omitempty"`
-	Email    *string `json:"email,omitempty"`
-	AvatarID *int    `json:"avatar_id,omitempty"`
+	Name             *string `json:"name,omitempty"`
+	Email            *string `json:"email,omitempty"`
+	AvatarID         *int    `json:"avatar_id,omitempty"`
+	SharingPlatform  *string `json:"sharing_platform,omitempty"`
+	PlatformUserName *string `json:"platform_user_name,omitempty"`
 }
 
 type UserProfileDTO struct {

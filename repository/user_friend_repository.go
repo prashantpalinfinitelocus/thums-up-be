@@ -43,6 +43,3 @@ func (r *userFriendRepository) CreateMany(ctx context.Context, db *gorm.DB, frie
 	}
 	return db.WithContext(ctx).Create(&friends).Error
 }
-
-
-

@@ -22,11 +22,12 @@ type SelectWinnersRequest struct {
 }
 
 type WinnerResponse struct {
-	ID            int    `json:"id"`
-	UserID        string `json:"user_id"`
-	ThunderSeatID int    `json:"thunder_seat_id"`
-	WeekNumber    int    `json:"week_number"`
-	CreatedOn     string `json:"created_on"`
+	ID            int     `json:"id"`
+	UserID        string  `json:"user_id"`
+	ThunderSeatID int     `json:"thunder_seat_id"`
+	WeekNumber    int     `json:"week_number"`
+	QRCodeURL     *string `json:"qr_code_url,omitempty"`
+	CreatedOn     string  `json:"created_on"`
 }
 
 type CurrentWeekResponse struct {
@@ -61,4 +62,11 @@ type ContestWeekResponse struct {
 
 type ActivateWeekRequest struct {
 	WeekNumber int `json:"week_number" binding:"required"`
+}
+
+type WinnerStatusResponse struct {
+	HasWon     bool    `json:"has_won"`
+	HasViewed  bool    `json:"has_viewed"`
+	WeekNumber *int    `json:"week_number,omitempty"`
+	QRCodeURL  *string `json:"qr_code_url,omitempty"`
 }

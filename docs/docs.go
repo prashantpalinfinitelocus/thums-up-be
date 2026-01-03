@@ -2601,6 +2601,12 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "platform_user_name": {
+                    "type": "string"
+                },
+                "sharing_platform": {
+                    "type": "string"
                 }
             }
         },
@@ -2669,6 +2675,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "qr_code_url": {
+                    "type": "string"
                 },
                 "thunder_seat_id": {
                     "type": "integer"

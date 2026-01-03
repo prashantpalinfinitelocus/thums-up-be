@@ -361,6 +361,10 @@ definitions:
         type: string
       name:
         type: string
+      platform_user_name:
+        type: string
+      sharing_platform:
+        type: string
     type: object
   dtos.UserProfileDTO:
     properties:
@@ -407,6 +411,8 @@ definitions:
         type: string
       id:
         type: integer
+      qr_code_url:
+        type: string
       thunder_seat_id:
         type: integer
       user_id:

@@ -25,6 +25,7 @@ type AuthService interface {
 	VerifyOTP(ctx context.Context, phoneNumber string, otp string) (*dtos.TokenResponse, error)
 	SignUp(ctx context.Context, req dtos.SignUpRequest) (*dtos.TokenResponse, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*dtos.TokenResponse, error)
+	GetLoginCount(ctx context.Context, userID string) (*dtos.LoginCountResponse, error)
 }
 
 type authService struct {
@@ -32,6 +33,7 @@ type authService struct {
 	userRepo         repository.UserRepository
 	otpRepo          repository.OTPRepository
 	refreshTokenRepo repository.RefreshTokenRepository
+	loginCountRepo   repository.LoginCountRepository
 	infobipClient    *vendors.InfobipClient
 	cfg              *config.Config
 }
@@ -41,6 +43,7 @@ func NewAuthService(
 	userRepo repository.UserRepository,
 	otpRepo repository.OTPRepository,
 	refreshTokenRepo repository.RefreshTokenRepository,
+	loginCountRepo repository.LoginCountRepository,
 	infobipClient *vendors.InfobipClient,
 ) AuthService {
 	return &authService{
@@ -48,6 +51,7 @@ func NewAuthService(
 		userRepo:         userRepo,
 		otpRepo:          otpRepo,
 		refreshTokenRepo: refreshTokenRepo,
+		loginCountRepo:   loginCountRepo,
 		infobipClient:    infobipClient,
 		cfg:              config.GetConfig(),
 	}
@@ -173,6 +177,11 @@ func (s *authService) VerifyOTP(ctx context.Context, phoneNumber string, otp str
 		// Step 6: Store refresh token
 		if err := s.refreshTokenRepo.Create(ctx, tx, refreshToken); err != nil {
 			return errors.NewInternalServerError("Failed to store refresh token", err)
+		}
+
+		// Step 7: Track login count (optional - log error but don't fail)
+		if err := s.createOrIncrementLoginCount(ctx, tx, user.ID, user.PhoneNumber); err != nil {
+			log.WithError(err).Error("Failed to create/increment login count")
 		}
 
 		// Build token response
@@ -390,4 +399,49 @@ func (s *authService) generateTempAccessToken(phoneNumber string) (string, error
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.cfg.JwtConfig.SecretKey))
+}
+
+func (s *authService) createOrIncrementLoginCount(ctx context.Context, tx *gorm.DB, userID, phoneNumber string) error {
+	loginCount, err := s.loginCountRepo.FindByUserID(ctx, tx, userID)
+	if err != nil {
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			newLoginCount := &entities.LoginCount{
+				UserID:      userID,
+				PhoneNumber: phoneNumber,
+				Count:       1,
+				LastLogin:   time.Now(),
+			}
+			return s.loginCountRepo.Create(ctx, tx, newLoginCount)
+		}
+		return err
+	}
+
+	loginCount.Count++
+	loginCount.LastLogin = time.Now()
+	return s.loginCountRepo.Update(ctx, tx, loginCount)
+}
+
+func (s *authService) GetLoginCount(ctx context.Context, userID string) (*dtos.LoginCountResponse, error) {
+	loginCount, err := s.loginCountRepo.FindByUserID(ctx, s.txnManager.GetDB(), userID)
+	if err != nil {
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			return &dtos.LoginCountResponse{
+				UserID:    userID,
+				Count:     0,
+				LastLogin: nil,
+			}, nil
+		}
+		return nil, errors.NewInternalServerError("Failed to fetch login count", err)
+	}
+
+	var lastLogin *time.Time
+	if !loginCount.LastLogin.IsZero() {
+		lastLogin = &loginCount.LastLogin
+	}
+
+	return &dtos.LoginCountResponse{
+		UserID:    loginCount.UserID,
+		Count:     loginCount.Count,
+		LastLogin: lastLogin,
+	}, nil
 }

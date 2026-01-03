@@ -18,8 +18,9 @@ func SetupWinnerRoutes(api *gin.RouterGroup, db *gorm.DB, userRepo repository.Us
 		winnersAuth := winners.Group("")
 		winnersAuth.Use(middlewares.AuthMiddleware(db, userRepo))
 		{
+			winnersAuth.GET("/status", winnerHandler.CheckWinnerStatus)
+			winnersAuth.POST("/mark-viewed", winnerHandler.MarkBannerAsViewed)
 			winnersAuth.POST("/kyc", winnerHandler.SubmitWinnerKYC)
 		}
 	}
 }
-

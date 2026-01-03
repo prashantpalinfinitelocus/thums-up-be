@@ -104,5 +104,3 @@ func (r *userQuestionAnswerRepository) FindAllByUserID(ctx context.Context, tx *
 	}
 	return answers, nil
 }
-
-

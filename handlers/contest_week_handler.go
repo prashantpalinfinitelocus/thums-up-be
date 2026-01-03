@@ -26,18 +26,19 @@ func NewContestWeekHandler(contestWeekService services.ContestWeekService) *Cont
 }
 
 // CreateContestWeek godoc
-// @Summary Create a new contest week
-// @Description Create a new contest week with week number, start date, end date, and winner count. Requires authentication.
-// @Tags Contest Weeks
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param request body dtos.ContestWeekRequest true "Contest week details"
-// @Success 201 {object} dtos.SuccessResponse{data=dtos.ContestWeekResponse} "Contest week created successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to create contest week"
-// @Router /contest-weeks [post]
+//
+//	@Summary		Create a new contest week
+//	@Description	Create a new contest week with week number, start date, end date, and winner count. Requires authentication.
+//	@Tags			Contest Weeks
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			request	body		dtos.ContestWeekRequest								true	"Contest week details"
+//	@Success		201		{object}	dtos.SuccessResponse{data=dtos.ContestWeekResponse}	"Contest week created successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse									"Validation failed"
+//	@Failure		401		{object}	dtos.ErrorResponse									"Unauthorized"
+//	@Failure		500		{object}	dtos.ErrorResponse									"Failed to create contest week"
+//	@Router			/contest-weeks [post]
 func (h *ContestWeekHandler) CreateContestWeek(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -88,14 +89,15 @@ func (h *ContestWeekHandler) CreateContestWeek(c *gin.Context) {
 }
 
 // GetAllContestWeeks godoc
-// @Summary Get all contest weeks
-// @Description Retrieve a list of all contest weeks
-// @Tags Contest Weeks
-// @Accept json
-// @Produce json
-// @Success 200 {object} dtos.SuccessResponse{data=[]dtos.ContestWeekResponse} "Contest weeks retrieved successfully"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to get contest weeks"
-// @Router /contest-weeks [get]
+//
+//	@Summary		Get all contest weeks
+//	@Description	Retrieve a list of all contest weeks
+//	@Tags			Contest Weeks
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	dtos.SuccessResponse{data=[]dtos.ContestWeekResponse}	"Contest weeks retrieved successfully"
+//	@Failure		500	{object}	dtos.ErrorResponse										"Failed to get contest weeks"
+//	@Router			/contest-weeks [get]
 func (h *ContestWeekHandler) GetAllContestWeeks(c *gin.Context) {
 	responses, err := h.contestWeekService.GetAllContestWeeks(c.Request.Context())
 	if err != nil {
@@ -122,17 +124,18 @@ func (h *ContestWeekHandler) GetAllContestWeeks(c *gin.Context) {
 }
 
 // GetContestWeekByNumber godoc
-// @Summary Get contest week by week number
-// @Description Retrieve a specific contest week by its week number
-// @Tags Contest Weeks
-// @Accept json
-// @Produce json
-// @Param weekNumber path int true "Week number"
-// @Success 200 {object} dtos.SuccessResponse{data=dtos.ContestWeekResponse} "Contest week retrieved successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Invalid week number"
-// @Failure 404 {object} dtos.ErrorResponse "Contest week not found"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to get contest week"
-// @Router /contest-weeks/{weekNumber} [get]
+//
+//	@Summary		Get contest week by week number
+//	@Description	Retrieve a specific contest week by its week number
+//	@Tags			Contest Weeks
+//	@Accept			json
+//	@Produce		json
+//	@Param			weekNumber	path		int													true	"Week number"
+//	@Success		200			{object}	dtos.SuccessResponse{data=dtos.ContestWeekResponse}	"Contest week retrieved successfully"
+//	@Failure		400			{object}	dtos.ErrorResponse									"Invalid week number"
+//	@Failure		404			{object}	dtos.ErrorResponse									"Contest week not found"
+//	@Failure		500			{object}	dtos.ErrorResponse									"Failed to get contest week"
+//	@Router			/contest-weeks/{weekNumber} [get]
 func (h *ContestWeekHandler) GetContestWeekByNumber(c *gin.Context) {
 	weekNumberStr := c.Param("weekNumber")
 	weekNumber, err := strconv.Atoi(weekNumberStr)
@@ -169,19 +172,20 @@ func (h *ContestWeekHandler) GetContestWeekByNumber(c *gin.Context) {
 }
 
 // ActivateWeek godoc
-// @Summary Activate a contest week
-// @Description Activate a specific contest week by week number. Only one week can be active at a time. Requires authentication.
-// @Tags Contest Weeks
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param request body dtos.ActivateWeekRequest true "Week number to activate"
-// @Success 200 {object} dtos.SuccessResponse{data=dtos.ContestWeekResponse} "Contest week activated successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
-// @Failure 404 {object} dtos.ErrorResponse "Contest week not found"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to activate contest week"
-// @Router /contest-weeks/activate [post]
+//
+//	@Summary		Activate a contest week
+//	@Description	Activate a specific contest week by week number. Only one week can be active at a time. Requires authentication.
+//	@Tags			Contest Weeks
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			request	body		dtos.ActivateWeekRequest							true	"Week number to activate"
+//	@Success		200		{object}	dtos.SuccessResponse{data=dtos.ContestWeekResponse}	"Contest week activated successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse									"Validation failed"
+//	@Failure		401		{object}	dtos.ErrorResponse									"Unauthorized"
+//	@Failure		404		{object}	dtos.ErrorResponse									"Contest week not found"
+//	@Failure		500		{object}	dtos.ErrorResponse									"Failed to activate contest week"
+//	@Router			/contest-weeks/activate [post]
 func (h *ContestWeekHandler) ActivateWeek(c *gin.Context) {
 	var req dtos.ActivateWeekRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -220,15 +224,16 @@ func (h *ContestWeekHandler) ActivateWeek(c *gin.Context) {
 }
 
 // GetActiveWeek godoc
-// @Summary Get active contest week
-// @Description Retrieve the currently active contest week
-// @Tags Contest Weeks
-// @Accept json
-// @Produce json
-// @Success 200 {object} dtos.SuccessResponse{data=dtos.ContestWeekResponse} "Active week retrieved successfully"
-// @Failure 404 {object} dtos.ErrorResponse "No active contest week found"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to get active week"
-// @Router /contest-weeks/active [get]
+//
+//	@Summary		Get active contest week
+//	@Description	Retrieve the currently active contest week
+//	@Tags			Contest Weeks
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	dtos.SuccessResponse{data=dtos.ContestWeekResponse}	"Active week retrieved successfully"
+//	@Failure		404	{object}	dtos.ErrorResponse									"No active contest week found"
+//	@Failure		500	{object}	dtos.ErrorResponse									"Failed to get active week"
+//	@Router			/contest-weeks/active [get]
 func (h *ContestWeekHandler) GetActiveWeek(c *gin.Context) {
 	response, err := h.contestWeekService.GetActiveWeek(c.Request.Context())
 	if err != nil {

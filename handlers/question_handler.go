@@ -29,18 +29,19 @@ func NewQuestionHandler(questionService services.QuestionService, userService se
 }
 
 // SubmitQuestion godoc
-// @Summary Submit a new question
-// @Description Submit a new question with text and language. Requires authentication.
-// @Tags Questions
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param request body dtos.QuestionSubmitRequest true "Question text and language ID"
-// @Success 201 {object} dtos.SuccessResponse{data=dtos.QuestionResponse} "Question submitted successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to submit question"
-// @Router /questions [post]
+//
+//	@Summary		Submit a new question
+//	@Description	Submit a new question with text and language. Requires authentication.
+//	@Tags			Questions
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			request	body		dtos.QuestionSubmitRequest							true	"Question text and language ID"
+//	@Success		201		{object}	dtos.SuccessResponse{data=dtos.QuestionResponse}	"Question submitted successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse									"Validation failed"
+//	@Failure		401		{object}	dtos.ErrorResponse									"Unauthorized"
+//	@Failure		500		{object}	dtos.ErrorResponse									"Failed to submit question"
+//	@Router			/questions [post]
 func (h *QuestionHandler) SubmitQuestion(c *gin.Context) {
 	var req dtos.QuestionSubmitRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -88,14 +89,15 @@ func (h *QuestionHandler) SubmitQuestion(c *gin.Context) {
 }
 
 // GetActiveQuestions godoc
-// @Summary Get active questions
-// @Description Retrieve all active questions
-// @Tags Questions
-// @Accept json
-// @Produce json
-// @Success 200 {object} dtos.SuccessResponse{data=[]dtos.QuestionResponse} "Questions retrieved successfully"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to get active questions"
-// @Router /questions/active [get]
+//
+//	@Summary		Get active questions
+//	@Description	Retrieve all active questions
+//	@Tags			Questions
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	dtos.SuccessResponse{data=[]dtos.QuestionResponse}	"Questions retrieved successfully"
+//	@Failure		500	{object}	dtos.ErrorResponse									"Failed to get active questions"
+//	@Router			/questions/active [get]
 func (h *QuestionHandler) GetActiveQuestions(c *gin.Context) {
 	responses, err := h.questionService.GetActiveQuestions(c.Request.Context())
 	if err != nil {
@@ -122,18 +124,19 @@ func (h *QuestionHandler) GetActiveQuestions(c *gin.Context) {
 }
 
 // GetQuestions godoc
-// @Summary Get Questions
-// @Description Get all active questions with user's answers
-// @Tags Questions
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param language_id query int true "Language ID"
-// @Success 200 {object} dtos.SuccessResponse{data=[]dtos.QuestionResponseDTO} "Questions retrieved successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Invalid request"
-// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to fetch questions"
-// @Router /profile/questions [get]
+//
+//	@Summary		Get Questions
+//	@Description	Get all active questions with user's answers
+//	@Tags			Questions
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			language_id	query		int														true	"Language ID"
+//	@Success		200			{object}	dtos.SuccessResponse{data=[]dtos.QuestionResponseDTO}	"Questions retrieved successfully"
+//	@Failure		400			{object}	dtos.ErrorResponse										"Invalid request"
+//	@Failure		401			{object}	dtos.ErrorResponse										"Unauthorized"
+//	@Failure		500			{object}	dtos.ErrorResponse										"Failed to fetch questions"
+//	@Router			/profile/questions [get]
 func (h *QuestionHandler) GetQuestions(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -189,18 +192,19 @@ func (h *QuestionHandler) GetQuestions(c *gin.Context) {
 }
 
 // AnswerQuestions godoc
-// @Summary Answer Questions
-// @Description Submit answers to multiple questions
-// @Tags Questions
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param request body []dtos.AnswerQuestionsRequestDTO true "Answer Questions Request"
-// @Success 200 {object} dtos.SuccessResponse{data=string} "Answers submitted successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Invalid request"
-// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to submit answers"
-// @Router /profile/questions [post]
+//
+//	@Summary		Answer Questions
+//	@Description	Submit answers to multiple questions
+//	@Tags			Questions
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			request	body		[]dtos.AnswerQuestionsRequestDTO	true	"Answer Questions Request"
+//	@Success		200		{object}	dtos.SuccessResponse{data=string}	"Answers submitted successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse					"Invalid request"
+//	@Failure		401		{object}	dtos.ErrorResponse					"Unauthorized"
+//	@Failure		500		{object}	dtos.ErrorResponse					"Failed to submit answers"
+//	@Router			/profile/questions [post]
 func (h *QuestionHandler) AnswerQuestions(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -283,18 +287,19 @@ func (h *QuestionHandler) AnswerQuestions(c *gin.Context) {
 }
 
 // GetQuestionByID godoc
-// @Summary Get Question By Text
-// @Description Get a question by its text and language ID
-// @Tags Questions
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param request body dtos.GetQuestionByTextRequestDTO true "Get Question By Text Request"
-// @Success 200 {object} dtos.SuccessResponse{data=dtos.QuestionResponseDTO} "Question retrieved successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Invalid request body"
-// @Failure 404 {object} dtos.ErrorResponse "Question not found"
-// @Failure 500 {object} dtos.ErrorResponse "Internal server error"
-// @Router /profile/questions/text [post]
+//
+//	@Summary		Get Question By Text
+//	@Description	Get a question by its text and language ID
+//	@Tags			Questions
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			request	body		dtos.GetQuestionByTextRequestDTO					true	"Get Question By Text Request"
+//	@Success		200		{object}	dtos.SuccessResponse{data=dtos.QuestionResponseDTO}	"Question retrieved successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse									"Invalid request body"
+//	@Failure		404		{object}	dtos.ErrorResponse									"Question not found"
+//	@Failure		500		{object}	dtos.ErrorResponse									"Internal server error"
+//	@Router			/profile/questions/text [post]
 func (h *QuestionHandler) GetQuestionByID(c *gin.Context) {
 	var req dtos.GetQuestionByTextRequestDTO
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -348,18 +353,19 @@ func (h *QuestionHandler) GetQuestionByID(c *gin.Context) {
 }
 
 // CreateQuestions godoc
-// @Summary Create Questions
-// @Description Create or update questions and options
-// @Tags Questions
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param request body dtos.CreateQuestionsRequestDTO true "Create Questions Request"
-// @Success 200 {object} dtos.SuccessResponse{data=string} "Questions created successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Invalid request"
-// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to create questions"
-// @Router /profile/questions/create [post]
+//
+//	@Summary		Create Questions
+//	@Description	Create or update questions and options
+//	@Tags			Questions
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			request	body		dtos.CreateQuestionsRequestDTO		true	"Create Questions Request"
+//	@Success		200		{object}	dtos.SuccessResponse{data=string}	"Questions created successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse					"Invalid request"
+//	@Failure		401		{object}	dtos.ErrorResponse					"Unauthorized"
+//	@Failure		500		{object}	dtos.ErrorResponse					"Failed to create questions"
+//	@Router			/profile/questions/create [post]
 func (h *QuestionHandler) CreateQuestions(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {

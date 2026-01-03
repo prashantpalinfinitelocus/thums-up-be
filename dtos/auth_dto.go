@@ -1,5 +1,7 @@
 package dtos
 
+import "time"
+
 type SendOTPRequest struct {
 	PhoneNumber string `json:"phone_number" binding:"required,min=10,max=10,numeric"`
 }
@@ -43,4 +45,10 @@ type UserResponse struct {
 
 type OTPResponse struct {
 	OTP string `json:"otp"`
+}
+
+type LoginCountResponse struct {
+	UserID    string     `json:"user_id"`
+	Count     int        `json:"count"`
+	LastLogin *time.Time `json:"last_login,omitempty"`
 }

@@ -19,6 +19,7 @@ func RunDBMigrations(db *gorm.DB) error {
 	if err := db.AutoMigrate(
 		&entities.User{},
 		&entities.OTPLog{},
+		&entities.LoginCount{},
 		&entities.RefreshToken{},
 		&entities.NotifyMe{},
 		&entities.Address{},

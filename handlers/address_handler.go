@@ -23,16 +23,17 @@ func NewAddressHandler(userService services.UserService) *AddressHandler {
 }
 
 // GetAddresses godoc
-// @Summary Get user addresses
-// @Description Retrieve all addresses for the authenticated user. Requires authentication.
-// @Tags Profile
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Success 200 {object} []dtos.AddressResponseDTO "Addresses retrieved successfully"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 500 {object} map[string]string "Failed to fetch addresses"
-// @Router /profile/address [get]
+//
+//	@Summary		Get user addresses
+//	@Description	Retrieve all addresses for the authenticated user. Requires authentication.
+//	@Tags			Profile
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Success		200	{object}	[]dtos.AddressResponseDTO	"Addresses retrieved successfully"
+//	@Failure		401	{object}	map[string]string			"Unauthorized"
+//	@Failure		500	{object}	map[string]string			"Failed to fetch addresses"
+//	@Router			/profile/address [get]
 func (h *AddressHandler) GetAddresses(ctx *gin.Context) {
 	user, exists := ctx.Get("user")
 	if !exists {
@@ -55,19 +56,20 @@ func (h *AddressHandler) GetAddresses(ctx *gin.Context) {
 }
 
 // AddAddress godoc
-// @Summary Add a new address
-// @Description Add a new delivery address for the authenticated user. Validates pincode and location deliverability. Requires authentication.
-// @Tags Profile
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param request body dtos.AddressRequestDTO true "Address details"
-// @Success 201 {object} dtos.AddressResponseDTO "Address created successfully"
-// @Failure 400 {object} map[string]string "Validation failed or location not deliverable"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "User not found"
-// @Failure 500 {object} map[string]string "Failed to add address"
-// @Router /profile/address [post]
+//
+//	@Summary		Add a new address
+//	@Description	Add a new delivery address for the authenticated user. Validates pincode and location deliverability. Requires authentication.
+//	@Tags			Profile
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			request	body		dtos.AddressRequestDTO	true	"Address details"
+//	@Success		201		{object}	dtos.AddressResponseDTO	"Address created successfully"
+//	@Failure		400		{object}	map[string]string		"Validation failed or location not deliverable"
+//	@Failure		401		{object}	map[string]string		"Unauthorized"
+//	@Failure		404		{object}	map[string]string		"User not found"
+//	@Failure		500		{object}	map[string]string		"Failed to add address"
+//	@Router			/profile/address [post]
 func (h *AddressHandler) AddAddress(ctx *gin.Context) {
 	user, exists := ctx.Get("user")
 	if !exists {
@@ -115,21 +117,22 @@ func (h *AddressHandler) AddAddress(ctx *gin.Context) {
 }
 
 // UpdateAddress godoc
-// @Summary Update an existing address
-// @Description Update an existing address for the authenticated user. Validates pincode and location deliverability. Requires authentication.
-// @Tags Profile
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param addressId path string true "Address ID"
-// @Param request body dtos.AddressRequestDTO true "Address details"
-// @Success 200 {object} dtos.AddressResponseDTO "Address updated successfully"
-// @Failure 400 {object} map[string]string "Validation failed or location not deliverable"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 403 {object} map[string]string "Address does not belong to user"
-// @Failure 404 {object} map[string]string "Address not found"
-// @Failure 500 {object} map[string]string "Failed to update address"
-// @Router /profile/address/{addressId} [put]
+//
+//	@Summary		Update an existing address
+//	@Description	Update an existing address for the authenticated user. Validates pincode and location deliverability. Requires authentication.
+//	@Tags			Profile
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			addressId	path		string					true	"Address ID"
+//	@Param			request		body		dtos.AddressRequestDTO	true	"Address details"
+//	@Success		200			{object}	dtos.AddressResponseDTO	"Address updated successfully"
+//	@Failure		400			{object}	map[string]string		"Validation failed or location not deliverable"
+//	@Failure		401			{object}	map[string]string		"Unauthorized"
+//	@Failure		403			{object}	map[string]string		"Address does not belong to user"
+//	@Failure		404			{object}	map[string]string		"Address not found"
+//	@Failure		500			{object}	map[string]string		"Failed to update address"
+//	@Router			/profile/address/{addressId} [put]
 func (h *AddressHandler) UpdateAddress(ctx *gin.Context) {
 	user, exists := ctx.Get("user")
 	if !exists {
@@ -187,20 +190,21 @@ func (h *AddressHandler) UpdateAddress(ctx *gin.Context) {
 }
 
 // DeleteAddress godoc
-// @Summary Delete an address
-// @Description Delete an existing address for the authenticated user. Requires authentication.
-// @Tags Profile
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param addressId path string true "Address ID"
-// @Success 200 {object} map[string]string "Address deleted successfully"
-// @Failure 400 {object} map[string]string "Address ID is required"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 403 {object} map[string]string "Address does not belong to user"
-// @Failure 404 {object} map[string]string "Address not found"
-// @Failure 500 {object} map[string]string "Failed to delete address"
-// @Router /profile/address/{addressId} [delete]
+//
+//	@Summary		Delete an address
+//	@Description	Delete an existing address for the authenticated user. Requires authentication.
+//	@Tags			Profile
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			addressId	path		string				true	"Address ID"
+//	@Success		200			{object}	map[string]string	"Address deleted successfully"
+//	@Failure		400			{object}	map[string]string	"Address ID is required"
+//	@Failure		401			{object}	map[string]string	"Unauthorized"
+//	@Failure		403			{object}	map[string]string	"Address does not belong to user"
+//	@Failure		404			{object}	map[string]string	"Address not found"
+//	@Failure		500			{object}	map[string]string	"Failed to delete address"
+//	@Router			/profile/address/{addressId} [delete]
 func (h *AddressHandler) DeleteAddress(ctx *gin.Context) {
 	user, exists := ctx.Get("user")
 	if !exists {

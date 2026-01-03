@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"strings"
 	"time"
+
+	"github.com/skip2/go-qrcode"
 )
 
 type SuccessResponse struct {
@@ -62,4 +64,8 @@ func PtrBool(b bool) *bool {
 
 func PtrTime(t time.Time) *time.Time {
 	return &t
+}
+
+func GenerateQRCode(data string) ([]byte, error) {
+	return qrcode.Encode(data, qrcode.Medium, 256)
 }

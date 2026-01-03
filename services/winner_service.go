@@ -2,10 +2,12 @@ package services
 
 import (
 	"context"
+	stderrors "errors"
+	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/dtos"
@@ -20,6 +22,8 @@ type WinnerService interface {
 	GetWinnersByWeek(ctx context.Context, weekNumber int) ([]dtos.WinnerResponse, error)
 	GetAllWinners(ctx context.Context, limit, offset int) ([]dtos.WinnerResponse, int64, error)
 	SubmitWinnerKYC(ctx context.Context, userID string, req dtos.WinnerKYCRequest) error
+	CheckUserWinnerStatus(ctx context.Context, userID string) (*dtos.WinnerStatusResponse, error)
+	MarkBannerAsViewed(ctx context.Context, userID string) error
 }
 
 type winnerService struct {
@@ -30,6 +34,7 @@ type winnerService struct {
 	userRepo        repository.UserRepository
 	userAadharRepo  repository.UserAadharCardRepository
 	userFriendRepo  repository.UserFriendRepository
+	gcsService      utils.GCSService
 }
 
 func NewWinnerService(
@@ -40,6 +45,7 @@ func NewWinnerService(
 	userRepo repository.UserRepository,
 	userAadharRepo repository.UserAadharCardRepository,
 	userFriendRepo repository.UserFriendRepository,
+	gcsService utils.GCSService,
 ) WinnerService {
 	return &winnerService{
 		txnManager:      txnManager,
@@ -49,6 +55,7 @@ func NewWinnerService(
 		userRepo:        userRepo,
 		userAadharRepo:  userAadharRepo,
 		userFriendRepo:  userFriendRepo,
+		gcsService:      gcsService,
 	}
 }
 
@@ -87,11 +94,28 @@ func (s *winnerService) SelectWinners(ctx context.Context, req dtos.SelectWinner
 
 	now := time.Now()
 	winners := make([]entities.ThunderSeatWinner, len(randomEntries))
+
 	for i, entry := range randomEntries {
+		qrData := fmt.Sprintf("winner:%s:week:%d:thunder_seat:%d", entry.UserID, req.WeekNumber, entry.ID)
+		qrBytes, err := utils.GenerateQRCode(qrData)
+		if err != nil {
+			log.WithError(err).Error("Failed to generate QR code")
+			return nil, errors.NewInternalServerError("Failed to generate QR code", err)
+		}
+
+		qrPath := fmt.Sprintf("winners/week_%d/%s.png", req.WeekNumber, entry.UserID)
+		_, qrKey, err := s.gcsService.UploadFileFromBytes(ctx, qrBytes, qrPath, "image/png")
+		if err != nil {
+			log.WithError(err).Error("Failed to upload QR code")
+			return nil, errors.NewInternalServerError("Failed to upload QR code", err)
+		}
+
 		winners[i] = entities.ThunderSeatWinner{
 			UserID:        entry.UserID,
 			ThunderSeatID: entry.ID,
+			QRCode:        qrKey,
 			WeekNumber:    req.WeekNumber,
+			HasViewed:     false,
 			CreatedBy:     "system",
 			CreatedOn:     now,
 		}
@@ -107,11 +131,13 @@ func (s *winnerService) SelectWinners(ctx context.Context, req dtos.SelectWinner
 
 	responses := make([]dtos.WinnerResponse, len(winners))
 	for i, winner := range winners {
+		qrURL := s.gcsService.GetPublicURL(winner.QRCode)
 		responses[i] = dtos.WinnerResponse{
 			ID:            winner.ID,
 			UserID:        winner.UserID,
 			ThunderSeatID: winner.ThunderSeatID,
 			WeekNumber:    winner.WeekNumber,
+			QRCodeURL:     &qrURL,
 			CreatedOn:     winner.CreatedOn.Format(time.RFC3339),
 		}
 	}
@@ -127,11 +153,17 @@ func (s *winnerService) GetWinnersByWeek(ctx context.Context, weekNumber int) ([
 
 	responses := make([]dtos.WinnerResponse, len(winners))
 	for i, winner := range winners {
+		var qrURL *string
+		if winner.QRCode != "" {
+			url := s.gcsService.GetPublicURL(winner.QRCode)
+			qrURL = &url
+		}
 		responses[i] = dtos.WinnerResponse{
 			ID:            winner.ID,
 			UserID:        winner.UserID,
 			ThunderSeatID: winner.ThunderSeatID,
 			WeekNumber:    winner.WeekNumber,
+			QRCodeURL:     qrURL,
 			CreatedOn:     winner.CreatedOn.Format(time.RFC3339),
 		}
 	}
@@ -147,11 +179,17 @@ func (s *winnerService) GetAllWinners(ctx context.Context, limit, offset int) ([
 
 	responses := make([]dtos.WinnerResponse, len(winners))
 	for i, winner := range winners {
+		var qrURL *string
+		if winner.QRCode != "" {
+			url := s.gcsService.GetPublicURL(winner.QRCode)
+			qrURL = &url
+		}
 		responses[i] = dtos.WinnerResponse{
 			ID:            winner.ID,
 			UserID:        winner.UserID,
 			ThunderSeatID: winner.ThunderSeatID,
 			WeekNumber:    winner.WeekNumber,
+			QRCodeURL:     qrURL,
 			CreatedOn:     winner.CreatedOn.Format(time.RFC3339),
 		}
 	}
@@ -290,3 +328,52 @@ func (s *winnerService) SubmitWinnerKYC(ctx context.Context, userID string, req 
 	return nil
 }
 
+func (s *winnerService) CheckUserWinnerStatus(ctx context.Context, userID string) (*dtos.WinnerStatusResponse, error) {
+	winner, err := s.winnerRepo.FindLatestByUserID(ctx, s.txnManager.GetDB(), userID)
+	if err != nil {
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			return &dtos.WinnerStatusResponse{
+				HasWon:    false,
+				HasViewed: false,
+			}, nil
+		}
+		return nil, errors.NewInternalServerError("Failed to check winner status", err)
+	}
+
+	var qrURL *string
+	if winner.QRCode != "" {
+		url := s.gcsService.GetPublicURL(winner.QRCode)
+		qrURL = &url
+	}
+
+	weekNumber := winner.WeekNumber
+	return &dtos.WinnerStatusResponse{
+		HasWon:     true,
+		HasViewed:  winner.HasViewed,
+		WeekNumber: &weekNumber,
+		QRCodeURL:  qrURL,
+	}, nil
+}
+
+func (s *winnerService) MarkBannerAsViewed(ctx context.Context, userID string) error {
+	winner, err := s.winnerRepo.FindLatestByUserID(ctx, s.txnManager.GetDB(), userID)
+	if err != nil {
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.NewNotFoundError("User is not a winner", nil)
+		}
+		return errors.NewInternalServerError("Failed to find winner", err)
+	}
+
+	if winner.HasViewed {
+		return nil
+	}
+
+	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+		return s.winnerRepo.UpdateHasViewed(ctx, tx, winner.ID)
+	})
+	if err != nil {
+		return errors.NewInternalServerError("Failed to update banner status", err)
+	}
+
+	return nil
+}

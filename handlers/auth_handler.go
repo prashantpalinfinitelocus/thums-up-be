@@ -24,17 +24,18 @@ func NewAuthHandler(authService services.AuthService) *AuthHandler {
 }
 
 // SendOTP godoc
-// @Summary Send OTP to phone number
-// @Description Send a one-time password to the provided phone number for authentication. Returns the OTP in the response (for development/testing purposes when SMS service is not configured).
-// @Tags Authentication
-// @Accept json
-// @Produce json
-// @Param request body dtos.SendOTPRequest true "Phone number"
-// @Success 200 {object} dtos.SuccessResponse{data=dtos.OTPResponse} "OTP sent successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 429 {object} dtos.ErrorResponse "Too many OTP requests"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to send OTP"
-// @Router /auth/send-otp [post]
+//
+//	@Summary		Send OTP to phone number
+//	@Description	Send a one-time password to the provided phone number for authentication. Returns the OTP in the response (for development/testing purposes when SMS service is not configured).
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dtos.SendOTPRequest							true	"Phone number"
+//	@Success		200		{object}	dtos.SuccessResponse{data=dtos.OTPResponse}	"OTP sent successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse							"Validation failed"
+//	@Failure		429		{object}	dtos.ErrorResponse							"Too many OTP requests"
+//	@Failure		500		{object}	dtos.ErrorResponse							"Failed to send OTP"
+//	@Router			/auth/send-otp [post]
 func (h *AuthHandler) SendOTP(c *gin.Context) {
 	var req dtos.SendOTPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -73,17 +74,18 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 }
 
 // VerifyOTP godoc
-// @Summary Verify OTP
-// @Description Verify the OTP sent to the phone number and return authentication token
-// @Tags Authentication
-// @Accept json
-// @Produce json
-// @Param request body dtos.VerifyOTPRequest true "Phone number and OTP"
-// @Success 200 {object} dtos.SuccessResponse{data=dtos.TokenResponse} "OTP verified successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 401 {object} dtos.ErrorResponse "Invalid OTP"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to verify OTP"
-// @Router /auth/verify-otp [post]
+//
+//	@Summary		Verify OTP
+//	@Description	Verify the OTP sent to the phone number and return authentication token
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dtos.VerifyOTPRequest							true	"Phone number and OTP"
+//	@Success		200		{object}	dtos.SuccessResponse{data=dtos.TokenResponse}	"OTP verified successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse								"Validation failed"
+//	@Failure		401		{object}	dtos.ErrorResponse								"Invalid OTP"
+//	@Failure		500		{object}	dtos.ErrorResponse								"Failed to verify OTP"
+//	@Router			/auth/verify-otp [post]
 func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 	var req dtos.VerifyOTPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -121,16 +123,17 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 }
 
 // SignUp godoc
-// @Summary User sign up
-// @Description Register a new user with phone number, name, and optional email and referral code
-// @Tags Authentication
-// @Accept json
-// @Produce json
-// @Param request body dtos.SignUpRequest true "User registration details"
-// @Success 201 {object} dtos.SuccessResponse{data=dtos.TokenResponse} "User registered successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to sign up"
-// @Router /auth/signup [post]
+//
+//	@Summary		User sign up
+//	@Description	Register a new user with phone number, name, and optional email and referral code
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dtos.SignUpRequest								true	"User registration details"
+//	@Success		201		{object}	dtos.SuccessResponse{data=dtos.TokenResponse}	"User registered successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse								"Validation failed"
+//	@Failure		500		{object}	dtos.ErrorResponse								"Failed to sign up"
+//	@Router			/auth/signup [post]
 func (h *AuthHandler) SignUp(c *gin.Context) {
 	var req dtos.SignUpRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -168,17 +171,18 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 }
 
 // RefreshToken godoc
-// @Summary Refresh authentication token
-// @Description Get a new access token using a valid refresh token
-// @Tags Authentication
-// @Accept json
-// @Produce json
-// @Param request body dtos.RefreshTokenRequest true "Refresh token"
-// @Success 200 {object} dtos.SuccessResponse{data=dtos.TokenResponse} "Token refreshed successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 401 {object} dtos.ErrorResponse "Invalid refresh token"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to refresh token"
-// @Router /auth/refresh [post]
+//
+//	@Summary		Refresh authentication token
+//	@Description	Get a new access token using a valid refresh token
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dtos.RefreshTokenRequest						true	"Refresh token"
+//	@Success		200		{object}	dtos.SuccessResponse{data=dtos.TokenResponse}	"Token refreshed successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse								"Validation failed"
+//	@Failure		401		{object}	dtos.ErrorResponse								"Invalid refresh token"
+//	@Failure		500		{object}	dtos.ErrorResponse								"Failed to refresh token"
+//	@Router			/auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req dtos.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -212,5 +216,48 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	c.JSON(http.StatusOK, dtos.SuccessResponse{
 		Success: true,
 		Data:    tokenResponse,
+	})
+}
+
+func (h *AuthHandler) GetLoginCount(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
+			Success: false,
+			Error:   errors.ErrUserNotAuthenticated,
+		})
+		return
+	}
+
+	userIDStr, ok := userID.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Success: false,
+			Error:   errors.ErrInvalidUserContext,
+		})
+		return
+	}
+
+	loginCount, err := h.authService.GetLoginCount(c.Request.Context(), userIDStr)
+	if err != nil {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
+			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
+				Success: false,
+				Error:   appErr.Message,
+			})
+			return
+		}
+		log.WithError(err).Error("Failed to get login count")
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Success: false,
+			Error:   "Failed to get login count",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dtos.SuccessResponse{
+		Success: true,
+		Data:    loginCount,
 	})
 }

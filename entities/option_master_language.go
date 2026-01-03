@@ -19,4 +19,3 @@ type OptionMasterLanguage struct {
 func (OptionMasterLanguage) TableName() string {
 	return "option_master_languages"
 }
-

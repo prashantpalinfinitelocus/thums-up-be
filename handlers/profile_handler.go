@@ -24,17 +24,18 @@ func NewProfileHandler(userService services.UserService) *ProfileHandler {
 }
 
 // GetProfile godoc
-// @Summary Get user profile
-// @Description Retrieve the authenticated user's profile information. Requires authentication.
-// @Tags Profile
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Success 200 {object} dtos.ProfileResponseDTO "Profile retrieved successfully"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "User not found"
-// @Failure 500 {object} map[string]string "Failed to fetch profile"
-// @Router /profile [get]
+//
+//	@Summary		Get user profile
+//	@Description	Retrieve the authenticated user's profile information. Requires authentication.
+//	@Tags			Profile
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Success		200	{object}	dtos.ProfileResponseDTO	"Profile retrieved successfully"
+//	@Failure		401	{object}	map[string]string		"Unauthorized"
+//	@Failure		404	{object}	map[string]string		"User not found"
+//	@Failure		500	{object}	map[string]string		"Failed to fetch profile"
+//	@Router			/profile [get]
 func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 	user, exists := ctx.Get("user")
 	if !exists {
@@ -78,19 +79,20 @@ func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 }
 
 // UpdateProfile godoc
-// @Summary Update user profile
-// @Description Update the authenticated user's profile information (name, email, avatar). Requires authentication.
-// @Tags Profile
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param request body dtos.UpdateProfileRequestDTO true "Profile update data"
-// @Success 200 {object} dtos.UserProfileDTO "Profile updated successfully"
-// @Failure 400 {object} map[string]string "Validation failed or email already in use"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "User not found"
-// @Failure 500 {object} map[string]string "Failed to update profile"
-// @Router /profile [patch]
+//
+//	@Summary		Update user profile
+//	@Description	Update the authenticated user's profile information (name, email, avatar). Requires authentication.
+//	@Tags			Profile
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			request	body		dtos.UpdateProfileRequestDTO	true	"Profile update data"
+//	@Success		200		{object}	dtos.UserProfileDTO				"Profile updated successfully"
+//	@Failure		400		{object}	map[string]string				"Validation failed or email already in use"
+//	@Failure		401		{object}	map[string]string				"Unauthorized"
+//	@Failure		404		{object}	map[string]string				"User not found"
+//	@Failure		500		{object}	map[string]string				"Failed to update profile"
+//	@Router			/profile [patch]
 func (h *ProfileHandler) UpdateProfile(ctx *gin.Context) {
 	user, exists := ctx.Get("user")
 	if !exists {

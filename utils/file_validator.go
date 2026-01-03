@@ -40,14 +40,14 @@ var (
 	}
 
 	AllowedImageTypes = []string{
-		"image/jpeg",      // .jpg, .jpeg
-		"image/jpg",       // .jpg
-		"image/png",       // .png
-		"image/gif",       // .gif
-		"image/webp",      // .webp
-		"image/svg+xml",   // .svg
-		"image/bmp",       // .bmp
-		"image/x-icon",    // .ico
+		"image/jpeg",               // .jpg, .jpeg
+		"image/jpg",                // .jpg
+		"image/png",                // .png
+		"image/gif",                // .gif
+		"image/webp",               // .webp
+		"image/svg+xml",            // .svg
+		"image/bmp",                // .bmp
+		"image/x-icon",             // .ico
 		"image/vnd.microsoft.icon", // .ico
 	}
 
@@ -215,5 +215,3 @@ func isValidImageFile(contentType, filename string) bool {
 
 	return false
 }
-
-

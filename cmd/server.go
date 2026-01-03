@@ -161,6 +161,7 @@ func (s *Server) initRepositories() {
 		contestWeek:            repository.NewContestWeekRepository(),
 		userAadharCard:         repository.NewUserAadharCardRepository(),
 		userFriend:             repository.NewUserFriendRepository(),
+		loginCount:             repository.NewLoginCountRepository(),
 	}
 	log.Debug("All repositories initialized")
 }
@@ -173,6 +174,7 @@ func (s *Server) initHandlers() {
 		s.repositories.user,
 		s.repositories.otp,
 		s.repositories.refreshToken,
+		s.repositories.loginCount,
 		s.infobipClient,
 	)
 
@@ -226,17 +228,21 @@ func (s *Server) initHandlers() {
 		s.repositories.user,
 		s.repositories.userAadharCard,
 		s.repositories.userFriend,
+		s.gcsService,
 	)
 
+	websiteStatusService := services.NewWebsiteStatusService()
+
 	s.handlers = &Handlers{
-		auth:        handlers.NewAuthHandler(authService),
-		profile:     handlers.NewProfileHandler(userService),
-		address:     handlers.NewAddressHandler(userService),
-		avatar:      handlers.NewAvatarHandler(avatarService),
-		question:    handlers.NewQuestionHandler(questionService, userService),
-		thunderSeat: handlers.NewThunderSeatHandler(thunderSeatService),
-		winner:      handlers.NewWinnerHandler(winnerService, s.gcsService),
-		contestWeek: handlers.NewContestWeekHandler(contestWeekService),
+		auth:          handlers.NewAuthHandler(authService),
+		profile:       handlers.NewProfileHandler(userService),
+		address:       handlers.NewAddressHandler(userService),
+		avatar:        handlers.NewAvatarHandler(avatarService),
+		question:      handlers.NewQuestionHandler(questionService, userService),
+		thunderSeat:   handlers.NewThunderSeatHandler(thunderSeatService),
+		winner:        handlers.NewWinnerHandler(winnerService, s.gcsService),
+		contestWeek:   handlers.NewContestWeekHandler(contestWeekService),
+		websiteStatus: handlers.NewWebsiteStatusHandler(websiteStatusService),
 	}
 
 	log.Debug("All handlers initialized")

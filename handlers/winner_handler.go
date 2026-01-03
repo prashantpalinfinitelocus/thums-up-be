@@ -30,18 +30,19 @@ func NewWinnerHandler(winnerService services.WinnerService, gcsService utils.GCS
 }
 
 // SelectWinners godoc
-// @Summary Select winners for a week
-// @Description Admin endpoint to select winners for a specific contest week. Requires API key authentication.
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Security APIKey
-// @Param request body dtos.SelectWinnersRequest true "Week number"
-// @Success 201 {object} dtos.SuccessResponse{data=[]dtos.WinnerResponse} "Winners selected successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to select winners"
-// @Router /admin/winners/select [post]
+//
+//	@Summary		Select winners for a week
+//	@Description	Admin endpoint to select winners for a specific contest week. Requires API key authentication.
+//	@Tags			Admin
+//	@Accept			json
+//	@Produce		json
+//	@Security		APIKey
+//	@Param			request	body		dtos.SelectWinnersRequest							true	"Week number"
+//	@Success		201		{object}	dtos.SuccessResponse{data=[]dtos.WinnerResponse}	"Winners selected successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse									"Validation failed"
+//	@Failure		401		{object}	dtos.ErrorResponse									"Unauthorized"
+//	@Failure		500		{object}	dtos.ErrorResponse									"Failed to select winners"
+//	@Router			/admin/winners/select [post]
 func (h *WinnerHandler) SelectWinners(c *gin.Context) {
 	var req dtos.SelectWinnersRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -80,16 +81,17 @@ func (h *WinnerHandler) SelectWinners(c *gin.Context) {
 }
 
 // GetWinnersByWeek godoc
-// @Summary Get winners by week
-// @Description Retrieve all winners for a specific contest week
-// @Tags Winners
-// @Accept json
-// @Produce json
-// @Param weekNumber path int true "Week number"
-// @Success 200 {object} dtos.SuccessResponse{data=[]dtos.WinnerResponse} "Winners retrieved successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Invalid week number"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to get winners"
-// @Router /winners/week/{weekNumber} [get]
+//
+//	@Summary		Get winners by week
+//	@Description	Retrieve all winners for a specific contest week
+//	@Tags			Winners
+//	@Accept			json
+//	@Produce		json
+//	@Param			weekNumber	path		int													true	"Week number"
+//	@Success		200			{object}	dtos.SuccessResponse{data=[]dtos.WinnerResponse}	"Winners retrieved successfully"
+//	@Failure		400			{object}	dtos.ErrorResponse									"Invalid week number"
+//	@Failure		500			{object}	dtos.ErrorResponse									"Failed to get winners"
+//	@Router			/winners/week/{weekNumber} [get]
 func (h *WinnerHandler) GetWinnersByWeek(c *gin.Context) {
 	weekNumberStr := c.Param("weekNumber")
 	weekNumber, err := strconv.Atoi(weekNumberStr)
@@ -126,17 +128,18 @@ func (h *WinnerHandler) GetWinnersByWeek(c *gin.Context) {
 }
 
 // GetAllWinners godoc
-// @Summary Get all winners with pagination
-// @Description Retrieve all winners with pagination support
-// @Tags Winners
-// @Accept json
-// @Produce json
-// @Param limit query int true "Number of items per page" minimum(1) maximum(100)
-// @Param offset query int false "Number of items to skip" minimum(0) default(0)
-// @Success 200 {object} dtos.PaginatedResponse{data=[]dtos.WinnerResponse} "Winners retrieved successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to get all winners"
-// @Router /winners [get]
+//
+//	@Summary		Get all winners with pagination
+//	@Description	Retrieve all winners with pagination support
+//	@Tags			Winners
+//	@Accept			json
+//	@Produce		json
+//	@Param			limit	query		int													true	"Number of items per page"	minimum(1)	maximum(100)
+//	@Param			offset	query		int													false	"Number of items to skip"	minimum(0)	default(0)
+//	@Success		200		{object}	dtos.PaginatedResponse{data=[]dtos.WinnerResponse}	"Winners retrieved successfully"
+//	@Failure		400		{object}	dtos.ErrorResponse									"Validation failed"
+//	@Failure		500		{object}	dtos.ErrorResponse									"Failed to get all winners"
+//	@Router			/winners [get]
 func (h *WinnerHandler) GetAllWinners(c *gin.Context) {
 	var req dtos.AllWinnersRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -186,23 +189,24 @@ func (h *WinnerHandler) GetAllWinners(c *gin.Context) {
 }
 
 // SubmitWinnerKYC godoc
-// @Summary Submit winner KYC details
-// @Description After being selected as a winner, user submits their details and friends' information.
-// @Tags Winners
-// @Accept multipart/form-data
-// @Produce json
-// @Security Bearer
-// @Param user_name formData string true "User name"
-// @Param user_email formData string true "User email"
-// @Param aadhar_number formData string true "Aadhar number"
-// @Param aadhar_front formData file true "Aadhar front image"
-// @Param aadhar_back formData file true "Aadhar back image"
-// @Param friends formData string false "Friends JSON array"
-// @Success 200 {object} dtos.SuccessResponse{data=string} "KYC submitted successfully"
-// @Failure 400 {object} dtos.ErrorResponse "Validation failed"
-// @Failure 401 {object} dtos.ErrorResponse "Unauthorized"
-// @Failure 500 {object} dtos.ErrorResponse "Failed to submit KYC"
-// @Router /winners/kyc [post]
+//
+//	@Summary		Submit winner KYC details
+//	@Description	After being selected as a winner, user submits their details and friends' information.
+//	@Tags			Winners
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Security		Bearer
+//	@Param			user_name		formData	string								true	"User name"
+//	@Param			user_email		formData	string								true	"User email"
+//	@Param			aadhar_number	formData	string								true	"Aadhar number"
+//	@Param			aadhar_front	formData	file								true	"Aadhar front image"
+//	@Param			aadhar_back		formData	file								true	"Aadhar back image"
+//	@Param			friends			formData	string								false	"Friends JSON array"
+//	@Success		200				{object}	dtos.SuccessResponse{data=string}	"KYC submitted successfully"
+//	@Failure		400				{object}	dtos.ErrorResponse					"Validation failed"
+//	@Failure		401				{object}	dtos.ErrorResponse					"Unauthorized"
+//	@Failure		500				{object}	dtos.ErrorResponse					"Failed to submit KYC"
+//	@Router			/winners/kyc [post]
 func (h *WinnerHandler) SubmitWinnerKYC(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -398,5 +402,91 @@ func (h *WinnerHandler) SubmitWinnerKYC(c *gin.Context) {
 	c.JSON(http.StatusOK, dtos.SuccessResponse{
 		Success: true,
 		Data:    "KYC submitted successfully",
+	})
+}
+
+func (h *WinnerHandler) CheckWinnerStatus(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
+			Success: false,
+			Error:   errors.ErrUserNotAuthenticated,
+		})
+		return
+	}
+
+	userEntity, ok := user.(*entities.User)
+	if !ok || userEntity == nil {
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Success: false,
+			Error:   errors.ErrInvalidUserContext,
+		})
+		return
+	}
+
+	status, err := h.winnerService.CheckUserWinnerStatus(c.Request.Context(), userEntity.ID)
+	if err != nil {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
+			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
+				Success: false,
+				Error:   appErr.Message,
+			})
+			return
+		}
+		log.WithError(err).Error("Failed to check winner status")
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Success: false,
+			Error:   "Failed to check winner status",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dtos.SuccessResponse{
+		Success: true,
+		Data:    status,
+	})
+}
+
+func (h *WinnerHandler) MarkBannerAsViewed(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
+			Success: false,
+			Error:   errors.ErrUserNotAuthenticated,
+		})
+		return
+	}
+
+	userEntity, ok := user.(*entities.User)
+	if !ok || userEntity == nil {
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Success: false,
+			Error:   errors.ErrInvalidUserContext,
+		})
+		return
+	}
+
+	err := h.winnerService.MarkBannerAsViewed(c.Request.Context(), userEntity.ID)
+	if err != nil {
+		var appErr *errors.AppError
+		if stderrors.As(err, &appErr) {
+			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
+				Success: false,
+				Error:   appErr.Message,
+			})
+			return
+		}
+		log.WithError(err).Error("Failed to mark banner as viewed")
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Success: false,
+			Error:   "Failed to mark banner as viewed",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dtos.SuccessResponse{
+		Success: true,
+		Data:    "Banner marked as viewed",
 	})
 }

@@ -89,5 +89,3 @@ func (r *optionMasterRepository) FindByQuestionIDs(ctx context.Context, tx *gorm
 	err := db.WithContext(ctx).Where("question_master_id IN ?", questionIDs).Find(&options).Error
 	return options, err
 }
-
-

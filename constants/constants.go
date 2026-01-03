@@ -53,6 +53,8 @@ const (
 	HTTP_CLIENT_TIMEOUT       = 30 * time.Second
 	GRACEFUL_SHUTDOWN_TIMEOUT = 10 * time.Second
 	MESSAGE_HANDLER_TIMEOUT   = 30 * time.Second
+
+	WEBSITE_LAUNCH_DATE = "2026-01-09T00:00:00Z"
 )
 
 var (
