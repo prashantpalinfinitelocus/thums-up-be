@@ -1715,18 +1715,23 @@ const docTemplate = `{
                 "summary": "Submit Thunder Seat answer",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Question ID",
-                        "name": "question_id",
+                        "type": "string",
+                        "description": "Answer text",
+                        "name": "description",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Answer text",
-                        "name": "answer",
-                        "in": "formData",
-                        "required": true
+                        "description": "Sharing platform (instagram, snapchat, facebook, twitter, tiktok, youtube)",
+                        "name": "social_media",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Platform user name (min 3, max 255 characters)",
+                        "name": "user_name",
+                        "in": "formData"
                     },
                     {
                         "type": "file",
@@ -2766,9 +2771,6 @@ const docTemplate = `{
                 },
                 "media_url": {
                     "type": "string"
-                },
-                "question_id": {
-                    "type": "integer"
                 },
                 "user_id": {
                     "type": "string"

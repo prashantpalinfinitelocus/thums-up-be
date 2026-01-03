@@ -336,8 +336,6 @@ definitions:
         type: string
       media_url:
         type: string
-      question_id:
-        type: integer
       user_id:
         type: string
       week_number:
@@ -1509,15 +1507,19 @@ paths:
       description: Submit an answer to a Thunder Seat question for the current week
         with optional media file (audio/video). Requires authentication.
       parameters:
-      - description: Question ID
-        in: formData
-        name: question_id
-        required: true
-        type: integer
       - description: Answer text
         in: formData
-        name: answer
+        name: description
         required: true
+        type: string
+      - description: Sharing platform (instagram, snapchat, facebook, twitter, tiktok,
+          youtube)
+        in: formData
+        name: social_media
+        type: string
+      - description: Platform user name (min 3, max 255 characters)
+        in: formData
+        name: user_name
         type: string
       - description: Optional media file (audio/video, max 100MB)
         in: formData
