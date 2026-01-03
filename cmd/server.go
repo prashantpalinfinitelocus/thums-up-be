@@ -215,8 +215,8 @@ func (s *Server) initHandlers() {
 	thunderSeatService := services.NewThunderSeatService(
 		txnManager,
 		s.repositories.thunderSeat,
-		s.repositories.question,
 		s.repositories.contestWeek,
+		s.repositories.user,
 		s.gcsService,
 	)
 

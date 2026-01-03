@@ -5,7 +5,6 @@ import "time"
 type ThunderSeat struct {
 	ID         int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID     string    `gorm:"type:uuid;not null;index" json:"user_id"`
-	QuestionID int       `gorm:"column:question_id;not null" json:"question_id"`
 	WeekNumber int       `gorm:"column:week_number;not null" json:"week_number"`
 	Answer     string    `gorm:"column:answer;type:text" json:"answer"`
 	MediaURL   *string   `gorm:"column:media_url;type:text" json:"media_url,omitempty"`

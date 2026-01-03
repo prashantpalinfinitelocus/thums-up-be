@@ -1,15 +1,14 @@
 package dtos
 
 type ThunderSeatSubmitRequest struct {
-	QuestionID int    `form:"question_id" binding:"required"`
-	Answer     string `form:"answer" binding:"required"`
-	// File will be handled separately in the handler using c.FormFile("media_file")
+	Answer           string  `form:"description" binding:"required"`
+	SharingPlatform  *string `form:"social_media" binding:"omitempty,oneof=instagram snapchat facebook twitter tiktok youtube"`
+	PlatformUserName *string `form:"user_name" binding:"omitempty,min=3,max=255"`
 }
 
 type ThunderSeatResponse struct {
 	ID         int     `json:"id"`
 	UserID     string  `json:"user_id"`
-	QuestionID int     `json:"question_id"`
 	WeekNumber int     `json:"week_number"`
 	Answer     string  `json:"answer"`
 	MediaURL   *string `json:"media_url,omitempty"`

@@ -2,11 +2,11 @@ package services
 
 import (
 	"context"
-	stderrors "errors"
 	"fmt"
 	"mime/multipart"
 	"time"
 
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
@@ -26,23 +26,23 @@ type ThunderSeatService interface {
 type thunderSeatService struct {
 	txnManager      *utils.TransactionManager
 	thunderSeatRepo repository.ThunderSeatRepository
-	questionRepo    repository.QuestionRepository
 	contestWeekRepo repository.ContestWeekRepository
+	userRepo        repository.UserRepository
 	gcsService      utils.GCSService
 }
 
 func NewThunderSeatService(
 	txnManager *utils.TransactionManager,
 	thunderSeatRepo repository.ThunderSeatRepository,
-	questionRepo repository.QuestionRepository,
 	contestWeekRepo repository.ContestWeekRepository,
+	userRepo repository.UserRepository,
 	gcsService utils.GCSService,
 ) ThunderSeatService {
 	return &thunderSeatService{
 		txnManager:      txnManager,
 		thunderSeatRepo: thunderSeatRepo,
-		questionRepo:    questionRepo,
 		contestWeekRepo: contestWeekRepo,
+		userRepo:        userRepo,
 		gcsService:      gcsService,
 	}
 }
@@ -61,26 +61,8 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 		return nil, errors.NewBadRequestError("Submissions are not allowed outside the active contest week period", nil)
 	}
 
-	question, err := s.questionRepo.FindByID(ctx, s.txnManager.GetDB(), req.QuestionID)
-	if err != nil {
-		return nil, errors.NewInternalServerError("Failed to verify question", err)
-	}
-	if question == nil {
-		return nil, errors.NewNotFoundError("Question not found", nil)
-	}
-
-	existing, err := s.thunderSeatRepo.CheckUserSubmission(ctx, s.txnManager.GetDB(), userID, req.QuestionID)
-	if err != nil && !stderrors.Is(err, gorm.ErrRecordNotFound) {
-		log.WithError(err).Error("Failed to check user submission")
-		return nil, errors.NewInternalServerError("Failed to check submission", err)
-	}
-	if existing != nil {
-		return nil, errors.NewBadRequestError("You have already submitted an answer for this question", nil)
-	}
-
 	thunderSeat := &entities.ThunderSeat{
 		UserID:     userID,
-		QuestionID: req.QuestionID,
 		WeekNumber: activeWeek.WeekNumber,
 		Answer:     req.Answer,
 		CreatedBy:  userID,
@@ -103,12 +85,41 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 	}
 
 	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
-		return s.thunderSeatRepo.Create(ctx, tx, thunderSeat)
+		if err := s.thunderSeatRepo.Create(ctx, tx, thunderSeat); err != nil {
+			return err
+		}
+
+		if req.SharingPlatform != nil || req.PlatformUserName != nil {
+			userUUID, parseErr := uuid.Parse(userID)
+			if parseErr != nil {
+				return parseErr
+			}
+
+			user, findErr := s.userRepo.FindById(ctx, tx, userUUID)
+			if findErr != nil {
+				return findErr
+			}
+
+			updateFields := make(map[string]interface{})
+			if req.SharingPlatform != nil {
+				updateFields["sharing_platform"] = *req.SharingPlatform
+			}
+			if req.PlatformUserName != nil {
+				updateFields["platform_user_name"] = *req.PlatformUserName
+			}
+
+			if len(updateFields) > 0 {
+				if updateErr := tx.WithContext(ctx).Model(user).Updates(updateFields).Error; updateErr != nil {
+					return updateErr
+				}
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		log.WithError(err).Error("Failed to submit thunder seat answer")
 
-		// Cleanup uploaded file if database operation fails
 		if thunderSeat.MediaURL != nil {
 			if deleteErr := s.gcsService.DeleteFile(ctx, *thunderSeat.MediaURL); deleteErr != nil {
 				log.WithError(deleteErr).Error("Failed to cleanup uploaded file after database error")
@@ -121,7 +132,6 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 	return &dtos.ThunderSeatResponse{
 		ID:         thunderSeat.ID,
 		UserID:     thunderSeat.UserID,
-		QuestionID: thunderSeat.QuestionID,
 		WeekNumber: thunderSeat.WeekNumber,
 		Answer:     thunderSeat.Answer,
 		MediaURL:   thunderSeat.MediaURL,
@@ -141,7 +151,6 @@ func (s *thunderSeatService) GetUserSubmissions(ctx context.Context, userID stri
 		responses[i] = dtos.ThunderSeatResponse{
 			ID:         sub.ID,
 			UserID:     sub.UserID,
-			QuestionID: sub.QuestionID,
 			WeekNumber: sub.WeekNumber,
 			Answer:     sub.Answer,
 			MediaURL:   sub.MediaURL,

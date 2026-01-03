@@ -32,8 +32,9 @@ func NewThunderSeatHandler(thunderSeatService services.ThunderSeatService) *Thun
 //	@Accept			multipart/form-data
 //	@Produce		json
 //	@Security		Bearer
-//	@Param			question_id	formData	int													true	"Question ID"
-//	@Param			answer		formData	string												true	"Answer text"
+//	@Param			description	formData	string												true	"Answer text"
+//	@Param			social_media	formData	string												false	"Sharing platform (instagram, snapchat, facebook, twitter, tiktok, youtube)"
+//	@Param			user_name	formData	string												false	"Platform user name (min 3, max 255 characters)"
 //	@Param			media_file	formData	file												false	"Optional media file (audio/video, max 100MB)"
 //	@Success		201			{object}	dtos.SuccessResponse{data=dtos.ThunderSeatResponse}	"Answer submitted successfully"
 //	@Failure		400			{object}	dtos.ErrorResponse									"Validation failed"
@@ -54,7 +55,6 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	}
 	userID := userEntity.ID
 
-	// Bind form data
 	var req dtos.ThunderSeatSubmitRequest
 	if err := c.ShouldBind(&req); err != nil {
 		validationErrors := utils.FormatValidationErrors(err)
@@ -66,7 +66,6 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		return
 	}
 
-	// Get optional media file
 	mediaFile, err := c.FormFile("media_file")
 	if err != nil && err != http.ErrMissingFile {
 		log.WithError(err).Error("Failed to get media file from request")
@@ -77,7 +76,6 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		return
 	}
 
-	// Validate media file if present
 	if mediaFile != nil {
 		if err := utils.ValidateMediaFile(mediaFile); err != nil {
 			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
