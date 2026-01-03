@@ -58,6 +58,11 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	var req dtos.ThunderSeatSubmitRequest
 	if err := c.ShouldBind(&req); err != nil {
 		validationErrors := utils.FormatValidationErrors(err)
+		log.WithFields(log.Fields{
+			"user_id":           userID,
+			"validation_errors": validationErrors,
+			"error":             err.Error(),
+		}).Warn("Thunder seat answer submission validation failed")
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 			Success: false,
 			Error:   errors.ErrValidationFailed,
@@ -90,13 +95,22 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	if err != nil {
 		var appErr *errors.AppError
 		if stderrors.As(err, &appErr) {
+			log.WithFields(log.Fields{
+				"user_id":     userID,
+				"status_code": appErr.StatusCode,
+				"error":       appErr.Message,
+				"has_media":   mediaFile != nil,
+			}).WithError(appErr.Err).Warn("Thunder seat answer submission failed with application error")
 			c.JSON(appErr.StatusCode, dtos.ErrorResponse{
 				Success: false,
 				Error:   appErr.Message,
 			})
 			return
 		}
-		log.WithError(err).Error("Failed to submit thunder seat answer")
+		log.WithFields(log.Fields{
+			"user_id":   userID,
+			"has_media": mediaFile != nil,
+		}).WithError(err).Error("Failed to submit thunder seat answer - unexpected error type")
 		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Success: false,
 			Error:   errors.ErrAnswerSubmitFailed,

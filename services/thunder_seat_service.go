@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,6 +17,11 @@ import (
 	"github.com/Infinite-Locus-Product/thums_up_backend/repository"
 	"github.com/Infinite-Locus-Product/thums_up_backend/utils"
 )
+
+// contains checks if a string contains a substring (case-insensitive)
+func contains(s, substr string) bool {
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
+}
 
 type ThunderSeatService interface {
 	SubmitAnswer(ctx context.Context, req dtos.ThunderSeatSubmitRequest, userID string, mediaFile *multipart.FileHeader) (*dtos.ThunderSeatResponse, error)
@@ -50,15 +56,37 @@ func NewThunderSeatService(
 func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderSeatSubmitRequest, userID string, mediaFile *multipart.FileHeader) (*dtos.ThunderSeatResponse, error) {
 	activeWeek, err := s.contestWeekRepo.FindActiveWeek(ctx, s.txnManager.GetDB())
 	if err != nil {
+		log.WithError(err).Error("Failed to get active contest week from database")
 		return nil, errors.NewInternalServerError("Failed to get active contest week", err)
 	}
 	if activeWeek == nil {
-		return nil, errors.NewBadRequestError("No active contest week found", nil)
+		log.Warn("No active contest week found when attempting to submit answer")
+		return nil, errors.NewBadRequestError("No active contest week found. Please check if a contest week is currently active.", nil)
 	}
 
 	now := time.Now()
-	if now.Before(activeWeek.StartDate) || now.After(activeWeek.EndDate) {
-		return nil, errors.NewBadRequestError("Submissions are not allowed outside the active contest week period", nil)
+	// Include the full end date by checking if now is after end of day (23:59:59.999)
+	endOfDay := time.Date(activeWeek.EndDate.Year(), activeWeek.EndDate.Month(), activeWeek.EndDate.Day(), 23, 59, 59, 999999999, activeWeek.EndDate.Location())
+
+	if now.Before(activeWeek.StartDate) {
+		log.WithFields(log.Fields{
+			"now":         now,
+			"start_date":  activeWeek.StartDate,
+			"end_date":    activeWeek.EndDate,
+			"week_number": activeWeek.WeekNumber,
+		}).Warn("Submission attempted before contest week start date")
+		return nil, errors.NewBadRequestError(fmt.Sprintf("Submissions are not allowed before the contest week starts. Contest week %d starts on %s", activeWeek.WeekNumber, activeWeek.StartDate.Format("2006-01-02 15:04:05")), nil)
+	}
+
+	if now.After(endOfDay) {
+		log.WithFields(log.Fields{
+			"now":         now,
+			"start_date":  activeWeek.StartDate,
+			"end_date":    activeWeek.EndDate,
+			"end_of_day":  endOfDay,
+			"week_number": activeWeek.WeekNumber,
+		}).Warn("Submission attempted after contest week end date")
+		return nil, errors.NewBadRequestError(fmt.Sprintf("Submissions are not allowed after the contest week ends. Contest week %d ended on %s", activeWeek.WeekNumber, activeWeek.EndDate.Format("2006-01-02")), nil)
 	}
 
 	thunderSeat := &entities.ThunderSeat{
@@ -86,17 +114,23 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 
 	err = s.txnManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
 		if err := s.thunderSeatRepo.Create(ctx, tx, thunderSeat); err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"user_id":     userID,
+				"week_number": activeWeek.WeekNumber,
+			}).Error("Failed to create thunder seat record in database")
 			return err
 		}
 
 		if req.SharingPlatform != nil || req.PlatformUserName != nil {
 			userUUID, parseErr := uuid.Parse(userID)
 			if parseErr != nil {
+				log.WithError(parseErr).WithField("user_id", userID).Error("Failed to parse user ID as UUID")
 				return parseErr
 			}
 
 			user, findErr := s.userRepo.FindById(ctx, tx, userUUID)
 			if findErr != nil {
+				log.WithError(findErr).WithField("user_id", userID).Error("Failed to find user for updating sharing platform info")
 				return findErr
 			}
 
@@ -110,6 +144,10 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 
 			if len(updateFields) > 0 {
 				if updateErr := tx.WithContext(ctx).Model(user).Updates(updateFields).Error; updateErr != nil {
+					log.WithError(updateErr).WithFields(log.Fields{
+						"user_id":       userID,
+						"update_fields": updateFields,
+					}).Error("Failed to update user sharing platform information")
 					return updateErr
 				}
 			}
@@ -118,15 +156,25 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 		return nil
 	})
 	if err != nil {
-		log.WithError(err).Error("Failed to submit thunder seat answer")
+		log.WithError(err).WithFields(log.Fields{
+			"user_id":     userID,
+			"week_number": activeWeek.WeekNumber,
+			"has_media":   mediaFile != nil,
+		}).Error("Failed to submit thunder seat answer in transaction")
 
 		if thunderSeat.MediaURL != nil {
 			if deleteErr := s.gcsService.DeleteFile(ctx, *thunderSeat.MediaURL); deleteErr != nil {
-				log.WithError(deleteErr).Error("Failed to cleanup uploaded file after database error")
+				log.WithError(deleteErr).WithField("media_url", *thunderSeat.MediaURL).Error("Failed to cleanup uploaded file after database error")
 			}
 		}
 
-		return nil, errors.NewInternalServerError("Failed to submit answer", err)
+
+		errStr := err.Error()
+		if contains(errStr, "duplicate") || contains(errStr, "unique constraint") || contains(errStr, "UNIQUE constraint") {
+			return nil, errors.NewBadRequestError("You have already submitted an answer for this contest week", err)
+		}
+
+		return nil, errors.NewInternalServerError("Failed to submit answer. Please try again later.", err)
 	}
 
 	return &dtos.ThunderSeatResponse{
