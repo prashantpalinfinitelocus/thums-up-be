@@ -23,11 +23,31 @@ type JWTClaims struct {
 func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenString string
+		cfg := config.GetConfig()
 
+		// First, try to get token from "access_token" cookie (preferred)
 		cookieToken, err := c.Cookie("access_token")
 		if err == nil && cookieToken != "" {
 			tokenString = cookieToken
 		} else {
+			// If "access_token" cookie not found, check all cookies for a valid JWT token
+			cookies := c.Request.Cookies()
+			for _, cookie := range cookies {
+				if cookie.Value != "" {
+					// Try to parse as JWT to see if it's a valid token
+					token, err := jwt.ParseWithClaims(cookie.Value, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+						return []byte(cfg.JwtConfig.SecretKey), nil
+					})
+					if err == nil && token.Valid {
+						tokenString = cookie.Value
+						break
+					}
+				}
+			}
+		}
+
+		// If no token found in cookies, check Authorization header
+		if tokenString == "" {
 			authHeader := c.GetHeader("Authorization")
 			if authHeader == "" {
 				c.JSON(http.StatusUnauthorized, gin.H{
@@ -59,7 +79,6 @@ func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.Handler
 			c.Abort()
 			return
 		}
-		cfg := config.GetConfig()
 
 		token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(cfg.JwtConfig.SecretKey), nil
@@ -114,11 +133,31 @@ func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.Handler
 func OptionalAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenString string
+		cfg := config.GetConfig()
 
+		// First, try to get token from "access_token" cookie (preferred)
 		cookieToken, err := c.Cookie("access_token")
 		if err == nil && cookieToken != "" {
 			tokenString = cookieToken
 		} else {
+			// If "access_token" cookie not found, check all cookies for a valid JWT token
+			cookies := c.Request.Cookies()
+			for _, cookie := range cookies {
+				if cookie.Value != "" {
+					// Try to parse as JWT to see if it's a valid token
+					token, err := jwt.ParseWithClaims(cookie.Value, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+						return []byte(cfg.JwtConfig.SecretKey), nil
+					})
+					if err == nil && token.Valid {
+						tokenString = cookie.Value
+						break
+					}
+				}
+			}
+		}
+
+		// If no token found in cookies, check Authorization header
+		if tokenString == "" {
 			authHeader := c.GetHeader("Authorization")
 			if authHeader == "" {
 				c.Next()
@@ -138,7 +177,6 @@ func OptionalAuthMiddleware() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		cfg := config.GetConfig()
 
 		token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(cfg.JwtConfig.SecretKey), nil
