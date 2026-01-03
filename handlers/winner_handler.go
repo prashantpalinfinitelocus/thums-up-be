@@ -405,6 +405,18 @@ func (h *WinnerHandler) SubmitWinnerKYC(c *gin.Context) {
 	})
 }
 
+// CheckWinnerStatus godoc
+//
+//	@Summary		Check user winner status
+//	@Description	Check if the authenticated user has won and whether they have viewed the congratulations banner
+//	@Tags			Winners
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Success		200	{object}	dtos.SuccessResponse{data=dtos.WinnerStatusResponse}	"Winner status retrieved successfully"
+//	@Failure		401	{object}	dtos.ErrorResponse										"Unauthorized"
+//	@Failure		500	{object}	dtos.ErrorResponse										"Failed to check winner status"
+//	@Router			/winners/status [get]
 func (h *WinnerHandler) CheckWinnerStatus(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -448,6 +460,19 @@ func (h *WinnerHandler) CheckWinnerStatus(c *gin.Context) {
 	})
 }
 
+// MarkBannerAsViewed godoc
+//
+//	@Summary		Mark banner as viewed
+//	@Description	Mark the congratulations banner as viewed for the authenticated user
+//	@Tags			Winners
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Success		200	{object}	dtos.SuccessResponse{data=string}	"Banner marked as viewed successfully"
+//	@Failure		401	{object}	dtos.ErrorResponse					"Unauthorized"
+//	@Failure		404	{object}	dtos.ErrorResponse					"User is not a winner"
+//	@Failure		500	{object}	dtos.ErrorResponse					"Failed to mark banner as viewed"
+//	@Router			/winners/mark-viewed [post]
 func (h *WinnerHandler) MarkBannerAsViewed(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {

@@ -22,8 +22,36 @@ type JWTClaims struct {
 
 func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+		var tokenString string
+
+		cookieToken, err := c.Cookie("access_token")
+		if err == nil && cookieToken != "" {
+			tokenString = cookieToken
+		} else {
+			authHeader := c.GetHeader("Authorization")
+			if authHeader == "" {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"success": false,
+					"error":   errors.ErrAuthHeaderRequired,
+				})
+				c.Abort()
+				return
+			}
+
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"success": false,
+					"error":   errors.ErrInvalidAuthHeaderFormat,
+				})
+				c.Abort()
+				return
+			}
+
+			tokenString = parts[1]
+		}
+
+		if tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
 				"error":   errors.ErrAuthHeaderRequired,
@@ -31,18 +59,6 @@ func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.Handler
 			c.Abort()
 			return
 		}
-
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"error":   errors.ErrInvalidAuthHeaderFormat,
-			})
-			c.Abort()
-			return
-		}
-
-		tokenString := parts[1]
 		cfg := config.GetConfig()
 
 		token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -97,19 +113,31 @@ func AuthMiddleware(db *gorm.DB, userRepo repository.UserRepository) gin.Handler
 
 func OptionalAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+		var tokenString string
+
+		cookieToken, err := c.Cookie("access_token")
+		if err == nil && cookieToken != "" {
+			tokenString = cookieToken
+		} else {
+			authHeader := c.GetHeader("Authorization")
+			if authHeader == "" {
+				c.Next()
+				return
+			}
+
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				c.Next()
+				return
+			}
+
+			tokenString = parts[1]
+		}
+
+		if tokenString == "" {
 			c.Next()
 			return
 		}
-
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.Next()
-			return
-		}
-
-		tokenString := parts[1]
 		cfg := config.GetConfig()
 
 		token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {

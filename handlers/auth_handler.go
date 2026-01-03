@@ -219,6 +219,18 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	})
 }
 
+// GetLoginCount godoc
+//
+//	@Summary		Get user login count
+//	@Description	Get the login count for the authenticated user
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Security		Bearer
+//	@Success		200	{object}	dtos.SuccessResponse{data=dtos.LoginCountResponse}	"Login count retrieved successfully"
+//	@Failure		401	{object}	dtos.ErrorResponse									"Unauthorized"
+//	@Failure		500	{object}	dtos.ErrorResponse									"Failed to get login count"
+//	@Router			/auth/login-count [get]
 func (h *AuthHandler) GetLoginCount(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {

@@ -190,6 +190,15 @@ definitions:
     - language_id
     - question_text
     type: object
+  dtos.LoginCountResponse:
+    properties:
+      count:
+        type: integer
+      last_login:
+        type: string
+      user_id:
+        type: string
+    type: object
   dtos.OTPResponse:
     properties:
       otp:
@@ -405,6 +414,11 @@ definitions:
     - otp
     - phone_number
     type: object
+  dtos.WebsiteStatusResponse:
+    properties:
+      status:
+        type: string
+    type: object
   dtos.WinnerResponse:
     properties:
       created_on:
@@ -416,6 +430,17 @@ definitions:
       thunder_seat_id:
         type: integer
       user_id:
+        type: string
+      week_number:
+        type: integer
+    type: object
+  dtos.WinnerStatusResponse:
+    properties:
+      has_viewed:
+        type: boolean
+      has_won:
+        type: boolean
+      qr_code_url:
         type: string
       week_number:
         type: integer
@@ -477,6 +502,36 @@ paths:
       summary: Select winners for a week
       tags:
       - Admin
+  /auth/login-count:
+    get:
+      consumes:
+      - application/json
+      description: Get the login count for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login count retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.LoginCountResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to get login count
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get user login count
+      tags:
+      - Authentication
   /auth/refresh:
     post:
       consumes:
@@ -976,7 +1031,7 @@ paths:
       consumes:
       - application/json
       description: Update the authenticated user's profile information (name, email,
-        avatar). Requires authentication.
+        avatar, sharing_platform, platform_user_name). Requires authentication.
       parameters:
       - description: Profile update data
         in: body
@@ -1559,6 +1614,31 @@ paths:
       summary: Get user's Thunder Seat submissions
       tags:
       - Thunder Seat
+  /website-status:
+    get:
+      consumes:
+      - application/json
+      description: Get the current website status (live, live_soon, or coming_soon)
+        based on launch date
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Website status retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.WebsiteStatusResponse'
+              type: object
+        "500":
+          description: Failed to get website status
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get website status
+      tags:
+      - Website
   /winners:
     get:
       consumes:
@@ -1666,6 +1746,72 @@ paths:
       security:
       - Bearer: []
       summary: Submit winner KYC details
+      tags:
+      - Winners
+  /winners/mark-viewed:
+    post:
+      consumes:
+      - application/json
+      description: Mark the congratulations banner as viewed for the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Banner marked as viewed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: User is not a winner
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to mark banner as viewed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Mark banner as viewed
+      tags:
+      - Winners
+  /winners/status:
+    get:
+      consumes:
+      - application/json
+      description: Check if the authenticated user has won and whether they have viewed
+        the congratulations banner
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Winner status retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.WinnerStatusResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to check winner status
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Check user winner status
       tags:
       - Winners
   /winners/week/{weekNumber}:

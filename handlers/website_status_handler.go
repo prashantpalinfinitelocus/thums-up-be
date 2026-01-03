@@ -19,6 +19,16 @@ func NewWebsiteStatusHandler(websiteStatusService services.WebsiteStatusService)
 	}
 }
 
+// GetStatus godoc
+//
+//	@Summary		Get website status
+//	@Description	Get the current website status (live, live_soon, or coming_soon) based on launch date
+//	@Tags			Website
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	dtos.SuccessResponse{data=dtos.WebsiteStatusResponse}	"Website status retrieved successfully"
+//	@Failure		500	{object}	dtos.ErrorResponse										"Failed to get website status"
+//	@Router			/website-status [get]
 func (h *WebsiteStatusHandler) GetStatus(c *gin.Context) {
 	status := h.websiteStatusService.GetStatus()
 

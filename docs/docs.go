@@ -94,6 +94,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/login-count": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get the login count for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get user login count",
+                "responses": {
+                    "200": {
+                        "description": "Login count retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.LoginCountResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get login count",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/refresh": {
             "post": {
                 "description": "Get a new access token using a valid refresh token",
@@ -888,7 +940,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Update the authenticated user's profile information (name, email, avatar). Requires authentication.",
+                "description": "Update the authenticated user's profile information (name, email, avatar, sharing_platform, platform_user_name). Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1825,6 +1877,47 @@ const docTemplate = `{
                 }
             }
         },
+        "/website-status": {
+            "get": {
+                "description": "Get the current website status (live, live_soon, or coming_soon) based on launch date",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Website"
+                ],
+                "summary": "Get website status",
+                "responses": {
+                    "200": {
+                        "description": "Website status retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.WebsiteStatusResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get website status",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/winners": {
             "get": {
                 "description": "Retrieve all winners with pagination support",
@@ -1988,6 +2081,116 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to submit KYC",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/winners/mark-viewed": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Mark the congratulations banner as viewed for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Winners"
+                ],
+                "summary": "Mark banner as viewed",
+                "responses": {
+                    "200": {
+                        "description": "Banner marked as viewed successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User is not a winner",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to mark banner as viewed",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/winners/status": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Check if the authenticated user has won and whether they have viewed the congratulations banner",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Winners"
+                ],
+                "summary": "Check user winner status",
+                "responses": {
+                    "200": {
+                        "description": "Winner status retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.WinnerStatusResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to check winner status",
                         "schema": {
                             "$ref": "#/definitions/dtos.ErrorResponse"
                         }
@@ -2342,6 +2545,20 @@ const docTemplate = `{
                 }
             }
         },
+        "dtos.LoginCountResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "last_login": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dtos.OTPResponse": {
             "type": "object",
             "properties": {
@@ -2667,6 +2884,14 @@ const docTemplate = `{
                 }
             }
         },
+        "dtos.WebsiteStatusResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "dtos.WinnerResponse": {
             "type": "object",
             "properties": {
@@ -2683,6 +2908,23 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "user_id": {
+                    "type": "string"
+                },
+                "week_number": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dtos.WinnerStatusResponse": {
+            "type": "object",
+            "properties": {
+                "has_viewed": {
+                    "type": "boolean"
+                },
+                "has_won": {
+                    "type": "boolean"
+                },
+                "qr_code_url": {
                     "type": "string"
                 },
                 "week_number": {

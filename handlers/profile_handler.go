@@ -81,7 +81,7 @@ func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 // UpdateProfile godoc
 //
 //	@Summary		Update user profile
-//	@Description	Update the authenticated user's profile information (name, email, avatar). Requires authentication.
+//	@Description	Update the authenticated user's profile information (name, email, avatar, sharing_platform, platform_user_name). Requires authentication.
 //	@Tags			Profile
 //	@Accept			json
 //	@Produce		json
