@@ -14,6 +14,7 @@ import (
 
 	"github.com/Infinite-Locus-Product/thums_up_backend/config"
 	"github.com/Infinite-Locus-Product/thums_up_backend/constants"
+	"github.com/Infinite-Locus-Product/thums_up_backend/docs"
 	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
 	"github.com/Infinite-Locus-Product/thums_up_backend/handlers"
 	"github.com/Infinite-Locus-Product/thums_up_backend/pkg/queue"
@@ -42,6 +43,8 @@ func init() {
 
 func startServer() {
 	cfg := config.GetConfig()
+
+	docs.SwaggerInfo.Host = cfg.SwaggerHost
 
 	srv := NewServer(cfg)
 	defer srv.Cleanup()
