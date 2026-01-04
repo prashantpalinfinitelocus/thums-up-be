@@ -231,7 +231,9 @@ func (s *Server) initHandlers() {
 		s.gcsService,
 	)
 
-	websiteStatusService := services.NewWebsiteStatusService(s.db, s.repositories.winner)
+	websiteStatusService := services.NewWebsiteStatusService(s.db, s.repositories.winner, s.repositories.contestWeek)
+
+	stateService := services.NewStateService(s.db, s.repositories.state)
 
 	s.handlers = &Handlers{
 		auth:          handlers.NewAuthHandler(authService),
@@ -243,6 +245,7 @@ func (s *Server) initHandlers() {
 		winner:        handlers.NewWinnerHandler(winnerService, s.gcsService),
 		contestWeek:   handlers.NewContestWeekHandler(contestWeekService),
 		websiteStatus: handlers.NewWebsiteStatusHandler(websiteStatusService),
+		state:         handlers.NewStateHandler(stateService),
 	}
 
 	log.Debug("All handlers initialized")

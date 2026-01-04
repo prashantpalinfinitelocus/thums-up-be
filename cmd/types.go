@@ -55,4 +55,5 @@ type Handlers struct {
 	winner        *handlers.WinnerHandler
 	contestWeek   *handlers.ContestWeekHandler
 	websiteStatus *handlers.WebsiteStatusHandler
+	state         *handlers.StateHandler
 }

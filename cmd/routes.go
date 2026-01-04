@@ -72,5 +72,7 @@ func (s *Server) setupAPIRoutes(router *gin.Engine) {
 
 	routes.SetupWebsiteStatusRoutes(api, s.handlers.websiteStatus)
 
+	routes.SetupStateRoutes(api, s.handlers.state)
+
 	routes.SetupAdminRoutes(api, s.handlers.winner)
 }

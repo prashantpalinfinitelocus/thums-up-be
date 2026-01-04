@@ -8,9 +8,10 @@ import (
 )
 
 type StateRepository interface {
+	GenericRepository[entities.State]
 	FindByName(ctx context.Context, tx *gorm.DB, name string) (*entities.State, error)
-	FindByID(ctx context.Context, tx *gorm.DB, id int) (*entities.State, error)
 	FindByIDs(ctx context.Context, tx *gorm.DB, ids []int) ([]entities.State, error)
+	FindAllActive(ctx context.Context, db *gorm.DB) ([]entities.State, error)
 }
 
 type CityRepository interface {
@@ -28,7 +29,7 @@ type PinCodeRepository interface {
 }
 
 type stateRepository struct {
-	db *gorm.DB
+	*GormRepository[entities.State]
 }
 
 type cityRepository struct {
@@ -40,7 +41,9 @@ type pinCodeRepository struct {
 }
 
 func NewStateRepository() StateRepository {
-	return &stateRepository{}
+	return &stateRepository{
+		GormRepository: NewGormRepository[entities.State](),
+	}
 }
 
 func NewCityRepository() CityRepository {
@@ -60,18 +63,18 @@ func (r *stateRepository) FindByName(ctx context.Context, tx *gorm.DB, name stri
 	return &state, nil
 }
 
-func (r *stateRepository) FindByID(ctx context.Context, tx *gorm.DB, id int) (*entities.State, error) {
-	var state entities.State
-	err := tx.WithContext(ctx).Where("id = ?", id).First(&state).Error
-	if err != nil {
-		return nil, err
-	}
-	return &state, nil
-}
-
 func (r *stateRepository) FindByIDs(ctx context.Context, tx *gorm.DB, ids []int) ([]entities.State, error) {
 	var states []entities.State
 	err := tx.WithContext(ctx).Where("id IN ?", ids).Find(&states).Error
+	if err != nil {
+		return nil, err
+	}
+	return states, nil
+}
+
+func (r *stateRepository) FindAllActive(ctx context.Context, db *gorm.DB) ([]entities.State, error) {
+	var states []entities.State
+	err := db.WithContext(ctx).Where("is_active = ? AND is_deleted = ?", true, false).Order("name ASC").Find(&states).Error
 	if err != nil {
 		return nil, err
 	}
