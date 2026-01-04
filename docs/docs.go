@@ -2199,7 +2199,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Check if the authenticated user has won and whether they have viewed the congratulations banner",
+                "description": "Check if the authenticated user has won, whether they have viewed the congratulations banner, and if they have participated in the contest. Returns has_won (true if user is a winner), has_viewed (true if banner was viewed), has_participated (true if user has submitted any answers in thunder_seat), week_number (if won), and qr_code_url (if won).",
                 "consumes": [
                     "application/json"
                 ],
@@ -2973,6 +2973,9 @@ const docTemplate = `{
         "dtos.WinnerStatusResponse": {
             "type": "object",
             "properties": {
+                "has_participated": {
+                    "type": "boolean"
+                },
                 "has_viewed": {
                     "type": "boolean"
                 },

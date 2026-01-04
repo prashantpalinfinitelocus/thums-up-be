@@ -27,14 +27,14 @@ type WinnerService interface {
 }
 
 type winnerService struct {
-	txnManager            *utils.TransactionManager
-	winnerRepo            repository.WinnerRepository
-	thunderSeatRepo       repository.ThunderSeatRepository
-	contestWeekRepo       repository.ContestWeekRepository
-	userRepo              repository.UserRepository
-	userAadharRepo        repository.UserAadharCardRepository
+	txnManager             *utils.TransactionManager
+	winnerRepo             repository.WinnerRepository
+	thunderSeatRepo        repository.ThunderSeatRepository
+	contestWeekRepo        repository.ContestWeekRepository
+	userRepo               repository.UserRepository
+	userAadharRepo         repository.UserAadharCardRepository
 	userAdditionalInfoRepo repository.UserAdditionalInfoRepository
-	gcsService            utils.GCSService
+	gcsService             utils.GCSService
 }
 
 func NewWinnerService(
@@ -48,14 +48,14 @@ func NewWinnerService(
 	gcsService utils.GCSService,
 ) WinnerService {
 	return &winnerService{
-		txnManager:            txnManager,
-		winnerRepo:            winnerRepo,
-		thunderSeatRepo:       thunderSeatRepo,
-		contestWeekRepo:       contestWeekRepo,
-		userRepo:              userRepo,
-		userAadharRepo:        userAadharRepo,
+		txnManager:             txnManager,
+		winnerRepo:             winnerRepo,
+		thunderSeatRepo:        thunderSeatRepo,
+		contestWeekRepo:        contestWeekRepo,
+		userRepo:               userRepo,
+		userAadharRepo:         userAadharRepo,
 		userAdditionalInfoRepo: userAdditionalInfoRepo,
-		gcsService:            gcsService,
+		gcsService:             gcsService,
 	}
 }
 
@@ -334,12 +334,19 @@ func (s *winnerService) SubmitWinnerKYC(ctx context.Context, userID string, req 
 }
 
 func (s *winnerService) CheckUserWinnerStatus(ctx context.Context, userID string) (*dtos.WinnerStatusResponse, error) {
+	thunderSeatEntries, err := s.thunderSeatRepo.FindByUserID(ctx, s.txnManager.GetDB(), userID)
+	if err != nil {
+		return nil, errors.NewInternalServerError("Failed to check user participation", err)
+	}
+	hasParticipated := len(thunderSeatEntries) > 0
+
 	winner, err := s.winnerRepo.FindLatestByUserID(ctx, s.txnManager.GetDB(), userID)
 	if err != nil {
 		if stderrors.Is(err, gorm.ErrRecordNotFound) {
 			return &dtos.WinnerStatusResponse{
-				HasWon:    false,
-				HasViewed: false,
+				HasWon:          false,
+				HasViewed:       false,
+				HasParticipated: hasParticipated,
 			}, nil
 		}
 		return nil, errors.NewInternalServerError("Failed to check winner status", err)
@@ -353,10 +360,11 @@ func (s *winnerService) CheckUserWinnerStatus(ctx context.Context, userID string
 
 	weekNumber := winner.WeekNumber
 	return &dtos.WinnerStatusResponse{
-		HasWon:     true,
-		HasViewed:  winner.HasViewed,
-		WeekNumber: &weekNumber,
-		QRCodeURL:  qrURL,
+		HasWon:          true,
+		HasViewed:       winner.HasViewed,
+		HasParticipated: hasParticipated,
+		WeekNumber:      &weekNumber,
+		QRCodeURL:       qrURL,
 	}, nil
 }
 

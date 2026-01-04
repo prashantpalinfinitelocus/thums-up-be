@@ -64,8 +64,9 @@ type ActivateWeekRequest struct {
 }
 
 type WinnerStatusResponse struct {
-	HasWon     bool    `json:"has_won"`
-	HasViewed  bool    `json:"has_viewed"`
-	WeekNumber *int    `json:"week_number,omitempty"`
-	QRCodeURL  *string `json:"qr_code_url,omitempty"`
+	HasWon         bool    `json:"has_won"`
+	HasViewed      bool    `json:"has_viewed"`
+	HasParticipated bool    `json:"has_participated"`
+	WeekNumber     *int    `json:"week_number,omitempty"`
+	QRCodeURL      *string `json:"qr_code_url,omitempty"`
 }
