@@ -55,6 +55,9 @@ const (
 	MESSAGE_HANDLER_TIMEOUT   = 30 * time.Second
 
 	WEBSITE_LAUNCH_DATE = "2026-01-09T00:00:00Z"
+
+	// System UUID for system/admin operations
+	SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000000"
 )
 
 var (

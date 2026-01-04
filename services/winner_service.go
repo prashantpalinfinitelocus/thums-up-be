@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/Infinite-Locus-Product/thums_up_backend/constants"
 	"github.com/Infinite-Locus-Product/thums_up_backend/dtos"
 	"github.com/Infinite-Locus-Product/thums_up_backend/entities"
 	"github.com/Infinite-Locus-Product/thums_up_backend/errors"
@@ -116,7 +117,7 @@ func (s *winnerService) SelectWinners(ctx context.Context, req dtos.SelectWinner
 			QRCode:        qrKey,
 			WeekNumber:    req.WeekNumber,
 			HasViewed:     false,
-			CreatedBy:     "system",
+			CreatedBy:     constants.SYSTEM_USER_ID,
 			CreatedOn:     now,
 		}
 	}
