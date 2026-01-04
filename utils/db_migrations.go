@@ -27,6 +27,8 @@ func RunDBMigrations(db *gorm.DB) error {
 		&entities.State{},
 		&entities.City{},
 		&entities.PinCode{},
+		&entities.UserAadharCard{},
+		&entities.UserAdditionalInfo{},
 		&entities.QuestionMaster{},
 		&entities.OptionMaster{},
 		&entities.QuestionMasterLanguage{},
