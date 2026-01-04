@@ -30,7 +30,7 @@ func NewWebsiteStatusHandler(websiteStatusService services.WebsiteStatusService)
 //	@Failure		500	{object}	dtos.ErrorResponse										"Failed to get website status"
 //	@Router			/website-status [get]
 func (h *WebsiteStatusHandler) GetStatus(c *gin.Context) {
-	status := h.websiteStatusService.GetStatus()
+	status := h.websiteStatusService.GetStatus(c.Request.Context())
 
 	c.JSON(http.StatusOK, dtos.SuccessResponse{
 		Success: true,

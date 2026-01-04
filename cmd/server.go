@@ -231,7 +231,7 @@ func (s *Server) initHandlers() {
 		s.gcsService,
 	)
 
-	websiteStatusService := services.NewWebsiteStatusService()
+	websiteStatusService := services.NewWebsiteStatusService(s.db, s.repositories.winner)
 
 	s.handlers = &Handlers{
 		auth:          handlers.NewAuthHandler(authService),

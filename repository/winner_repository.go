@@ -16,6 +16,7 @@ type WinnerRepository interface {
 	FindAllWithPagination(ctx context.Context, db *gorm.DB, limit, offset int) ([]entities.ThunderSeatWinner, int64, error)
 	FindLatestByUserID(ctx context.Context, db *gorm.DB, userID string) (*entities.ThunderSeatWinner, error)
 	UpdateHasViewed(ctx context.Context, db *gorm.DB, winnerID int) error
+	Count(ctx context.Context, db *gorm.DB) (int64, error)
 }
 
 type winnerRepository struct {
@@ -85,4 +86,12 @@ func (r *winnerRepository) FindLatestByUserID(ctx context.Context, db *gorm.DB, 
 
 func (r *winnerRepository) UpdateHasViewed(ctx context.Context, db *gorm.DB, winnerID int) error {
 	return db.WithContext(ctx).Model(&entities.ThunderSeatWinner{}).Where("id = ?", winnerID).Update("has_viewed", true).Error
+}
+
+func (r *winnerRepository) Count(ctx context.Context, db *gorm.DB) (int64, error) {
+	var count int64
+	if err := db.WithContext(ctx).Model(&entities.ThunderSeatWinner{}).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
 }
