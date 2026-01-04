@@ -66,6 +66,7 @@ func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 			Name:         userProfile.Name,
 			Email:        userProfile.Email,
 			AvatarImage:  avatarImageURL,
+			IsViewed:     userProfile.IsViewed,
 			IsActive:     userProfile.IsActive,
 			IsVerified:   userProfile.IsVerified,
 			ReferralCode: userProfile.ReferralCode,

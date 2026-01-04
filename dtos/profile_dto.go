@@ -51,6 +51,7 @@ type UpdateProfileRequestDTO struct {
 	Name             *string `json:"name,omitempty"`
 	Email            *string `json:"email,omitempty"`
 	AvatarID         *int    `json:"avatar_id,omitempty"`
+	IsViewed         *bool   `json:"is_viewed,omitempty"`
 	SharingPlatform  *string `json:"sharing_platform,omitempty"`
 	PlatformUserName *string `json:"platform_user_name,omitempty"`
 }
@@ -65,6 +66,7 @@ type UserProfileDTO struct {
 	IsVerified   bool      `json:"is_verified"`
 	ReferralCode *string   `json:"referral_code,omitempty"`
 	ReferredBy   *string   `json:"referred_by,omitempty"`
+	IsViewed     bool      `json:"is_viewed"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }

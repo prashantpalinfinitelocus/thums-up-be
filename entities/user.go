@@ -20,6 +20,7 @@ type User struct {
 	PlatformUserName *string    `gorm:"type:varchar(255)" json:"platform_user_name,omitempty"`
 	ReferredBy       *string    `gorm:"type:varchar(20)" json:"referred_by,omitempty"`
 	DeviceToken      *string    `gorm:"type:text" json:"device_token,omitempty"`
+	IsViewed         bool       `gorm:"default:false" json:"is_viewed,omitempty"`
 	CreatedAt        time.Time  `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
 	DeletedAt        *time.Time `gorm:"index" json:"deleted_at,omitempty"`

@@ -169,6 +169,10 @@ func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.Up
 		updateFields["avatar_id"] = *req.AvatarID
 	}
 
+	if req.IsViewed != nil {
+		updateFields["is_viewed"] = *req.IsViewed
+	}
+
 	if req.SharingPlatform != nil {
 		updateFields["sharing_platform"] = *req.SharingPlatform
 	}
