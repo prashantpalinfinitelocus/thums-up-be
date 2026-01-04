@@ -16,7 +16,7 @@ import (
 )
 
 type UserService interface {
-	GetUser(ctx context.Context, userID string) (*entities.User, *string, error)
+	GetUser(ctx context.Context, userID string) (*entities.User, *string, *string, error)
 	UpdateUser(ctx context.Context, userID string, req dtos.UpdateProfileRequestDTO) (*entities.User, error)
 	GetUserAddresses(ctx context.Context, userID string) ([]dtos.AddressResponseDTO, error)
 	AddUserAddress(ctx context.Context, userID string, req dtos.AddressRequestDTO) (*dtos.AddressResponseDTO, error)
@@ -42,6 +42,7 @@ type userService struct {
 	questionMasterLanguageRepo repository.QuestionMasterLanguageRepository
 	optionMasterRepo           repository.OptionMasterRepository
 	optionMasterLanguageRepo   repository.OptionMasterLanguageRepository
+	winnerRepo                 repository.WinnerRepository
 }
 
 func NewUserService(
@@ -58,6 +59,7 @@ func NewUserService(
 	questionMasterLanguageRepo repository.QuestionMasterLanguageRepository,
 	optionMasterRepo repository.OptionMasterRepository,
 	optionMasterLanguageRepo repository.OptionMasterLanguageRepository,
+	winnerRepo repository.WinnerRepository,
 ) UserService {
 	return &userService{
 		txnManager:                 txnManager,
@@ -73,45 +75,52 @@ func NewUserService(
 		questionMasterLanguageRepo: questionMasterLanguageRepo,
 		optionMasterRepo:           optionMasterRepo,
 		optionMasterLanguageRepo:   optionMasterLanguageRepo,
+		winnerRepo:                 winnerRepo,
 	}
 }
 
-func (s *userService) GetUser(ctx context.Context, userID string) (*entities.User, *string, error) {
+func (s *userService) GetUser(ctx context.Context, userID string) (*entities.User, *string, *string, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid user ID format: %w", err)
+		return nil, nil, nil, fmt.Errorf("invalid user ID format: %w", err)
 	}
 
 	tx, err := s.txnManager.StartTxn()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	defer s.txnManager.RollbackOnPanic(tx)
 
 	user, err := s.userRepo.FindById(ctx, tx, userUUID)
 	if err != nil {
 		s.txnManager.AbortTxn(tx)
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	if user == nil {
 		s.txnManager.AbortTxn(tx)
-		return nil, nil, fmt.Errorf("user not found")
+		return nil, nil, nil, fmt.Errorf("user not found")
 	}
 
 	var avatarImageURL *string
 	if user.AvatarID != nil {
 		avatar, err := s.avatarRepo.FindByID(ctx, tx, *user.AvatarID)
 		if err == nil && avatar != nil && !avatar.IsDeleted && avatar.IsActive {
-			// Reconstruct full path: avatars/{userID}/{filename}
 			fullPath := fmt.Sprintf("avatars/%s/%s", avatar.CreatedBy, avatar.ImageKey)
 			imageURL := s.gcsService.GetPublicURL(fullPath)
 			avatarImageURL = &imageURL
 		}
 	}
 
+	var qrCodeURL *string
+	winner, err := s.winnerRepo.FindLatestByUserID(ctx, tx, userID)
+	if err == nil && winner != nil && winner.QRCode != "" {
+		url := s.gcsService.GetPublicURL(winner.QRCode)
+		qrCodeURL = &url
+	}
+
 	s.txnManager.CommitTxn(tx)
-	return user, avatarImageURL, nil
+	return user, avatarImageURL, qrCodeURL, nil
 }
 
 func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.UpdateProfileRequestDTO) (*entities.User, error) {

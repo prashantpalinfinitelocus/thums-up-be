@@ -887,7 +887,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Retrieve the authenticated user's profile information. Requires authentication.",
+                "description": "Retrieve the authenticated user's profile information including avatar image and QR code URL (if user has won). The QR code URL is retrieved from the thunder_seat_winner table if the user is a winner. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2028,7 +2028,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "After being selected as a winner, user submits their KYC details including name, email, Aadhar card images, and up to three cities for additional information. All cities are optional text fields.",
+                "description": "After being selected as a winner, user submits their KYC details including name, email, optional Aadhar card images, and up to three cities for additional information. Aadhar card number and images are optional. Cities are optional text fields.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -2056,24 +2056,21 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Aadhar number",
+                        "description": "Aadhar number (optional)",
                         "name": "aadhar_number",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "file",
-                        "description": "Aadhar front image",
+                        "description": "Aadhar front image (optional)",
                         "name": "aadhar_front",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "file",
-                        "description": "Aadhar back image",
+                        "description": "Aadhar back image (optional)",
                         "name": "aadhar_back",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "string",
@@ -2901,6 +2898,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "phone_number": {
+                    "type": "string"
+                },
+                "qr_code_url": {
                     "type": "string"
                 },
                 "referral_code": {

@@ -26,7 +26,7 @@ func NewProfileHandler(userService services.UserService) *ProfileHandler {
 // GetProfile godoc
 //
 //	@Summary		Get user profile
-//	@Description	Retrieve the authenticated user's profile information. Requires authentication.
+//	@Description	Retrieve the authenticated user's profile information including avatar image and QR code URL (if user has won). The QR code URL is retrieved from the thunder_seat_winner table if the user is a winner. Requires authentication.
 //	@Tags			Profile
 //	@Accept			json
 //	@Produce		json
@@ -48,7 +48,7 @@ func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": errors.ErrInvalidUserContext})
 		return
 	}
-	userProfile, avatarImageURL, err := h.userService.GetUser(ctx, userEntity.ID)
+	userProfile, avatarImageURL, qrCodeURL, err := h.userService.GetUser(ctx, userEntity.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("%s: %v", errors.ErrProfileFetchFailed, err)})
 		return
@@ -66,6 +66,7 @@ func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 			Name:         userProfile.Name,
 			Email:        userProfile.Email,
 			AvatarImage:  avatarImageURL,
+			QRCodeURL:    qrCodeURL,
 			IsViewed:     userProfile.IsViewed,
 			IsActive:     userProfile.IsActive,
 			IsVerified:   userProfile.IsVerified,

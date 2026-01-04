@@ -189,16 +189,16 @@ func (h *WinnerHandler) GetAllWinners(c *gin.Context) {
 // SubmitWinnerKYC godoc
 //
 //	@Summary		Submit winner KYC details
-//	@Description	After being selected as a winner, user submits their KYC details including name, email, Aadhar card images, and up to three cities for additional information. All cities are optional text fields.
+//	@Description	After being selected as a winner, user submits their KYC details including name, email, optional Aadhar card images, and up to three cities for additional information. Aadhar card number and images are optional. Cities are optional text fields.
 //	@Tags			Winners
 //	@Accept			multipart/form-data
 //	@Produce		json
 //	@Security		Bearer
 //	@Param			user_name		formData	string								true	"User name"
 //	@Param			user_email		formData	string								true	"User email"
-//	@Param			aadhar_number	formData	string								true	"Aadhar number"
-//	@Param			aadhar_front	formData	file								true	"Aadhar front image"
-//	@Param			aadhar_back		formData	file								true	"Aadhar back image"
+//	@Param			aadhar_number	formData	string								false	"Aadhar number (optional)"
+//	@Param			aadhar_front	formData	file								false	"Aadhar front image (optional)"
+//	@Param			aadhar_back		formData	file								false	"Aadhar back image (optional)"
 //	@Param			city1			formData	string								false	"City 1 (optional)"
 //	@Param			city2			formData	string								false	"City 2 (optional)"
 //	@Param			city3			formData	string								false	"City 3 (optional)"
@@ -228,68 +228,66 @@ func (h *WinnerHandler) SubmitWinnerKYC(c *gin.Context) {
 
 	userName := c.PostForm("user_name")
 	userEmail := c.PostForm("user_email")
-	aadharNumber := c.PostForm("aadhar_number")
 
-	if userName == "" || userEmail == "" || aadharNumber == "" {
+	if userName == "" || userEmail == "" {
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 			Success: false,
-			Error:   "user_name, user_email, and aadhar_number are required",
+			Error:   "user_name and user_email are required",
 		})
 		return
+	}
+
+	var aadharFrontURL *string
+	var aadharBackURL *string
+	var aadharNumber *string
+
+	aadharNumberStr := c.PostForm("aadhar_number")
+	if aadharNumberStr != "" {
+		aadharNumber = &aadharNumberStr
 	}
 
 	aadharFrontFile, err := c.FormFile("aadhar_front")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-			Success: false,
-			Error:   "aadhar_front file is required",
-		})
-		return
+	if err == nil && aadharFrontFile != nil {
+		if err := utils.ValidateImageFile(aadharFrontFile); err != nil {
+			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+				Success: false,
+				Error:   "Invalid aadhar_front file: " + err.Error(),
+			})
+			return
+		}
+
+		url, _, err := h.gcsService.UploadFile(c.Request.Context(), aadharFrontFile, "winners/kyc/aadhar")
+		if err != nil {
+			log.WithError(err).Error("Failed to upload aadhar front")
+			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+				Success: false,
+				Error:   "Failed to upload aadhar front image",
+			})
+			return
+		}
+		aadharFrontURL = &url
 	}
 
 	aadharBackFile, err := c.FormFile("aadhar_back")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-			Success: false,
-			Error:   "aadhar_back file is required",
-		})
-		return
-	}
+	if err == nil && aadharBackFile != nil {
+		if err := utils.ValidateImageFile(aadharBackFile); err != nil {
+			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+				Success: false,
+				Error:   "Invalid aadhar_back file: " + err.Error(),
+			})
+			return
+		}
 
-	if err := utils.ValidateImageFile(aadharFrontFile); err != nil {
-		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-			Success: false,
-			Error:   "Invalid aadhar_front file: " + err.Error(),
-		})
-		return
-	}
-
-	if err := utils.ValidateImageFile(aadharBackFile); err != nil {
-		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-			Success: false,
-			Error:   "Invalid aadhar_back file: " + err.Error(),
-		})
-		return
-	}
-
-	aadharFrontURL, _, err := h.gcsService.UploadFile(c.Request.Context(), aadharFrontFile, "winners/kyc/aadhar")
-	if err != nil {
-		log.WithError(err).Error("Failed to upload aadhar front")
-		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
-			Success: false,
-			Error:   "Failed to upload aadhar front image",
-		})
-		return
-	}
-
-	aadharBackURL, _, err := h.gcsService.UploadFile(c.Request.Context(), aadharBackFile, "winners/kyc/aadhar")
-	if err != nil {
-		log.WithError(err).Error("Failed to upload aadhar back")
-		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
-			Success: false,
-			Error:   "Failed to upload aadhar back image",
-		})
-		return
+		url, _, err := h.gcsService.UploadFile(c.Request.Context(), aadharBackFile, "winners/kyc/aadhar")
+		if err != nil {
+			log.WithError(err).Error("Failed to upload aadhar back")
+			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+				Success: false,
+				Error:   "Failed to upload aadhar back image",
+			})
+			return
+		}
+		aadharBackURL = &url
 	}
 
 	city1 := c.PostForm("city1")

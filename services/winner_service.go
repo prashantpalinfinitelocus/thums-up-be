@@ -261,38 +261,58 @@ func (s *winnerService) SubmitWinnerKYC(ctx context.Context, userID string, req 
 		}
 	}
 
-	// Upsert user's aadhar card
-	existingCard, err := s.userAadharRepo.FindByUserID(ctx, tx, userID)
-	if err != nil {
-		s.txnManager.AbortTxn(tx)
-		return errors.NewInternalServerError("Failed to fetch user aadhar card", err)
-	}
-
 	now := time.Now()
-	if existingCard == nil {
-		card := &entities.UserAadharCard{
-			UserID:         userID,
-			AadharNumber:   req.AadharNumber,
-			AadharFrontKey: req.AadharFront,
-			AadharBackKey:  req.AadharBack,
-			IsDeleted:      false,
-			CreatedBy:      userID,
-			CreatedOn:      now,
-		}
-		if err := s.userAadharRepo.Create(ctx, tx, card); err != nil {
-			s.txnManager.AbortTxn(tx)
-			return errors.NewInternalServerError("Failed to save user aadhar card", err)
-		}
-	} else {
-		existingCard.AadharNumber = req.AadharNumber
-		existingCard.AadharFrontKey = req.AadharFront
-		existingCard.AadharBackKey = req.AadharBack
-		existingCard.LastModifiedBy = &userID
-		existingCard.LastModifiedOn = &now
 
-		if err := s.userAadharRepo.Update(ctx, tx, existingCard); err != nil {
+	if req.AadharNumber != nil || req.AadharFront != nil || req.AadharBack != nil {
+		existingCard, err := s.userAadharRepo.FindByUserID(ctx, tx, userID)
+		if err != nil {
 			s.txnManager.AbortTxn(tx)
-			return errors.NewInternalServerError("Failed to update user aadhar card", err)
+			return errors.NewInternalServerError("Failed to fetch user aadhar card", err)
+		}
+		if existingCard == nil {
+			aadharNumber := ""
+			if req.AadharNumber != nil {
+				aadharNumber = *req.AadharNumber
+			}
+			aadharFront := ""
+			if req.AadharFront != nil {
+				aadharFront = *req.AadharFront
+			}
+			aadharBack := ""
+			if req.AadharBack != nil {
+				aadharBack = *req.AadharBack
+			}
+
+			card := &entities.UserAadharCard{
+				UserID:         userID,
+				AadharNumber:   aadharNumber,
+				AadharFrontKey: aadharFront,
+				AadharBackKey:  aadharBack,
+				IsDeleted:      false,
+				CreatedBy:      userID,
+				CreatedOn:      now,
+			}
+			if err := s.userAadharRepo.Create(ctx, tx, card); err != nil {
+				s.txnManager.AbortTxn(tx)
+				return errors.NewInternalServerError("Failed to save user aadhar card", err)
+			}
+		} else {
+			if req.AadharNumber != nil {
+				existingCard.AadharNumber = *req.AadharNumber
+			}
+			if req.AadharFront != nil {
+				existingCard.AadharFrontKey = *req.AadharFront
+			}
+			if req.AadharBack != nil {
+				existingCard.AadharBackKey = *req.AadharBack
+			}
+			existingCard.LastModifiedBy = &userID
+			existingCard.LastModifiedOn = &now
+
+			if err := s.userAadharRepo.Update(ctx, tx, existingCard); err != nil {
+				s.txnManager.AbortTxn(tx)
+				return errors.NewInternalServerError("Failed to update user aadhar card", err)
+			}
 		}
 	}
 

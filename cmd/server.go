@@ -192,6 +192,7 @@ func (s *Server) initHandlers() {
 		s.repositories.questionMasterLanguage,
 		s.repositories.optionMaster,
 		s.repositories.optionMasterLanguage,
+		s.repositories.winner,
 	)
 
 	avatarService := services.NewAvatarService(

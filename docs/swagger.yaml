@@ -395,6 +395,8 @@ definitions:
         type: string
       phone_number:
         type: string
+      qr_code_url:
+        type: string
       referral_code:
         type: string
       referred_by:
@@ -1003,8 +1005,9 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve the authenticated user's profile information. Requires
-        authentication.
+      description: Retrieve the authenticated user's profile information including
+        avatar image and QR code URL (if user has won). The QR code URL is retrieved
+        from the thunder_seat_winner table if the user is a winner. Requires authentication.
       produces:
       - application/json
       responses:
@@ -1720,8 +1723,9 @@ paths:
       consumes:
       - multipart/form-data
       description: After being selected as a winner, user submits their KYC details
-        including name, email, Aadhar card images, and up to three cities for additional
-        information. All cities are optional text fields.
+        including name, email, optional Aadhar card images, and up to three cities
+        for additional information. Aadhar card number and images are optional. Cities
+        are optional text fields.
       parameters:
       - description: User name
         in: formData
@@ -1733,20 +1737,17 @@ paths:
         name: user_email
         required: true
         type: string
-      - description: Aadhar number
+      - description: Aadhar number (optional)
         in: formData
         name: aadhar_number
-        required: true
         type: string
-      - description: Aadhar front image
+      - description: Aadhar front image (optional)
         in: formData
         name: aadhar_front
-        required: true
         type: file
-      - description: Aadhar back image
+      - description: Aadhar back image (optional)
         in: formData
         name: aadhar_back
-        required: true
         type: file
       - description: City 1 (optional)
         in: formData

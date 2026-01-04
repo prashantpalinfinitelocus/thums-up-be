@@ -62,6 +62,7 @@ type UserProfileDTO struct {
 	Name         *string   `json:"name,omitempty"`
 	Email        *string   `json:"email,omitempty"`
 	AvatarImage  *string   `json:"avatar_image,omitempty"`
+	QRCodeURL    *string   `json:"qr_code_url,omitempty"`
 	IsActive     bool      `json:"is_active"`
 	IsVerified   bool      `json:"is_verified"`
 	ReferralCode *string   `json:"referral_code,omitempty"`
