@@ -160,7 +160,7 @@ func (s *Server) initRepositories() {
 		winner:                 repository.NewWinnerRepository(),
 		contestWeek:            repository.NewContestWeekRepository(),
 		userAadharCard:         repository.NewUserAadharCardRepository(),
-		userFriend:             repository.NewUserFriendRepository(),
+		userAdditionalInfo:     repository.NewUserAdditionalInfoRepository(),
 		loginCount:             repository.NewLoginCountRepository(),
 	}
 	log.Debug("All repositories initialized")
@@ -227,7 +227,7 @@ func (s *Server) initHandlers() {
 		s.repositories.contestWeek,
 		s.repositories.user,
 		s.repositories.userAadharCard,
-		s.repositories.userFriend,
+		s.repositories.userAdditionalInfo,
 		s.gcsService,
 	)
 

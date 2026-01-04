@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"encoding/json"
 	stderrors "errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -191,7 +189,7 @@ func (h *WinnerHandler) GetAllWinners(c *gin.Context) {
 // SubmitWinnerKYC godoc
 //
 //	@Summary		Submit winner KYC details
-//	@Description	After being selected as a winner, user submits their details and friends' information.
+//	@Description	After being selected as a winner, user submits their KYC details including name, email, Aadhar card images, and up to three cities for additional information. All cities are optional text fields.
 //	@Tags			Winners
 //	@Accept			multipart/form-data
 //	@Produce		json
@@ -201,7 +199,9 @@ func (h *WinnerHandler) GetAllWinners(c *gin.Context) {
 //	@Param			aadhar_number	formData	string								true	"Aadhar number"
 //	@Param			aadhar_front	formData	file								true	"Aadhar front image"
 //	@Param			aadhar_back		formData	file								true	"Aadhar back image"
-//	@Param			friends			formData	string								false	"Friends JSON array"
+//	@Param			city1			formData	string								false	"City 1 (optional)"
+//	@Param			city2			formData	string								false	"City 2 (optional)"
+//	@Param			city3			formData	string								false	"City 3 (optional)"
 //	@Success		200				{object}	dtos.SuccessResponse{data=string}	"KYC submitted successfully"
 //	@Failure		400				{object}	dtos.ErrorResponse					"Validation failed"
 //	@Failure		401				{object}	dtos.ErrorResponse					"Unauthorized"
@@ -292,85 +292,9 @@ func (h *WinnerHandler) SubmitWinnerKYC(c *gin.Context) {
 		return
 	}
 
-	var friends []dtos.WinnerFriendDTO
-	friendsJSON := c.PostForm("friends")
-	if friendsJSON != "" {
-		if err := json.Unmarshal([]byte(friendsJSON), &friends); err != nil {
-			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-				Success: false,
-				Error:   "Invalid friends JSON format",
-			})
-			return
-		}
-		if len(friends) > 10 {
-			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-				Success: false,
-				Error:   "Maximum 10 friends allowed",
-			})
-			return
-		}
-
-		for i := range friends {
-			friendFrontKey := fmt.Sprintf("friend_%d_aadhar_front", i)
-			friendBackKey := fmt.Sprintf("friend_%d_aadhar_back", i)
-
-			friendFrontFile, err := c.FormFile(friendFrontKey)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-					Success: false,
-					Error:   fmt.Sprintf("friend_%d_aadhar_front file is required", i),
-				})
-				return
-			}
-
-			if err := utils.ValidateImageFile(friendFrontFile); err != nil {
-				c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-					Success: false,
-					Error:   fmt.Sprintf("Invalid friend %d aadhar_front file: %s", i, err.Error()),
-				})
-				return
-			}
-
-			friendFrontURL, _, err := h.gcsService.UploadFile(c.Request.Context(), friendFrontFile, "winners/kyc/friends/aadhar")
-			if err != nil {
-				log.WithError(err).Errorf("Failed to upload friend %d aadhar front", i)
-				c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
-					Success: false,
-					Error:   fmt.Sprintf("Failed to upload friend %d aadhar front image", i),
-				})
-				return
-			}
-			friends[i].AadharFront = friendFrontURL
-
-			friendBackFile, err := c.FormFile(friendBackKey)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-					Success: false,
-					Error:   fmt.Sprintf("friend_%d_aadhar_back file is required", i),
-				})
-				return
-			}
-
-			if err := utils.ValidateImageFile(friendBackFile); err != nil {
-				c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-					Success: false,
-					Error:   fmt.Sprintf("Invalid friend %d aadhar_back file: %s", i, err.Error()),
-				})
-				return
-			}
-
-			friendBackURL, _, err := h.gcsService.UploadFile(c.Request.Context(), friendBackFile, "winners/kyc/friends/aadhar")
-			if err != nil {
-				log.WithError(err).Errorf("Failed to upload friend %d aadhar back", i)
-				c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
-					Success: false,
-					Error:   fmt.Sprintf("Failed to upload friend %d aadhar back image", i),
-				})
-				return
-			}
-			friends[i].AadharBack = friendBackURL
-		}
-	}
+	city1 := c.PostForm("city1")
+	city2 := c.PostForm("city2")
+	city3 := c.PostForm("city3")
 
 	req := dtos.WinnerKYCRequest{
 		UserName:     userName,
@@ -378,7 +302,9 @@ func (h *WinnerHandler) SubmitWinnerKYC(c *gin.Context) {
 		AadharNumber: aadharNumber,
 		AadharFront:  aadharFrontURL,
 		AadharBack:   aadharBackURL,
-		Friends:      friends,
+		City1:        city1,
+		City2:        city2,
+		City3:        city3,
 	}
 
 	if err := h.winnerService.SubmitWinnerKYC(c.Request.Context(), userEntity.ID, req); err != nil {

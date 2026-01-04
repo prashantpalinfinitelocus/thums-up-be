@@ -1717,8 +1717,9 @@ paths:
     post:
       consumes:
       - multipart/form-data
-      description: After being selected as a winner, user submits their details and
-        friends' information.
+      description: After being selected as a winner, user submits their KYC details
+        including name, email, Aadhar card images, and up to three cities for additional
+        information. All cities are optional text fields.
       parameters:
       - description: User name
         in: formData
@@ -1745,9 +1746,17 @@ paths:
         name: aadhar_back
         required: true
         type: file
-      - description: Friends JSON array
+      - description: City 1 (optional)
         in: formData
-        name: friends
+        name: city1
+        type: string
+      - description: City 2 (optional)
+        in: formData
+        name: city2
+        type: string
+      - description: City 3 (optional)
+        in: formData
+        name: city3
         type: string
       produces:
       - application/json

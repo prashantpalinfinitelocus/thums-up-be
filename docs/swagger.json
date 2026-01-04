@@ -2022,7 +2022,7 @@
                         "Bearer": []
                     }
                 ],
-                "description": "After being selected as a winner, user submits their details and friends' information.",
+                "description": "After being selected as a winner, user submits their KYC details including name, email, Aadhar card images, and up to three cities for additional information. All cities are optional text fields.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -2071,8 +2071,20 @@
                     },
                     {
                         "type": "string",
-                        "description": "Friends JSON array",
-                        "name": "friends",
+                        "description": "City 1 (optional)",
+                        "name": "city1",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "City 2 (optional)",
+                        "name": "city2",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "City 3 (optional)",
+                        "name": "city3",
                         "in": "formData"
                     }
                 ],

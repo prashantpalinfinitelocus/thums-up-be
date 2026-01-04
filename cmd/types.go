@@ -41,7 +41,7 @@ type Repositories struct {
 	winner                 repository.WinnerRepository
 	contestWeek            repository.ContestWeekRepository
 	userAadharCard         repository.UserAadharCardRepository
-	userFriend             repository.UserFriendRepository
+	userAdditionalInfo     repository.UserAdditionalInfoRepository
 	loginCount             repository.LoginCountRepository
 }
 

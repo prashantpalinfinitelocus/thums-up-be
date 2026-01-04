@@ -2,14 +2,12 @@ package entities
 
 import "time"
 
-type UserFriend struct {
+type UserAdditionalInfo struct {
 	ID             int        `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID         string     `gorm:"type:uuid;not null;index" json:"user_id"`
-	FriendUUID     string     `gorm:"type:uuid;not null" json:"friend_uuid"`
-	FriendName     string     `gorm:"type:varchar(255);not null" json:"friend_name"`
-	AadharNumber   string     `gorm:"type:varchar(20);not null" json:"aadhar_number"`
-	AadharFrontKey string     `gorm:"type:text;not null" json:"aadhar_front"`
-	AadharBackKey  string     `gorm:"type:text;not null" json:"aadhar_back"`
+	City1          string     `gorm:"type:text" json:"city1"`
+	City2          string     `gorm:"type:text" json:"city2"`
+	City3          string     `gorm:"type:text" json:"city3"`
 	IsDeleted      bool       `gorm:"default:false" json:"is_deleted"`
 	CreatedBy      string     `gorm:"type:uuid" json:"created_by"`
 	CreatedOn      time.Time  `gorm:"autoCreateTime" json:"created_on"`
@@ -17,6 +15,7 @@ type UserFriend struct {
 	LastModifiedOn *time.Time `json:"last_modified_on,omitempty"`
 }
 
-func (UserFriend) TableName() string {
-	return "user_friends"
+func (UserAdditionalInfo) TableName() string {
+	return "user_additional_info"
 }
+

@@ -27,14 +27,14 @@ type WinnerService interface {
 }
 
 type winnerService struct {
-	txnManager      *utils.TransactionManager
-	winnerRepo      repository.WinnerRepository
-	thunderSeatRepo repository.ThunderSeatRepository
-	contestWeekRepo repository.ContestWeekRepository
-	userRepo        repository.UserRepository
-	userAadharRepo  repository.UserAadharCardRepository
-	userFriendRepo  repository.UserFriendRepository
-	gcsService      utils.GCSService
+	txnManager            *utils.TransactionManager
+	winnerRepo            repository.WinnerRepository
+	thunderSeatRepo       repository.ThunderSeatRepository
+	contestWeekRepo       repository.ContestWeekRepository
+	userRepo              repository.UserRepository
+	userAadharRepo        repository.UserAadharCardRepository
+	userAdditionalInfoRepo repository.UserAdditionalInfoRepository
+	gcsService            utils.GCSService
 }
 
 func NewWinnerService(
@@ -44,18 +44,18 @@ func NewWinnerService(
 	contestWeekRepo repository.ContestWeekRepository,
 	userRepo repository.UserRepository,
 	userAadharRepo repository.UserAadharCardRepository,
-	userFriendRepo repository.UserFriendRepository,
+	userAdditionalInfoRepo repository.UserAdditionalInfoRepository,
 	gcsService utils.GCSService,
 ) WinnerService {
 	return &winnerService{
-		txnManager:      txnManager,
-		winnerRepo:      winnerRepo,
-		thunderSeatRepo: thunderSeatRepo,
-		contestWeekRepo: contestWeekRepo,
-		userRepo:        userRepo,
-		userAadharRepo:  userAadharRepo,
-		userFriendRepo:  userFriendRepo,
-		gcsService:      gcsService,
+		txnManager:            txnManager,
+		winnerRepo:            winnerRepo,
+		thunderSeatRepo:       thunderSeatRepo,
+		contestWeekRepo:       contestWeekRepo,
+		userRepo:              userRepo,
+		userAadharRepo:        userAadharRepo,
+		userAdditionalInfoRepo: userAdditionalInfoRepo,
+		gcsService:            gcsService,
 	}
 }
 
@@ -296,31 +296,36 @@ func (s *winnerService) SubmitWinnerKYC(ctx context.Context, userID string, req 
 		}
 	}
 
-	// Replace friends list (soft-delete existing then insert new)
-	if err := s.userFriendRepo.DeleteByUserID(ctx, tx, userID); err != nil {
+	existingInfo, err := s.userAdditionalInfoRepo.FindByUserID(ctx, tx, userID)
+	if err != nil {
 		s.txnManager.AbortTxn(tx)
-		return errors.NewInternalServerError("Failed to clear existing friends", err)
+		return errors.NewInternalServerError("Failed to fetch user additional info", err)
 	}
 
-	if len(req.Friends) > 0 {
-		friends := make([]entities.UserFriend, 0, len(req.Friends))
-		for _, f := range req.Friends {
-			friends = append(friends, entities.UserFriend{
-				UserID:         userID,
-				FriendUUID:     f.UUID,
-				FriendName:     f.Name,
-				AadharNumber:   f.AadharNumber,
-				AadharFrontKey: f.AadharFront,
-				AadharBackKey:  f.AadharBack,
-				IsDeleted:      false,
-				CreatedBy:      userID,
-				CreatedOn:      now,
-			})
+	if existingInfo == nil {
+		info := &entities.UserAdditionalInfo{
+			UserID:    userID,
+			City1:     req.City1,
+			City2:     req.City2,
+			City3:     req.City3,
+			IsDeleted: false,
+			CreatedBy: userID,
+			CreatedOn: now,
 		}
-
-		if err := s.userFriendRepo.CreateMany(ctx, tx, friends); err != nil {
+		if err := s.userAdditionalInfoRepo.Create(ctx, tx, info); err != nil {
 			s.txnManager.AbortTxn(tx)
-			return errors.NewInternalServerError("Failed to save winner friends", err)
+			return errors.NewInternalServerError("Failed to save user additional info", err)
+		}
+	} else {
+		existingInfo.City1 = req.City1
+		existingInfo.City2 = req.City2
+		existingInfo.City3 = req.City3
+		existingInfo.LastModifiedBy = &userID
+		existingInfo.LastModifiedOn = &now
+
+		if err := s.userAdditionalInfoRepo.Update(ctx, tx, existingInfo); err != nil {
+			s.txnManager.AbortTxn(tx)
+			return errors.NewInternalServerError("Failed to update user additional info", err)
 		}
 	}
 
