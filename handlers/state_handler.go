@@ -22,7 +22,7 @@ func NewStateHandler(stateService services.StateService) *StateHandler {
 // GetAllStates godoc
 //
 //	@Summary		Get all states
-//	@Description	Retrieve all active states
+//	@Description	Retrieve all active states. Returns a list of all states where is_active is true and is_deleted is false, ordered by name alphabetically.
 //	@Tags			Location
 //	@Accept			json
 //	@Produce		json

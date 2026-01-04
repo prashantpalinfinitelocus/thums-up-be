@@ -366,6 +366,8 @@ definitions:
         type: integer
       email:
         type: string
+      is_viewed:
+        type: boolean
       name:
         type: string
       platform_user_name:
@@ -386,6 +388,8 @@ definitions:
       is_active:
         type: boolean
       is_verified:
+        type: boolean
+      is_viewed:
         type: boolean
       name:
         type: string
@@ -415,6 +419,10 @@ definitions:
   dtos.WebsiteStatusResponse:
     properties:
       status:
+        type: string
+      winner_announcement:
+        type: boolean
+      winner_announcement_date:
         type: string
     type: object
   dtos.WinnerResponse:
@@ -1500,6 +1508,26 @@ paths:
       summary: Get active questions
       tags:
       - Questions
+  /states:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all active states. Returns a list of all states where
+        is_active is true and is_deleted is false, ordered by name alphabetically.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: States retrieved successfully
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "500":
+          description: Failed to fetch states
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get all states
+      tags:
+      - Location
   /thunder-seat:
     post:
       consumes:

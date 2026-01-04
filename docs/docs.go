@@ -1695,6 +1695,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/states": {
+            "get": {
+                "description": "Retrieve all active states. Returns a list of all states where is_active is true and is_deleted is false, ordered by name alphabetically.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Location"
+                ],
+                "summary": "Get all states",
+                "responses": {
+                    "200": {
+                        "description": "States retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.SuccessResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to fetch states",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/thunder-seat": {
             "post": {
                 "security": [
@@ -2818,6 +2847,9 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
+                "is_viewed": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -2848,6 +2880,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "is_verified": {
+                    "type": "boolean"
+                },
+                "is_viewed": {
                     "type": "boolean"
                 },
                 "name": {
@@ -2890,6 +2925,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "status": {
+                    "type": "string"
+                },
+                "winner_announcement": {
+                    "type": "boolean"
+                },
+                "winner_announcement_date": {
                     "type": "string"
                 }
             }
