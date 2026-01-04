@@ -54,33 +54,90 @@ func (r *thunderSeatRepository) CheckUserSubmission(ctx context.Context, db *gor
 }
 
 func (r *thunderSeatRepository) GetRandomEntries(ctx context.Context, db *gorm.DB, limit int, excludeUserIDs []string) ([]entities.ThunderSeat, error) {
-	var entries []entities.ThunderSeat
-	query := db.WithContext(ctx).Order("RANDOM()").Limit(limit).Distinct("user_id")
-
+	var userIDs []string
+	
+	subquery := db.WithContext(ctx).
+		Model(&entities.ThunderSeat{}).
+		Select("user_id").
+		Group("user_id")
+	
 	if len(excludeUserIDs) > 0 {
-		query = query.Where("user_id NOT IN ?", excludeUserIDs)
+		subquery = subquery.Where("user_id NOT IN ?", excludeUserIDs)
 	}
-
+	
+	if err := subquery.Order("RANDOM()").Limit(limit).Pluck("user_id", &userIDs).Error; err != nil {
+		return nil, err
+	}
+	
+	if len(userIDs) == 0 {
+		return []entities.ThunderSeat{}, nil
+	}
+	
+	var entries []entities.ThunderSeat
+	query := db.WithContext(ctx).
+		Where("user_id IN ?", userIDs).
+		Order("RANDOM()")
+	
 	if err := query.Find(&entries).Error; err != nil {
 		return nil, err
 	}
-	return entries, nil
+	
+	userIDMap := make(map[string]entities.ThunderSeat)
+	for _, entry := range entries {
+		if _, exists := userIDMap[entry.UserID]; !exists {
+			userIDMap[entry.UserID] = entry
+		}
+	}
+	
+	result := make([]entities.ThunderSeat, 0, len(userIDMap))
+	for _, entry := range userIDMap {
+		result = append(result, entry)
+	}
+	
+	return result, nil
 }
 
 func (r *thunderSeatRepository) GetRandomEntriesByWeek(ctx context.Context, db *gorm.DB, weekNumber int, limit int, excludeUserIDs []string) ([]entities.ThunderSeat, error) {
+	var userIDs []string
+	
+	subquery := db.WithContext(ctx).
+		Model(&entities.ThunderSeat{}).
+		Select("user_id").
+		Where("week_number = ?", weekNumber).
+		Group("user_id")
+	
+	if len(excludeUserIDs) > 0 {
+		subquery = subquery.Where("user_id NOT IN ?", excludeUserIDs)
+	}
+	
+	if err := subquery.Order("RANDOM()").Limit(limit).Pluck("user_id", &userIDs).Error; err != nil {
+		return nil, err
+	}
+	
+	if len(userIDs) == 0 {
+		return []entities.ThunderSeat{}, nil
+	}
+	
 	var entries []entities.ThunderSeat
 	query := db.WithContext(ctx).
-		Where("week_number = ?", weekNumber).
-		Order("RANDOM()").
-		Limit(limit).
-		Distinct("user_id")
-
-	if len(excludeUserIDs) > 0 {
-		query = query.Where("user_id NOT IN ?", excludeUserIDs)
-	}
-
+		Where("week_number = ? AND user_id IN ?", weekNumber, userIDs).
+		Order("RANDOM()")
+	
 	if err := query.Find(&entries).Error; err != nil {
 		return nil, err
 	}
-	return entries, nil
+	
+	userIDMap := make(map[string]entities.ThunderSeat)
+	for _, entry := range entries {
+		if _, exists := userIDMap[entry.UserID]; !exists {
+			userIDMap[entry.UserID] = entry
+		}
+	}
+	
+	result := make([]entities.ThunderSeat, 0, len(userIDMap))
+	for _, entry := range userIDMap {
+		result = append(result, entry)
+	}
+	
+	return result, nil
 }
