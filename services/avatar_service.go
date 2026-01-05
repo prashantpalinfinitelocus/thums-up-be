@@ -172,7 +172,6 @@ func (s *avatarService) GetAvatarByID(ctx context.Context, avatarID int) (*dtos.
 
 	var imageURL string
 	if s.gcsService != nil {
-		// Reconstruct full path: avatars/{userID}/{filename}
 		fullPath := fmt.Sprintf("avatars/%s/%s", avatar.CreatedBy, avatar.ImageKey)
 		imageURL = s.gcsService.GetPublicURL(fullPath)
 	}

@@ -163,7 +163,9 @@ func (s *winnerService) GetWinnersByWeek(ctx context.Context, weekNumber int) ([
 		var avatarURL *string
 		var avatarName *string
 		if winner.User.Avatar != nil {
-			url := s.gcsService.GetPublicURL(winner.User.Avatar.ImageKey)
+			// Reconstruct full path: avatars/{createdBy}/{imageKey}
+			fullPath := fmt.Sprintf("avatars/%s/%s", winner.User.Avatar.CreatedBy, winner.User.Avatar.ImageKey)
+			url := s.gcsService.GetPublicURL(fullPath)
 			avatarURL = &url
 			avatarName = &winner.User.Avatar.Name
 		}
@@ -202,7 +204,9 @@ func (s *winnerService) GetAllWinners(ctx context.Context, limit, offset int) ([
 		var avatarURL *string
 		var avatarName *string
 		if winner.User.Avatar != nil {
-			url := s.gcsService.GetPublicURL(winner.User.Avatar.ImageKey)
+			// Reconstruct full path: avatars/{createdBy}/{imageKey}
+			fullPath := fmt.Sprintf("avatars/%s/%s", winner.User.Avatar.CreatedBy, winner.User.Avatar.ImageKey)
+			url := s.gcsService.GetPublicURL(fullPath)
 			avatarURL = &url
 			avatarName = &winner.User.Avatar.Name
 		}
