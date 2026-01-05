@@ -20,8 +20,8 @@ func SetupProfileRoutes(
 	profileGroup := api.Group("/profile")
 	profileGroup.Use(middlewares.AuthMiddleware(db, userRepo))
 	{
-		profileGroup.GET("/", profileHandler.GetProfile)
-		profileGroup.PATCH("/", profileHandler.UpdateProfile)
+		profileGroup.GET("", profileHandler.GetProfile)
+		profileGroup.PATCH("", profileHandler.UpdateProfile)
 
 		profileGroup.POST("/address", addressHandler.AddAddress)
 		profileGroup.GET("/address", addressHandler.GetAddresses)

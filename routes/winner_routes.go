@@ -12,7 +12,7 @@ import (
 func SetupWinnerRoutes(api *gin.RouterGroup, db *gorm.DB, userRepo repository.UserRepository, winnerHandler *handlers.WinnerHandler) {
 	winners := api.Group("/winners")
 	{
-		winners.GET("/", winnerHandler.GetAllWinners)
+		winners.GET("", winnerHandler.GetAllWinners)
 		winners.GET("/week/:weekNumber", winnerHandler.GetWinnersByWeek)
 
 		winnersAuth := winners.Group("")

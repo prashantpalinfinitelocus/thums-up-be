@@ -22,7 +22,7 @@ func SetupQuestionRoutes(
 		questionsAuth := questions.Group("")
 		questionsAuth.Use(middlewares.AuthMiddleware(db, userRepo))
 		{
-			questionsAuth.POST("/", questionHandler.SubmitQuestion)
+			questionsAuth.POST("", questionHandler.SubmitQuestion)
 		}
 	}
 }

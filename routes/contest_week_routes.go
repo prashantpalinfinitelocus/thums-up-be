@@ -12,14 +12,14 @@ import (
 func SetupContestWeekRoutes(api *gin.RouterGroup, db *gorm.DB, userRepo repository.UserRepository, contestWeekHandler *handlers.ContestWeekHandler) {
 	contestWeeks := api.Group("/contest-weeks")
 	{
-		contestWeeks.GET("/", contestWeekHandler.GetAllContestWeeks)
+		contestWeeks.GET("", contestWeekHandler.GetAllContestWeeks)
 		contestWeeks.GET("/active", contestWeekHandler.GetActiveWeek)
 		contestWeeks.GET("/:weekNumber", contestWeekHandler.GetContestWeekByNumber)
 
 		authRequired := contestWeeks.Group("")
 		authRequired.Use(middlewares.AuthMiddleware(db, userRepo))
 		{
-			authRequired.POST("/", contestWeekHandler.CreateContestWeek)
+			authRequired.POST("", contestWeekHandler.CreateContestWeek)
 			authRequired.POST("/activate", contestWeekHandler.ActivateWeek)
 		}
 	}
