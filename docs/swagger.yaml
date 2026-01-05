@@ -399,6 +399,8 @@ definitions:
         type: boolean
       is_viewed:
         type: boolean
+      is_winner:
+        type: boolean
       name:
         type: string
       phone_number:
@@ -1022,8 +1024,10 @@ paths:
       consumes:
       - application/json
       description: Retrieve the authenticated user's profile information including
-        avatar image and QR code URL (if user has won). The QR code URL is retrieved
-        from the thunder_seat_winner table if the user is a winner. Requires authentication.
+        avatar image, winner status, and QR code URL (if user has won and submitted
+        KYC). The is_winner flag indicates if the user is a winner. The QR code is
+        generated after the user submits their KYC details. Requires authentication.
+        This endpoint is optimized with concurrent data fetching using goroutines.
       produces:
       - application/json
       responses:
