@@ -55,22 +55,7 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	}
 	userID := userEntity.ID
 
-	var req dtos.ThunderSeatSubmitRequest
-	if err := c.ShouldBind(&req); err != nil {
-		validationErrors := utils.FormatValidationErrors(err)
-		log.WithFields(log.Fields{
-			"user_id":           userID,
-			"validation_errors": validationErrors,
-			"error":             err.Error(),
-		}).Warn("Thunder seat answer submission validation failed")
-		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-			Success: false,
-			Error:   errors.ErrValidationFailed,
-			Details: validationErrors,
-		})
-		return
-	}
-
+	// Get media file first (streaming, avoids buffer issues)
 	mediaFile, err := c.FormFile("media_file")
 	if err != nil && err != http.ErrMissingFile {
 		log.WithError(err).Error("Failed to get media file from request")
@@ -89,6 +74,53 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 			})
 			return
 		}
+	}
+
+	description := c.PostForm("description")
+	if description == "" {
+		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Success: false,
+			Error:   errors.ErrValidationFailed,
+			Details: map[string]string{"description": "description is required"},
+		})
+		return
+	}
+
+	var req dtos.ThunderSeatSubmitRequest
+	req.Answer = description
+
+	// Optional fields
+	if socialMedia := c.PostForm("social_media"); socialMedia != "" {
+		// Validate social media platform
+		validPlatforms := []string{"instagram", "snapchat", "facebook", "twitter", "tiktok", "youtube"}
+		isValid := false
+		for _, platform := range validPlatforms {
+			if socialMedia == platform {
+				isValid = true
+				break
+			}
+		}
+		if !isValid {
+			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+				Success: false,
+				Error:   errors.ErrValidationFailed,
+				Details: map[string]string{"social_media": "social_media must be one of: instagram, snapchat, facebook, twitter, tiktok, youtube"},
+			})
+			return
+		}
+		req.SharingPlatform = &socialMedia
+	}
+
+	if userName := c.PostForm("user_name"); userName != "" {
+		if len(userName) < 3 || len(userName) > 255 {
+			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+				Success: false,
+				Error:   errors.ErrValidationFailed,
+				Details: map[string]string{"user_name": "user_name must be between 3 and 255 characters"},
+			})
+			return
+		}
+		req.PlatformUserName = &userName
 	}
 
 	response, err := h.thunderSeatService.SubmitAnswer(c.Request.Context(), req, userID, mediaFile)
