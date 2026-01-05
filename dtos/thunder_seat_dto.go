@@ -27,6 +27,10 @@ type WinnerResponse struct {
 	WeekNumber    int     `json:"week_number"`
 	QRCodeURL     *string `json:"qr_code_url,omitempty"`
 	CreatedOn     string  `json:"created_on"`
+	Name          *string `json:"name,omitempty"`
+	Email         *string `json:"email,omitempty"`
+	AvatarURL     *string `json:"avatar_url,omitempty"`
+	AvatarName    *string `json:"avatar_name,omitempty"`
 }
 
 type CurrentWeekResponse struct {

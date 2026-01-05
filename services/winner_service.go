@@ -159,6 +159,15 @@ func (s *winnerService) GetWinnersByWeek(ctx context.Context, weekNumber int) ([
 			url := s.gcsService.GetPublicURL(winner.QRCode)
 			qrURL = &url
 		}
+
+		var avatarURL *string
+		var avatarName *string
+		if winner.User.Avatar != nil {
+			url := s.gcsService.GetPublicURL(winner.User.Avatar.ImageKey)
+			avatarURL = &url
+			avatarName = &winner.User.Avatar.Name
+		}
+
 		responses[i] = dtos.WinnerResponse{
 			ID:            winner.ID,
 			UserID:        winner.UserID,
@@ -166,6 +175,10 @@ func (s *winnerService) GetWinnersByWeek(ctx context.Context, weekNumber int) ([
 			WeekNumber:    winner.WeekNumber,
 			QRCodeURL:     qrURL,
 			CreatedOn:     winner.CreatedOn.Format(time.RFC3339),
+			Name:          winner.User.Name,
+			Email:         winner.User.Email,
+			AvatarURL:     avatarURL,
+			AvatarName:    avatarName,
 		}
 	}
 
@@ -185,6 +198,15 @@ func (s *winnerService) GetAllWinners(ctx context.Context, limit, offset int) ([
 			url := s.gcsService.GetPublicURL(winner.QRCode)
 			qrURL = &url
 		}
+
+		var avatarURL *string
+		var avatarName *string
+		if winner.User.Avatar != nil {
+			url := s.gcsService.GetPublicURL(winner.User.Avatar.ImageKey)
+			avatarURL = &url
+			avatarName = &winner.User.Avatar.Name
+		}
+
 		responses[i] = dtos.WinnerResponse{
 			ID:            winner.ID,
 			UserID:        winner.UserID,
@@ -192,6 +214,10 @@ func (s *winnerService) GetAllWinners(ctx context.Context, limit, offset int) ([
 			WeekNumber:    winner.WeekNumber,
 			QRCodeURL:     qrURL,
 			CreatedOn:     winner.CreatedOn.Format(time.RFC3339),
+			Name:          winner.User.Name,
+			Email:         winner.User.Email,
+			AvatarURL:     avatarURL,
+			AvatarName:    avatarName,
 		}
 	}
 

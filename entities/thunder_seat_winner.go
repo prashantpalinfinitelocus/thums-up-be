@@ -11,6 +11,7 @@ type ThunderSeatWinner struct {
 	HasViewed     bool      `gorm:"column:has_viewed;default:false" json:"has_viewed"`
 	CreatedBy     string    `gorm:"type:uuid;not null" json:"created_by"`
 	CreatedOn     time.Time `gorm:"autoCreateTime" json:"created_on"`
+	User          User      `gorm:"foreignKey:UserID;references:ID" json:"user,omitempty"`
 }
 
 func (ThunderSeatWinner) TableName() string {

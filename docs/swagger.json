@@ -2944,11 +2944,23 @@
         "dtos.WinnerResponse": {
             "type": "object",
             "properties": {
+                "avatar_name": {
+                    "type": "string"
+                },
+                "avatar_url": {
+                    "type": "string"
+                },
                 "created_on": {
+                    "type": "string"
+                },
+                "email": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 },
                 "qr_code_url": {
                     "type": "string"

@@ -31,7 +31,10 @@ func NewWinnerRepository() WinnerRepository {
 
 func (r *winnerRepository) FindByWeekNumber(ctx context.Context, db *gorm.DB, weekNumber int) ([]entities.ThunderSeatWinner, error) {
 	var winners []entities.ThunderSeatWinner
-	if err := db.WithContext(ctx).Where("week_number = ?", weekNumber).Find(&winners).Error; err != nil {
+	if err := db.WithContext(ctx).
+		Preload("User.Avatar").
+		Where("week_number = ?", weekNumber).
+		Find(&winners).Error; err != nil {
 		return nil, err
 	}
 	return winners, nil
@@ -69,7 +72,12 @@ func (r *winnerRepository) FindAllWithPagination(ctx context.Context, db *gorm.D
 		return nil, 0, err
 	}
 
-	if err := db.WithContext(ctx).Order("created_on DESC").Limit(limit).Offset(offset).Find(&winners).Error; err != nil {
+	if err := db.WithContext(ctx).
+		Preload("User.Avatar").
+		Order("created_on DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&winners).Error; err != nil {
 		return nil, 0, err
 	}
 
