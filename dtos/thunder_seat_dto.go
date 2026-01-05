@@ -14,6 +14,10 @@ type ThunderSeatResponse struct {
 	MediaURL   *string `json:"media_url,omitempty"`
 	MediaType  *string `json:"media_type,omitempty"`
 	CreatedOn  string  `json:"created_on"`
+	Name       *string `json:"name,omitempty"`
+	Email      *string `json:"email,omitempty"`
+	AvatarURL  *string `json:"avatar_url,omitempty"`
+	AvatarName *string `json:"avatar_name,omitempty"`
 }
 
 type SelectWinnersRequest struct {

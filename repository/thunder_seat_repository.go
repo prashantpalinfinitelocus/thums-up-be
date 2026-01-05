@@ -28,7 +28,10 @@ func NewThunderSeatRepository() ThunderSeatRepository {
 
 func (r *thunderSeatRepository) FindByUserID(ctx context.Context, db *gorm.DB, userID string) ([]entities.ThunderSeat, error) {
 	var entries []entities.ThunderSeat
-	if err := db.WithContext(ctx).Where("user_id = ?", userID).Find(&entries).Error; err != nil {
+	if err := db.WithContext(ctx).
+		Preload("User.Avatar").
+		Where("user_id = ?", userID).
+		Find(&entries).Error; err != nil {
 		return nil, err
 	}
 	return entries, nil

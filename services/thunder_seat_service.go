@@ -168,7 +168,6 @@ func (s *thunderSeatService) SubmitAnswer(ctx context.Context, req dtos.ThunderS
 			}
 		}
 
-
 		errStr := err.Error()
 		if contains(errStr, "duplicate") || contains(errStr, "unique constraint") || contains(errStr, "UNIQUE constraint") {
 			return nil, errors.NewBadRequestError("You have already submitted an answer for this contest week", err)
@@ -196,6 +195,16 @@ func (s *thunderSeatService) GetUserSubmissions(ctx context.Context, userID stri
 
 	responses := make([]dtos.ThunderSeatResponse, len(submissions))
 	for i, sub := range submissions {
+		var avatarURL *string
+		var avatarName *string
+		if sub.User.Avatar != nil {
+			// Reconstruct full path: avatars/{createdBy}/{imageKey}
+			fullPath := fmt.Sprintf("avatars/%s/%s", sub.User.Avatar.CreatedBy, sub.User.Avatar.ImageKey)
+			url := s.gcsService.GetPublicURL(fullPath)
+			avatarURL = &url
+			avatarName = &sub.User.Avatar.Name
+		}
+
 		responses[i] = dtos.ThunderSeatResponse{
 			ID:         sub.ID,
 			UserID:     sub.UserID,
@@ -204,6 +213,10 @@ func (s *thunderSeatService) GetUserSubmissions(ctx context.Context, userID stri
 			MediaURL:   sub.MediaURL,
 			MediaType:  sub.MediaType,
 			CreatedOn:  sub.CreatedOn.Format(time.RFC3339),
+			Name:       sub.User.Name,
+			Email:      sub.User.Email,
+			AvatarURL:  avatarURL,
+			AvatarName: avatarName,
 		}
 	}
 

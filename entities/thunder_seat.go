@@ -12,6 +12,7 @@ type ThunderSeat struct {
 	MediaType  *string   `gorm:"column:media_type;type:varchar(50)" json:"media_type,omitempty"`
 	CreatedBy  string    `gorm:"type:uuid;not null" json:"created_by"`
 	CreatedOn  time.Time `gorm:"autoCreateTime" json:"created_on"`
+	User       User      `gorm:"foreignKey:UserID;references:ID" json:"user,omitempty"`
 }
 
 func (ThunderSeat) TableName() string {

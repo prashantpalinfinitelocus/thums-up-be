@@ -2798,7 +2798,16 @@ const docTemplate = `{
                 "answer": {
                     "type": "string"
                 },
+                "avatar_name": {
+                    "type": "string"
+                },
+                "avatar_url": {
+                    "type": "string"
+                },
                 "created_on": {
+                    "type": "string"
+                },
+                "email": {
                     "type": "string"
                 },
                 "id": {
@@ -2808,6 +2817,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "media_url": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "user_id": {
