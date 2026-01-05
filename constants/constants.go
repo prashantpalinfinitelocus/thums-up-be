@@ -54,9 +54,9 @@ const (
 	GRACEFUL_SHUTDOWN_TIMEOUT = 10 * time.Second
 	MESSAGE_HANDLER_TIMEOUT   = 30 * time.Second
 
-	WEBSITE_LAUNCH_DATE = "2026-01-01T00:00:00Z"
+	WEBSITE_LAUNCH_DATE = "2026-01-06T00:00:00Z"
 
-	// System UUID for system/admin operations
+	// System UUID for system/admin operationss
 	SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000000"
 )
 
