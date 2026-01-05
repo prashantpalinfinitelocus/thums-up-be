@@ -55,8 +55,22 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	}
 	userID := userEntity.ID
 
-	// Get media file first (streaming, avoids buffer issues)
-	mediaFile, err := c.FormFile("media_file")
+	// Parse multipart form with large buffer (150MB) to handle large files
+	const maxMultipartMemory = 150 * 1024 * 1024
+	if err := utils.ParseMultipartFormWithLargeBuffer(c.Request, maxMultipartMemory); err != nil && err != http.ErrNotMultipart {
+		log.WithFields(log.Fields{
+			"user_id": userID,
+			"error":   err.Error(),
+		}).Error("Failed to parse multipart form with large buffer")
+		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Success: false,
+			Error:   "Failed to process form data",
+		})
+		return
+	}
+
+	// Get media file using large buffer helper
+	mediaFile, err := utils.GetFormFileWithLargeBuffer(c.Request, "media_file", maxMultipartMemory)
 	if err != nil && err != http.ErrMissingFile {
 		log.WithError(err).Error("Failed to get media file from request")
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
@@ -76,7 +90,8 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		}
 	}
 
-	description := c.PostForm("description")
+	// Get form values using large buffer helper
+	description, _ := utils.GetPostFormWithLargeBuffer(c.Request, "description", maxMultipartMemory)
 	if description == "" {
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 			Success: false,
@@ -90,7 +105,8 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	req.Answer = description
 
 	// Optional fields
-	if socialMedia := c.PostForm("social_media"); socialMedia != "" {
+	socialMedia, _ := utils.GetPostFormWithLargeBuffer(c.Request, "social_media", maxMultipartMemory)
+	if socialMedia != "" {
 		// Validate social media platform
 		validPlatforms := []string{"instagram", "snapchat", "facebook", "twitter", "tiktok", "youtube"}
 		isValid := false
@@ -111,7 +127,8 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		req.SharingPlatform = &socialMedia
 	}
 
-	if userName := c.PostForm("user_name"); userName != "" {
+	userName, _ := utils.GetPostFormWithLargeBuffer(c.Request, "user_name", maxMultipartMemory)
+	if userName != "" {
 		if len(userName) < 3 || len(userName) > 255 {
 			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 				Success: false,
