@@ -10,6 +10,10 @@ import (
 func (s *Server) setupRouter() *gin.Engine {
 	router := gin.New()
 
+	// Set MaxMultipartMemory to handle large file uploads (up to 100MB)
+	// Default is 32MB which causes "bufio: buffer full" error for large files
+	router.MaxMultipartMemory = 150 << 20 // 150MB to accommodate 100MB files + form fields
+
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(middlewares.CORSMiddleware())

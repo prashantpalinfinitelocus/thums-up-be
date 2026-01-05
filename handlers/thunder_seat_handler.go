@@ -55,19 +55,6 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	}
 	userID := userEntity.ID
 
-	const maxMultipartMemory = 1500 * 1024 * 1024
-	if err := c.Request.ParseMultipartForm(maxMultipartMemory); err != nil {
-		log.WithFields(log.Fields{
-			"user_id": userID,
-			"error":   err.Error(),
-		}).Warn("Failed to parse multipart form")
-		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
-			Success: false,
-			Error:   "Failed to process form data",
-		})
-		return
-	}
-
 	var req dtos.ThunderSeatSubmitRequest
 	if err := c.ShouldBind(&req); err != nil {
 		validationErrors := utils.FormatValidationErrors(err)
