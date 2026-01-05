@@ -1731,7 +1731,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Submit an answer to a Thunder Seat question for the current week with optional media file (audio/video). Requires authentication.",
+                "description": "Submit an answer to a Thunder Seat question for the current week with optional media file (image/audio/video). Requires authentication.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -1764,7 +1764,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "file",
-                        "description": "Optional media file (audio/video, max 100MB)",
+                        "description": "Optional media file (image max 10MB, video max 10MB, audio max 100MB)",
                         "name": "media_file",
                         "in": "formData"
                     }

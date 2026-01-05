@@ -7,7 +7,10 @@ import (
 )
 
 const (
-	MaxFileSize = 100 * 1024 * 1024 // 100MB in bytes
+	MaxAudioSize      = 100 * 1024 * 1024 // 100MB in bytes
+	MaxVideoSize      = 10 * 1024 * 1024  // 10MB in bytes
+	MaxImageSize      = 10 * 1024 * 1024  // 10MB in bytes
+	ContentTypeHeader = "Content-Type"
 )
 
 var (
@@ -77,13 +80,6 @@ func ValidateMediaFile(file *multipart.FileHeader) error {
 		return nil // File is optional
 	}
 
-	// Check file size
-	if file.Size > MaxFileSize {
-		return &FileValidationError{
-			Message: fmt.Sprintf("File size exceeds maximum allowed size of 100MB. Current size: %.2fMB", float64(file.Size)/(1024*1024)),
-		}
-	}
-
 	// Check if file size is 0
 	if file.Size == 0 {
 		return &FileValidationError{
@@ -91,19 +87,37 @@ func ValidateMediaFile(file *multipart.FileHeader) error {
 		}
 	}
 
-	// Get content type
-	contentType := file.Header.Get("Content-Type")
-
-	// Get file extension
+	// Get content type and filename
+	contentType := file.Header.Get(ContentTypeHeader)
 	filename := strings.ToLower(file.Filename)
 
-	// Check if it's a valid audio or video file
+	// Determine file type and validate size accordingly
 	isValidAudio := isValidAudioFile(contentType, filename)
 	isValidVideo := isValidVideoFile(contentType, filename)
+	isValidImage := isValidImageFile(contentType, filename)
 
-	if !isValidAudio && !isValidVideo {
+	if !isValidAudio && !isValidVideo && !isValidImage {
 		return &FileValidationError{
-			Message: "Invalid file type. Only audio and video files are allowed. Supported formats: mp3, wav, aac, m4a, ogg, flac (audio) and mp4, mov, avi, webm (video)",
+			Message: "Invalid file type. Only audio, video, and image files are allowed. Supported formats: mp3, wav, aac, m4a, ogg, flac (audio, max 100MB), mp4, mov, avi, webm (video, max 10MB), and jpg, jpeg, png, gif, webp (image, max 10MB)",
+		}
+	}
+
+	// Check file size based on file type
+	if isValidAudio && file.Size > MaxAudioSize {
+		return &FileValidationError{
+			Message: fmt.Sprintf("Audio file size exceeds maximum allowed size of 100MB. Current size: %.2fMB", float64(file.Size)/(1024*1024)),
+		}
+	}
+
+	if isValidVideo && file.Size > MaxVideoSize {
+		return &FileValidationError{
+			Message: fmt.Sprintf("Video file size exceeds maximum allowed size of 10MB. Current size: %.2fMB", float64(file.Size)/(1024*1024)),
+		}
+	}
+
+	if isValidImage && file.Size > MaxImageSize {
+		return &FileValidationError{
+			Message: fmt.Sprintf("Image file size exceeds maximum allowed size of 10MB. Current size: %.2fMB", float64(file.Size)/(1024*1024)),
 		}
 	}
 
@@ -147,7 +161,7 @@ func isValidVideoFile(contentType, filename string) bool {
 }
 
 func GetMediaType(file *multipart.FileHeader) string {
-	contentType := file.Header.Get("Content-Type")
+	contentType := file.Header.Get(ContentTypeHeader)
 	filename := strings.ToLower(file.Filename)
 
 	if isValidAudioFile(contentType, filename) {
@@ -156,6 +170,10 @@ func GetMediaType(file *multipart.FileHeader) string {
 
 	if isValidVideoFile(contentType, filename) {
 		return "video"
+	}
+
+	if isValidImageFile(contentType, filename) {
+		return "image"
 	}
 
 	return "unknown"
@@ -169,9 +187,9 @@ func ValidateImageFile(file *multipart.FileHeader) error {
 	}
 
 	// Check file size
-	if file.Size > MaxFileSize {
+	if file.Size > MaxImageSize {
 		return &FileValidationError{
-			Message: fmt.Sprintf("File size exceeds maximum allowed size of 100MB. Current size: %.2fMB", float64(file.Size)/(1024*1024)),
+			Message: fmt.Sprintf("Image file size exceeds maximum allowed size of 10MB. Current size: %.2fMB", float64(file.Size)/(1024*1024)),
 		}
 	}
 
@@ -183,7 +201,7 @@ func ValidateImageFile(file *multipart.FileHeader) error {
 	}
 
 	// Get content type
-	contentType := file.Header.Get("Content-Type")
+	contentType := file.Header.Get(ContentTypeHeader)
 
 	// Get file extension
 	filename := strings.ToLower(file.Filename)
