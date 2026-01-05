@@ -24,7 +24,6 @@ func SetupThunderSeatRoutes(
 		{
 			thunderSeatAuth.GET("/submissions", thunderSeatHandler.GetUserSubmissions)
 			thunderSeatAuth.POST("", thunderSeatHandler.SubmitAnswer)
-			thunderSeatAuth.POST("", thunderSeatHandler.SubmitAnswer)
 		}
 	}
 }
