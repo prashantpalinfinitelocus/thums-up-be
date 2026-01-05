@@ -55,6 +55,13 @@ func (h *AvatarHandler) CreateAvatar(ctx *gin.Context) {
 		return
 	}
 
+
+	const maxMultipartMemory = 150 * 1024 * 1024 // 150MB to accommodate large images + form fields
+	if err := ctx.Request.ParseMultipartForm(maxMultipartMemory); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to process form data"})
+		return
+	}
+
 	// Bind form data
 	var req dtos.CreateAvatarRequestDTO
 	if err := ctx.ShouldBind(&req); err != nil {

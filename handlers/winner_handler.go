@@ -226,6 +226,16 @@ func (h *WinnerHandler) SubmitWinnerKYC(c *gin.Context) {
 		return
 	}
 
+	const maxMultipartMemory = 150 * 1024 * 1024 // 150MB to accommodate large images + form fields
+	if err := c.Request.ParseMultipartForm(maxMultipartMemory); err != nil {
+		log.WithError(err).Warn("Failed to parse multipart form")
+		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Success: false,
+			Error:   "Failed to process form data",
+		})
+		return
+	}
+
 	userName := c.PostForm("user_name")
 	userEmail := c.PostForm("user_email")
 
