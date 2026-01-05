@@ -23,6 +23,7 @@ func SetupThunderSeatRoutes(
 		thunderSeatAuth.Use(middlewares.AuthMiddleware(db, userRepo))
 		{
 			thunderSeatAuth.GET("/submissions", thunderSeatHandler.GetUserSubmissions)
+			thunderSeatAuth.POST("", thunderSeatHandler.SubmitAnswer)
 			thunderSeatAuth.POST("/", thunderSeatHandler.SubmitAnswer)
 		}
 	}

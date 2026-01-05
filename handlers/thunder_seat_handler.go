@@ -55,8 +55,6 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	}
 	userID := userEntity.ID
 
-	// Parse multipart form with large memory limit (200MB)
-	// Files larger than this will automatically spill to disk
 	const maxMultipartMemory = 200 * 1024 * 1024
 	if err := utils.ParseMultipartFormLargeFiles(c.Request, maxMultipartMemory); err != nil {
 		log.WithFields(log.Fields{
@@ -70,7 +68,6 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		return
 	}
 
-	// Get media file
 	mediaFile, err := utils.GetFormFileLargeFiles(c.Request, "media_file", maxMultipartMemory)
 	if err != nil && err != http.ErrMissingFile {
 		log.WithError(err).Error("Failed to get media file from request")
@@ -91,7 +88,6 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		}
 	}
 
-	// Get form values
 	description, _ := utils.GetPostFormLargeFiles(c.Request, "description", maxMultipartMemory)
 	if description == "" {
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
@@ -105,7 +101,6 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	var req dtos.ThunderSeatSubmitRequest
 	req.Answer = description
 
-	// Optional fields
 	socialMedia, _ := utils.GetPostFormLargeFiles(c.Request, "social_media", maxMultipartMemory)
 	if socialMedia != "" {
 		// Validate social media platform
@@ -121,7 +116,7 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 				Success: false,
 				Error:   errors.ErrValidationFailed,
-				Details: map[string]string{"social_media": "social_media must be one of: instagram, snapchat, facebook, twitter, tiktok, youtube"},
+				Details: map[string]string{"social_media": "must be one of: instagram, snapchat, facebook, twitter, tiktok, youtube"},
 			})
 			return
 		}
