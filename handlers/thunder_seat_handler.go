@@ -55,13 +55,14 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	}
 	userID := userEntity.ID
 
-	// Parse multipart form with large buffer (150MB) to handle large files
-	const maxMultipartMemory = 150 * 1024 * 1024
-	if err := utils.ParseMultipartFormWithLargeBuffer(c.Request, maxMultipartMemory); err != nil && err != http.ErrNotMultipart {
+	// Parse multipart form with large memory limit (200MB)
+	// Files larger than this will automatically spill to disk
+	const maxMultipartMemory = 200 * 1024 * 1024
+	if err := utils.ParseMultipartFormLargeFiles(c.Request, maxMultipartMemory); err != nil {
 		log.WithFields(log.Fields{
 			"user_id": userID,
 			"error":   err.Error(),
-		}).Error("Failed to parse multipart form with large buffer")
+		}).Error("Failed to parse multipart form")
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 			Success: false,
 			Error:   "Failed to process form data",
@@ -69,8 +70,8 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		return
 	}
 
-	// Get media file using large buffer helper
-	mediaFile, err := utils.GetFormFileWithLargeBuffer(c.Request, "media_file", maxMultipartMemory)
+	// Get media file
+	mediaFile, err := utils.GetFormFileLargeFiles(c.Request, "media_file", maxMultipartMemory)
 	if err != nil && err != http.ErrMissingFile {
 		log.WithError(err).Error("Failed to get media file from request")
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
@@ -90,8 +91,8 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		}
 	}
 
-	// Get form values using large buffer helper
-	description, _ := utils.GetPostFormWithLargeBuffer(c.Request, "description", maxMultipartMemory)
+	// Get form values
+	description, _ := utils.GetPostFormLargeFiles(c.Request, "description", maxMultipartMemory)
 	if description == "" {
 		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
 			Success: false,
@@ -105,7 +106,7 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 	req.Answer = description
 
 	// Optional fields
-	socialMedia, _ := utils.GetPostFormWithLargeBuffer(c.Request, "social_media", maxMultipartMemory)
+	socialMedia, _ := utils.GetPostFormLargeFiles(c.Request, "social_media", maxMultipartMemory)
 	if socialMedia != "" {
 		// Validate social media platform
 		validPlatforms := []string{"instagram", "snapchat", "facebook", "twitter", "tiktok", "youtube"}
@@ -127,7 +128,7 @@ func (h *ThunderSeatHandler) SubmitAnswer(c *gin.Context) {
 		req.SharingPlatform = &socialMedia
 	}
 
-	userName, _ := utils.GetPostFormWithLargeBuffer(c.Request, "user_name", maxMultipartMemory)
+	userName, _ := utils.GetPostFormLargeFiles(c.Request, "user_name", maxMultipartMemory)
 	if userName != "" {
 		if len(userName) < 3 || len(userName) > 255 {
 			c.JSON(http.StatusBadRequest, dtos.ErrorResponse{

@@ -2,59 +2,34 @@ package utils
 
 import (
 	"bufio"
-	"mime"
+	"io"
 	"mime/multipart"
 	"net/http"
-	"strings"
 )
 
-const (
-	// Large buffer size to handle big multipart uploads (1MB buffer)
-	multipartBufferSize = 1024 * 1024
-)
-
-// ParseMultipartFormWithLargeBuffer parses a multipart form with a larger buffer
-// to avoid "bufio: buffer full" errors with large files
-func ParseMultipartFormWithLargeBuffer(r *http.Request, maxMemory int64) error {
+// ParseMultipartFormLargeFiles parses multipart form with large memory limit
+// This wraps the request body in a large buffer to avoid "bufio: buffer full" errors
+func ParseMultipartFormLargeFiles(r *http.Request, maxMemory int64) error {
 	if r.MultipartForm != nil {
 		return nil // Already parsed
 	}
 
-	contentType := r.Header.Get("Content-Type")
-	if contentType == "" {
-		return http.ErrNotMultipart
+	// Wrap the body in a buffered reader with a very large buffer (64MB)
+	// This prevents "bufio: buffer full" errors when parsing large multipart forms
+	if r.Body != nil {
+		bufferedBody := bufio.NewReaderSize(r.Body, 64*1024*1024) // 64MB buffer
+		r.Body = io.NopCloser(bufferedBody)
 	}
 
-	mediaType, params, err := mime.ParseMediaType(contentType)
-	if err != nil || !strings.HasPrefix(mediaType, "multipart/") {
-		return http.ErrNotMultipart
-	}
-
-	boundary, ok := params["boundary"]
-	if !ok {
-		return http.ErrMissingBoundary
-	}
-
-	// Create a buffered reader with a large buffer
-	bufferedReader := bufio.NewReaderSize(r.Body, multipartBufferSize)
-	
-	// Create multipart reader with the buffered reader
-	reader := multipart.NewReader(bufferedReader, boundary)
-
-	// Parse the multipart form
-	form, err := reader.ReadForm(maxMemory)
-	if err != nil {
-		return err
-	}
-
-	r.MultipartForm = form
-	return nil
+	// Use standard Go parsing with large memory limit
+	// Files larger than maxMemory will be automatically spilled to disk
+	return r.ParseMultipartForm(maxMemory)
 }
 
-// GetFormFileWithLargeBuffer gets a file from multipart form with large buffer support
-func GetFormFileWithLargeBuffer(r *http.Request, key string, maxMemory int64) (*multipart.FileHeader, error) {
-	// Parse with large buffer if not already parsed
-	if err := ParseMultipartFormWithLargeBuffer(r, maxMemory); err != nil && err != http.ErrNotMultipart {
+// GetFormFileLargeFiles gets a file from multipart form with large file support
+func GetFormFileLargeFiles(r *http.Request, key string, maxMemory int64) (*multipart.FileHeader, error) {
+	// Parse if not already parsed
+	if err := ParseMultipartFormLargeFiles(r, maxMemory); err != nil {
 		return nil, err
 	}
 
@@ -70,10 +45,10 @@ func GetFormFileWithLargeBuffer(r *http.Request, key string, maxMemory int64) (*
 	return files[0], nil
 }
 
-// GetPostFormWithLargeBuffer gets form values with large buffer support
-func GetPostFormWithLargeBuffer(r *http.Request, key string, maxMemory int64) (string, error) {
-	// Parse with large buffer if not already parsed
-	if err := ParseMultipartFormWithLargeBuffer(r, maxMemory); err != nil && err != http.ErrNotMultipart {
+// GetPostFormLargeFiles gets form values with large file support
+func GetPostFormLargeFiles(r *http.Request, key string, maxMemory int64) (string, error) {
+	// Parse if not already parsed
+	if err := ParseMultipartFormLargeFiles(r, maxMemory); err != nil {
 		return "", err
 	}
 

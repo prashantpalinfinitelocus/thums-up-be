@@ -63,6 +63,7 @@ func startServer() {
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
 		Handler: router,
+		MaxHeaderBytes: 10 << 20, // 10MB for headers to handle large multipart boundaries
 	}
 
 	go func() {
