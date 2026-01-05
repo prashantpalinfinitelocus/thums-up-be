@@ -97,24 +97,10 @@ func (s *winnerService) SelectWinners(ctx context.Context, req dtos.SelectWinner
 	winners := make([]entities.ThunderSeatWinner, len(randomEntries))
 
 	for i, entry := range randomEntries {
-		qrData := fmt.Sprintf("winner:%s:week:%d:thunder_seat:%d", entry.UserID, req.WeekNumber, entry.ID)
-		qrBytes, err := utils.GenerateQRCode(qrData)
-		if err != nil {
-			log.WithError(err).Error("Failed to generate QR code")
-			return nil, errors.NewInternalServerError("Failed to generate QR code", err)
-		}
-
-		qrPath := fmt.Sprintf("winners/week_%d/%s.png", req.WeekNumber, entry.UserID)
-		_, qrKey, err := s.gcsService.UploadFileFromBytes(ctx, qrBytes, qrPath, "image/png")
-		if err != nil {
-			log.WithError(err).Error("Failed to upload QR code")
-			return nil, errors.NewInternalServerError("Failed to upload QR code", err)
-		}
-
 		winners[i] = entities.ThunderSeatWinner{
 			UserID:        entry.UserID,
 			ThunderSeatID: entry.ID,
-			QRCode:        qrKey,
+			QRCode:        "", // QR code will be generated when user submits KYC
 			WeekNumber:    req.WeekNumber,
 			HasViewed:     false,
 			CreatedBy:     constants.SYSTEM_USER_ID,
@@ -132,13 +118,12 @@ func (s *winnerService) SelectWinners(ctx context.Context, req dtos.SelectWinner
 
 	responses := make([]dtos.WinnerResponse, len(winners))
 	for i, winner := range winners {
-		qrURL := s.gcsService.GetPublicURL(winner.QRCode)
 		responses[i] = dtos.WinnerResponse{
 			ID:            winner.ID,
 			UserID:        winner.UserID,
 			ThunderSeatID: winner.ThunderSeatID,
 			WeekNumber:    winner.WeekNumber,
-			QRCodeURL:     &qrURL,
+			QRCodeURL:     nil, // QR code will be generated when user submits KYC
 			CreatedOn:     winner.CreatedOn.Format(time.RFC3339),
 		}
 	}
@@ -377,6 +362,66 @@ func (s *winnerService) SubmitWinnerKYC(ctx context.Context, userID string, req 
 		if err := s.userAdditionalInfoRepo.Update(ctx, tx, existingInfo); err != nil {
 			s.txnManager.AbortTxn(tx)
 			return errors.NewInternalServerError("Failed to update user additional info", err)
+		}
+	}
+
+	latestWinner, err := s.winnerRepo.FindLatestByUserID(ctx, tx, userID)
+	if err != nil {
+		s.txnManager.AbortTxn(tx)
+		return errors.NewInternalServerError("Failed to fetch winner record", err)
+	}
+
+	if latestWinner != nil && latestWinner.QRCode == "" {
+		updatedUser, err := s.userRepo.FindById(ctx, tx, userUUID)
+		if err != nil {
+			s.txnManager.AbortTxn(tx)
+			return errors.NewInternalServerError("Failed to fetch updated user", err)
+		}
+
+		aadharCard, _ := s.userAadharRepo.FindByUserID(ctx, tx, userID)
+
+		additionalInfo, _ := s.userAdditionalInfoRepo.FindByUserID(ctx, tx, userID)
+
+		email := ""
+		if updatedUser.Email != nil {
+			email = *updatedUser.Email
+		}
+		name := ""
+		if updatedUser.Name != nil {
+			name = *updatedUser.Name
+		}
+		aadharNumber := ""
+		if aadharCard != nil {
+			aadharNumber = aadharCard.AadharNumber
+		}
+		cities := ""
+		if additionalInfo != nil {
+			cities = fmt.Sprintf("%s,%s,%s", additionalInfo.City1, additionalInfo.City2, additionalInfo.City3)
+		}
+
+		qrData := fmt.Sprintf("winner_id:%d|user_id:%s|name:%s|email:%s|phone:%s|aadhar:%s|cities:%s|week:%d|thunder_seat:%d",
+			latestWinner.ID, userID, name, email, updatedUser.PhoneNumber, aadharNumber, cities, latestWinner.WeekNumber, latestWinner.ThunderSeatID)
+
+		qrBytes, err := utils.GenerateQRCode(qrData)
+		if err != nil {
+			log.WithError(err).Error("Failed to generate QR code")
+			s.txnManager.AbortTxn(tx)
+			return errors.NewInternalServerError("Failed to generate QR code", err)
+		}
+
+		qrPath := fmt.Sprintf("winners/week_%d/%s.png", latestWinner.WeekNumber, userID)
+		_, qrKey, err := s.gcsService.UploadFileFromBytes(ctx, qrBytes, qrPath, "image/png")
+		if err != nil {
+			log.WithError(err).Error("Failed to upload QR code")
+			s.txnManager.AbortTxn(tx)
+			return errors.NewInternalServerError("Failed to upload QR code", err)
+		}
+
+		if err := tx.Model(&entities.ThunderSeatWinner{}).
+			Where("id = ?", latestWinner.ID).
+			Update("qr_code", qrKey).Error; err != nil {
+			s.txnManager.AbortTxn(tx)
+			return errors.NewInternalServerError("Failed to update winner QR code", err)
 		}
 	}
 

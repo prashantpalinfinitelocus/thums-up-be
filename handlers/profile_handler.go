@@ -26,7 +26,7 @@ func NewProfileHandler(userService services.UserService) *ProfileHandler {
 // GetProfile godoc
 //
 //	@Summary		Get user profile
-//	@Description	Retrieve the authenticated user's profile information including avatar image and QR code URL (if user has won). The QR code URL is retrieved from the thunder_seat_winner table if the user is a winner. Requires authentication.
+//	@Description	Retrieve the authenticated user's profile information including avatar image, winner status, and QR code URL (if user has won and submitted KYC). The is_winner flag indicates if the user is a winner. The QR code is generated after the user submits their KYC details. Requires authentication. This endpoint is optimized with concurrent data fetching using goroutines.
 //	@Tags			Profile
 //	@Accept			json
 //	@Produce		json
@@ -48,7 +48,7 @@ func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": errors.ErrInvalidUserContext})
 		return
 	}
-	userProfile, avatarImageURL, qrCodeURL, err := h.userService.GetUser(ctx, userEntity.ID)
+	userProfile, avatarImageURL, qrCodeURL, isWinner, err := h.userService.GetUser(ctx, userEntity.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("%s: %v", errors.ErrProfileFetchFailed, err)})
 		return
@@ -67,6 +67,7 @@ func (h *ProfileHandler) GetProfile(ctx *gin.Context) {
 			Email:        userProfile.Email,
 			AvatarImage:  avatarImageURL,
 			QRCodeURL:    qrCodeURL,
+			IsWinner:     isWinner,
 			IsViewed:     userProfile.IsViewed,
 			IsActive:     userProfile.IsActive,
 			IsVerified:   userProfile.IsVerified,

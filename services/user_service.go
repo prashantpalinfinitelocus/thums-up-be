@@ -16,7 +16,7 @@ import (
 )
 
 type UserService interface {
-	GetUser(ctx context.Context, userID string) (*entities.User, *string, *string, error)
+	GetUser(ctx context.Context, userID string) (*entities.User, *string, *string, bool, error)
 	UpdateUser(ctx context.Context, userID string, req dtos.UpdateProfileRequestDTO) (*entities.User, error)
 	GetUserAddresses(ctx context.Context, userID string) ([]dtos.AddressResponseDTO, error)
 	AddUserAddress(ctx context.Context, userID string, req dtos.AddressRequestDTO) (*dtos.AddressResponseDTO, error)
@@ -79,48 +79,78 @@ func NewUserService(
 	}
 }
 
-func (s *userService) GetUser(ctx context.Context, userID string) (*entities.User, *string, *string, error) {
+func (s *userService) GetUser(ctx context.Context, userID string) (*entities.User, *string, *string, bool, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("invalid user ID format: %w", err)
+		return nil, nil, nil, false, fmt.Errorf("invalid user ID format: %w", err)
 	}
 
 	tx, err := s.txnManager.StartTxn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, false, err
 	}
 	defer s.txnManager.RollbackOnPanic(tx)
 
 	user, err := s.userRepo.FindById(ctx, tx, userUUID)
 	if err != nil {
 		s.txnManager.AbortTxn(tx)
-		return nil, nil, nil, err
+		return nil, nil, nil, false, err
 	}
 
 	if user == nil {
 		s.txnManager.AbortTxn(tx)
-		return nil, nil, nil, fmt.Errorf("user not found")
+		return nil, nil, nil, false, fmt.Errorf("user not found")
 	}
 
-	var avatarImageURL *string
-	if user.AvatarID != nil {
-		avatar, err := s.avatarRepo.FindByID(ctx, tx, *user.AvatarID)
-		if err == nil && avatar != nil && !avatar.IsDeleted && avatar.IsActive {
-			fullPath := fmt.Sprintf("avatars/%s/%s", avatar.CreatedBy, avatar.ImageKey)
-			imageURL := s.gcsService.GetPublicURL(fullPath)
-			avatarImageURL = &imageURL
+	// Use goroutines to fetch avatar and winner status concurrently
+	type avatarResult struct {
+		url *string
+		err error
+	}
+	type winnerResult struct {
+		qrURL    *string
+		isWinner bool
+		err      error
+	}
+
+	avatarChan := make(chan avatarResult, 1)
+	winnerChan := make(chan winnerResult, 1)
+
+	// Fetch avatar concurrently
+	go func() {
+		var avatarImageURL *string
+		if user.AvatarID != nil {
+			avatar, err := s.avatarRepo.FindByID(ctx, tx, *user.AvatarID)
+			if err == nil && avatar != nil && !avatar.IsDeleted && avatar.IsActive {
+				fullPath := fmt.Sprintf("avatars/%s/%s", avatar.CreatedBy, avatar.ImageKey)
+				imageURL := s.gcsService.GetPublicURL(fullPath)
+				avatarImageURL = &imageURL
+			}
 		}
-	}
+		avatarChan <- avatarResult{url: avatarImageURL, err: nil}
+	}()
 
-	var qrCodeURL *string
-	winner, err := s.winnerRepo.FindLatestByUserID(ctx, tx, userID)
-	if err == nil && winner != nil && winner.QRCode != "" {
-		url := s.gcsService.GetPublicURL(winner.QRCode)
-		qrCodeURL = &url
-	}
+	// Fetch winner status concurrently
+	go func() {
+		var qrCodeURL *string
+		isWinner := false
+		winner, err := s.winnerRepo.FindLatestByUserID(ctx, tx, userID)
+		if err == nil && winner != nil {
+			isWinner = true
+			if winner.QRCode != "" {
+				url := s.gcsService.GetPublicURL(winner.QRCode)
+				qrCodeURL = &url
+			}
+		}
+		winnerChan <- winnerResult{qrURL: qrCodeURL, isWinner: isWinner, err: nil}
+	}()
+
+	// Wait for both goroutines to complete
+	avatarRes := <-avatarChan
+	winnerRes := <-winnerChan
 
 	s.txnManager.CommitTxn(tx)
-	return user, avatarImageURL, qrCodeURL, nil
+	return user, avatarRes.url, winnerRes.qrURL, winnerRes.isWinner, nil
 }
 
 func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.UpdateProfileRequestDTO) (*entities.User, error) {
