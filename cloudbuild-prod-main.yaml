@@ -1,8 +1,8 @@
 substitutions:
   _REGION: asia-south1
-  _PROJECT_ID: ai0016084-tja-thunderzone-test
-  _REPO_NAME: tccc-tja-test-cloud-build-repo
-  _MAIN_SERVICE: tccc-tja-test-cloudrun-backend
+  _PROJECT_ID: ai0016084-tja-thunderzone-prod
+  _REPO_NAME: tccc-tja-prod-cloud-build-repo
+  _MAIN_SERVICE: tccc-tja-prod-cloudrun-backend
 
 steps:
   # Step 1: Pull existing image for cache (ignore errors if it doesn't exist)
@@ -65,9 +65,9 @@ steps:
         '--min-instances=1',
         '--max-instances=3',
         '--allow-unauthenticated',
-        '--cpu=4',
-        '--memory=2Gi',
-        '--service-account=tccc-tja-test-cloudrun-sa@${_PROJECT_ID}.iam.gserviceaccount.com',
+        '--cpu=8',
+        '--memory=8Gi',
+        '--service-account=tccc-tja-prod-cloudrun-sa@${_PROJECT_ID}.iam.gserviceaccount.com',
         '--set-secrets=APP_ENV=APP_ENV:latest,INFOBIP_BASE_URL=INFOBIP_BASE_URL:latest,INFOBIP_API_KEY=INFOBIP_API_KEY:latest,INFOBIP_WA_NUMBER=INFOBIP_WA_NUMBER:latest,JWT_SECRET_KEY=JWT_SECRET_KEY:latest,JWT_ACCESS_TOKEN_EXPIRY=JWT_ACCESS_TOKEN_EXPIRY:latest,JWT_REFRESH_TOKEN_EXPIRY=JWT_REFRESH_TOKEN_EXPIRY:latest,DB_HOST=DB_HOST:latest,DB_PORT=DB_PORT:latest,DB_USER=DB_USER:latest,DB_PASSWORD=DB_PASSWORD:latest,DB_NAME=DB_NAME:latest,DB_SSL_MODE=DB_SSL_MODE:latest,GOOGLE_PUBSUB_PROJECT_ID=GOOGLE_PUBSUB_PROJECT_ID:latest,GOOGLE_PUBSUB_SUBSCRIPTION_ID=GOOGLE_PUBSUB_SUBSCRIPTION_ID:latest,GOOGLE_PUBSUB_TOPIC_ID=GOOGLE_PUBSUB_TOPIC_ID:latest,X_API_KEY=X_API_KEY:latest,GCP_BUCKET_NAME=GCP_BUCKET_NAME:latest,GCP_PROJECT_ID=GCP_PROJECT_ID:latest,GCP_URL=GCP_URL:latest,FIREBASE_SERVICE_KEY_PATH=FIREBASE_SERVICE_KEY_PATH:latest'
       ]
     id: 'deploy-cloudrun'
@@ -80,7 +80,7 @@ images:
 timeout: 1800s
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: E2_HIGHCPU_8
+  workerPool: projects/ai0016084-tja-thunderzone-prod/locations/asia-south1/workerPools/tccc-tja-prod-private-workerpool
   env:
     - 'DOCKER_BUILDKIT=0'
 
