@@ -38,3 +38,5 @@ func (r *userAadharCardRepository) Create(ctx context.Context, db *gorm.DB, enti
 func (r *userAadharCardRepository) Update(ctx context.Context, db *gorm.DB, entity *entities.UserAadharCard) error {
 	return db.WithContext(ctx).Save(entity).Error
 }
+
+

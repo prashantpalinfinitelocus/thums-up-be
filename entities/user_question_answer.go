@@ -20,3 +20,5 @@ type UserQuestionAnswer struct {
 func (UserQuestionAnswer) TableName() string {
 	return "user_question_answer"
 }
+
+

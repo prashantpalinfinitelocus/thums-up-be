@@ -10,8 +10,8 @@ import (
 type User struct {
 	ID               string     `gorm:"type:uuid;primaryKey" json:"id"`
 	PhoneNumber      string     `gorm:"type:varchar(15);uniqueIndex;not null" json:"phone_number"`
-	Name             *string    `gorm:"type:varchar(255)" json:"name,omitempty"`
-	Email            *string    `gorm:"type:varchar(255);uniqueIndex" json:"email,omitempty"`
+	Name             *string    `gorm:"type:varchar(255)" json:"name"`
+	Email            *string    `gorm:"type:varchar(255);uniqueIndex" json:"email"`
 	AvatarID         *int       `json:"avatar_id,omitempty" gorm:"type:int"`
 	IsActive         bool       `gorm:"default:true" json:"is_active"`
 	IsVerified       bool       `gorm:"default:false" json:"is_verified"`

@@ -19,3 +19,5 @@ type OptionMaster struct {
 func (OptionMaster) TableName() string {
 	return "option_master"
 }
+
+

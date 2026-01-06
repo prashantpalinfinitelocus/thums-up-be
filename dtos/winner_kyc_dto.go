@@ -10,3 +10,5 @@ type WinnerKYCRequest struct {
 	City2        string  `json:"city2"`
 	City3        string  `json:"city3"`
 }
+
+

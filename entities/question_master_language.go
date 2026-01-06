@@ -19,3 +19,5 @@ type QuestionMasterLanguage struct {
 func (QuestionMasterLanguage) TableName() string {
 	return "question_master_languages"
 }
+
+

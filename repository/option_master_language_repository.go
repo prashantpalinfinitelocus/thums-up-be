@@ -94,3 +94,5 @@ func (r *optionMasterLanguageRepository) Update(ctx context.Context, tx *gorm.DB
 func (r *optionMasterLanguageRepository) Delete(ctx context.Context, tx *gorm.DB, id int) error {
 	return tx.Model(&entities.OptionMasterLanguage{}).Where("id = ?", id).Update("is_deleted", true).Error
 }
+
+
