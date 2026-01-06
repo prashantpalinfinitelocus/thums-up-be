@@ -84,11 +84,11 @@ func loadConfig() (*Config, error) {
 		SwaggerHost:    getEnv("SWAGGER_HOST", "localhost:8080"),
 
 		DbConfig: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
+			Host:     getEnv("DB_HOST", ""),
 			Port:     parseEnvInt("DB_PORT", 5432),
-			User:     getEnv("DB_USER", "postgres"),
+			User:     getEnv("DB_USER", ""),
 			Password: getEnv("DB_PASSWORD", ""),
-			DBName:   getEnv("DB_NAME", "thums_up_db"),
+			DBName:   getEnv("DB_NAME", ""),
 			SSLMode:  getSSLMode(),
 		},
 
