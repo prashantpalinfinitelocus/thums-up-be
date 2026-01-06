@@ -112,7 +112,7 @@ func (s *Server) initGCSService() error {
 
 	log.Infof("Initializing GCS service with bucket: %s, project: %s", s.cfg.GcsConfig.BucketName, s.cfg.GcsConfig.ProjectID)
 
-	// Use default credentials (Workload Identity) - no credentials file needed
+	// Use default credentials (Workload Identity) - no credentials file need
 	gcsService, err := utils.NewGCSService(
 		s.cfg.GcsConfig.BucketName,
 		s.cfg.GcsConfig.ProjectID,
