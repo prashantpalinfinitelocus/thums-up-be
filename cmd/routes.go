@@ -25,7 +25,7 @@ func (s *Server) setupRouter() *gin.Engine {
 }
 
 func (s *Server) setupAPIRoutes(router *gin.Engine) {
-	api := router.Group("/api/v1")
+	api := router.Group("backend/api/v1")
 
 	routes.SetupAuthRoutes(api, s.handlers.auth, s.db, s.repositories.user)
 
