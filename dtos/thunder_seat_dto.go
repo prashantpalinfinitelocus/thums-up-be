@@ -1,7 +1,7 @@
 package dtos
 
 type ThunderSeatSubmitRequest struct {
-	Answer           string  `form:"description" binding:"required"`
+	Answer           string  `form:"description" binding:"omitempty"`
 	SharingPlatform  *string `form:"social_media" binding:"omitempty,oneof=instagram snapchat facebook twitter tiktok youtube"`
 	PlatformUserName *string `form:"user_name" binding:"omitempty,min=3,max=255"`
 }
