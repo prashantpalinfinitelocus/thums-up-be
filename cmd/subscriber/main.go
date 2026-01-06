@@ -72,7 +72,6 @@ func startSubscriber() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-
 	log.Info("Shutting down subscriber...")
 	cancel()
 

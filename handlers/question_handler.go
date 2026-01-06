@@ -53,7 +53,7 @@ func (h *QuestionHandler) SubmitQuestion(c *gin.Context) {
 		})
 		return
 	}
-
+    //fixed the question
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
