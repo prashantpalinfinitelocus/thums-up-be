@@ -110,13 +110,12 @@ func (s *Server) initGCSService() error {
 		return fmt.Errorf("GCP_PROJECT_ID is not set in configuration")
 	}
 
-	credPath := "./gcp-service-account.json"
 	log.Infof("Initializing GCS service with bucket: %s, project: %s", s.cfg.GcsConfig.BucketName, s.cfg.GcsConfig.ProjectID)
 
-	gcsService, err := utils.NewGCSServiceWithCredentials(
+	// Use default credentials (Workload Identity) - no credentials file needed
+	gcsService, err := utils.NewGCSService(
 		s.cfg.GcsConfig.BucketName,
 		s.cfg.GcsConfig.ProjectID,
-		credPath,
 	)
 	if err != nil {
 		return fmt.Errorf("GCS initialization failed: %w", err)
