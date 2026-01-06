@@ -188,7 +188,7 @@ func (s *userService) UpdateUser(ctx context.Context, userID string, req dtos.Up
 			s.txnManager.AbortTxn(tx)
 			return nil, fmt.Errorf("failed to check email uniqueness: %v", err)
 		}
-		if existingUser != nil && existingUser.ID != user.ID && *req.Email != " " {
+		if existingUser != nil && existingUser.ID != user.ID {
 			s.txnManager.AbortTxn(tx)
 			return nil, fmt.Errorf("email already in use")
 		}
