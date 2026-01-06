@@ -89,7 +89,7 @@ func loadConfig() (*Config, error) {
 			User:     getEnv("DB_USER", "postgres"),
 			Password: getEnv("DB_PASSWORD", ""),
 			DBName:   getEnv("DB_NAME", "thums_up_db"),
-			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+			SSLMode:  getSSLMode(),
 		},
 
 		InfobipConfig: InfobipConfig{
@@ -131,6 +131,32 @@ func parseEnvInt(key string, fallback int) int {
 		}
 	}
 	return fallback
+}
+
+// getSSLMode converts DATABASE_SSL boolean to PostgreSQL SSL mode string
+// Valid PostgreSQL SSL modes: disable, allow, prefer, require, verify-ca, verify-full
+func getSSLMode() string {
+	// First check if DB_SSL_MODE is set directly (preferred)
+	if sslMode := os.Getenv("DB_SSL_MODE"); sslMode != "" {
+		return sslMode
+	}
+
+	// Otherwise, convert DATABASE_SSL boolean to SSL mode
+	databaseSSL := os.Getenv("DATABASE_SSL")
+	databaseSSLRejectUnauthorized := os.Getenv("DATABASE_SSL_REJECT_UNAUTHORIZED")
+
+	// Parse boolean values (accept "true", "1", "yes", "on" as true)
+	isSSLEnabled := databaseSSL == "true" || databaseSSL == "1" || databaseSSL == "yes" || databaseSSL == "on"
+	isRejectUnauthorized := databaseSSLRejectUnauthorized == "true" || databaseSSLRejectUnauthorized == "1" || databaseSSLRejectUnauthorized == "yes" || databaseSSLRejectUnauthorized == "on"
+
+	if isSSLEnabled {
+		if isRejectUnauthorized {
+			return "verify-full"
+		}
+		return "require"
+	}
+
+	return "disable"
 }
 
 func GetConfig() *Config {
