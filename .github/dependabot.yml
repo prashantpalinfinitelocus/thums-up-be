@@ -14,6 +14,12 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    # Group updates to reduce PR noise
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"
 
   # Enable version updates for Docker
   - package-ecosystem: "docker"
@@ -25,6 +31,9 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -36,4 +45,7 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
 
