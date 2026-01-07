@@ -1,0 +1,60 @@
+name: "StackHawk DAST Scan"
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+  schedule:
+    # Run weekly on Tuesday at 2 AM UTC
+    - cron: '0 2 * * 2'
+  workflow_dispatch:
+
+jobs:
+  stackhawk-scan:
+    name: StackHawk DAST Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Install dependencies
+      run: |
+        go mod download
+        go mod tidy
+
+    - name: Start application (if needed)
+      # Uncomment and configure if you need to start the app for scanning
+      # run: |
+      #   docker-compose up -d
+      #   # Or: make run &
+      #   # Wait for app to be ready
+      #   timeout 60 bash -c 'until curl -f http://localhost:8080/health; do sleep 2; done'
+      continue-on-error: true
+
+    - name: Run StackHawk Scan
+      uses: stackhawk/hawk-action@v1
+      with:
+        apiKey: ${{ secrets.STACKHAWK_API_KEY }}
+        appId: ${{ secrets.STACKHAWK_APP_ID }}
+        envId: ${{ secrets.STACKHAWK_ENV_ID }}
+        # Optional: specify config file
+        # configFile: stackhawk.yml
+
+    - name: Upload results to GitHub Security
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: stackhawk-results.sarif
+        wait-for-processing: true
+      continue-on-error: true
+

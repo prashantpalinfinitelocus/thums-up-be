@@ -61,6 +61,7 @@ clean: ## Clean build artifacts
 	@echo "Cleaning..."
 	rm -rf bin/
 	rm -f coverage.out coverage.html
+	rm -rf security-reports/
 
 migrate: ## Run database migrations
 	@echo "Running migrations..."
@@ -87,9 +88,33 @@ deps-update: ## Update dependencies
 	go get -u ./...
 	go mod tidy
 
-security: ## Run security checks
+security: ## Run security checks (gosec)
 	@echo "Running security checks..."
 	gosec ./...
+
+security-scan: ## Run all local security scans
+	@echo "Running comprehensive security scans..."
+	@./scripts/run-security-scans.sh
+
+security-gosec: ## Run gosec security scan
+	@echo "Running gosec scan..."
+	@mkdir -p security-reports
+	gosec -fmt json -out security-reports/gosec-report.json ./...
+	gosec -fmt sarif -out security-reports/gosec-results.sarif ./...
+	@echo "Reports saved to security-reports/"
+
+security-vulncheck: ## Run govulncheck vulnerability scan
+	@echo "Running govulncheck scan..."
+	@mkdir -p security-reports
+	govulncheck -json ./... > security-reports/govulncheck-report.json 2>&1 || true
+	govulncheck ./... || true
+	@echo "Report saved to security-reports/govulncheck-report.json"
+
+security-deps: ## Check for outdated dependencies
+	@echo "Checking for dependency updates..."
+	@mkdir -p security-reports
+	go list -m -u all > security-reports/dependency-updates.txt 2>&1 || true
+	@echo "Report saved to security-reports/dependency-updates.txt"
 
 benchmark: ## Run benchmarks
 	@echo "Running benchmarks..."
@@ -100,6 +125,7 @@ install-tools: ## Install development tools
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+	go install golang.org/x/vuln/cmd/govulncheck@latest
 
 ci: lint test ## Run CI pipeline locally
 
