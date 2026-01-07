@@ -14,7 +14,12 @@ from datetime import datetime
 
 def get_stackhawk_api_key() -> Optional[str]:
     """Get StackHawk API key from environment variable."""
-    return os.environ.get('STACKHAWK_API_KEY') or os.environ.get('HAWK_API_KEY')
+    api_key = os.environ.get('STACKHAWK_API_KEY') or os.environ.get('HAWK_API_KEY')
+    if api_key:
+        # Validate key format (StackHawk API keys are typically UUIDs or long strings)
+        if len(api_key) < 10:
+            print("⚠️  Warning: API key seems too short. Please verify it's correct.", file=sys.stderr)
+    return api_key
 
 def get_application_id() -> Optional[str]:
     """Get application ID from stackhawk.yml or environment."""
@@ -38,28 +43,72 @@ def fetch_latest_scan(api_key: str, application_id: str) -> Optional[Dict[str, A
     """Fetch the latest scan from StackHawk API."""
     headers = {
         'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
     }
     
-    # Get latest scan
-    url = f'https://api.stackhawk.com/api/v1/scans/{application_id}/latest'
+    # Try different API endpoint formats
+    # Format 1: Direct application scans endpoint
+    url1 = f'https://api.stackhawk.com/api/v1/app/{application_id}/scans/latest'
+    # Format 2: Scans endpoint with application filter
+    url2 = f'https://api.stackhawk.com/api/v1/scans?applicationId={application_id}&limit=1'
+    # Format 3: Original format
+    url3 = f'https://api.stackhawk.com/api/v1/scans/{application_id}/latest'
+    
+    urls_to_try = [
+        (url1, "application scans endpoint"),
+        (url2, "scans list endpoint"),
+        (url3, "direct scans endpoint")
+    ]
     
     print(f"📡 Fetching latest scan for application {application_id}...")
     
-    try:
-        response = requests.get(url, headers=headers, timeout=30)
-        response.raise_for_status()
-        scan = response.json()
-        print(f"✅ Found scan: {scan.get('id', 'N/A')}")
-        return scan
-    except requests.exceptions.RequestException as e:
-        print(f"❌ Error fetching scan: {e}", file=sys.stderr)
-        if hasattr(e, 'response') and e.response is not None:
-            if e.response.status_code == 404:
-                print("  No scans found for this application", file=sys.stderr)
-            elif e.response.status_code == 401:
-                print("  Authentication failed. Check your API key.", file=sys.stderr)
-        return None
+    for url, description in urls_to_try:
+        try:
+            print(f"  Trying {description}...")
+            response = requests.get(url, headers=headers, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                # Handle different response formats
+                if isinstance(data, list) and len(data) > 0:
+                    scan = data[0]  # Get first scan from list
+                elif isinstance(data, dict):
+                    scan = data
+                else:
+                    continue
+                
+                scan_id = scan.get('id') or scan.get('scanId')
+                print(f"✅ Found scan: {scan_id}")
+                return scan
+            elif response.status_code == 401:
+                # If we get 401, try next endpoint format
+                error_detail = response.text
+                print(f"  Authentication failed with {description}")
+                if url == urls_to_try[-1][0]:  # Last URL
+                    print(f"  Response: {error_detail[:200]}", file=sys.stderr)
+                    print("  Authentication failed. Please verify:", file=sys.stderr)
+                    print("  1. STACKHAWK_API_KEY is correct", file=sys.stderr)
+                    print("  2. API key has proper permissions", file=sys.stderr)
+                    print("  3. Application ID is correct", file=sys.stderr)
+                continue
+            elif response.status_code == 404:
+                print(f"  No scans found with {description}")
+                continue
+            else:
+                print(f"  Unexpected status {response.status_code} with {description}")
+                continue
+                
+        except requests.exceptions.RequestException as e:
+            if url == urls_to_try[-1][0]:  # Last URL, show error
+                print(f"❌ Error fetching scan: {e}", file=sys.stderr)
+                if hasattr(e, 'response') and e.response is not None:
+                    print(f"  Status: {e.response.status_code}", file=sys.stderr)
+                    print(f"  Response: {e.response.text[:200]}", file=sys.stderr)
+            continue
+    
+    print("⚠️  Could not fetch scan from any endpoint", file=sys.stderr)
+    return None
 
 def fetch_scan_findings(api_key: str, scan_id: str) -> List[Dict[str, Any]]:
     """Fetch findings for a specific scan."""
@@ -255,6 +304,11 @@ def main():
     api_key = get_stackhawk_api_key()
     if not api_key:
         print("❌ Error: STACKHAWK_API_KEY environment variable not set", file=sys.stderr)
+        print("\n📝 How to get your StackHawk API key:", file=sys.stderr)
+        print("  1. Log in to StackHawk platform: https://app.stackhawk.com", file=sys.stderr)
+        print("  2. Go to Settings → API Keys", file=sys.stderr)
+        print("  3. Create a new API key or copy an existing one", file=sys.stderr)
+        print("  4. Set it as a GitHub secret: STACKHAWK_API_KEY", file=sys.stderr)
         return 1
     
     # Get application ID
@@ -272,9 +326,70 @@ def main():
     
     json_path = output_dir / 'stackhawk-results.json'
     pdf_path = output_dir / 'stackhawk-security-report.pdf'
+    sarif_path = output_dir / 'stackhawk-results.sarif'
     
-    # Fetch latest scan
-    scan = fetch_latest_scan(api_key, application_id)
+    # Try to parse SARIF file first (if scan was just run)
+    scan = None
+    findings = []
+    
+    if sarif_path.exists():
+        print("📄 Found SARIF file, parsing it for results...")
+        try:
+            with open(sarif_path, 'r', encoding='utf-8') as f:
+                sarif_data = json.load(f)
+            
+            runs = sarif_data.get('runs', [])
+            for run in runs:
+                results = run.get('results', [])
+                if results:
+                    print(f"✅ Found {len(results)} findings in SARIF file")
+                    # Convert SARIF to StackHawk format
+                    for result in results:
+                        rule_id = result.get('ruleId', 'N/A')
+                        message = result.get('message', {})
+                        text = message.get('text', 'N/A')
+                        level = result.get('level', 'warning')
+                        
+                        # Map SARIF levels to StackHawk severity
+                        severity_map = {
+                            'error': 'HIGH',
+                            'warning': 'MEDIUM',
+                            'note': 'LOW',
+                            'none': 'INFO'
+                        }
+                        severity = severity_map.get(level.lower(), 'MEDIUM')
+                        
+                        locations = result.get('locations', [])
+                        url = 'N/A'
+                        if locations:
+                            location = locations[0]
+                            physical_location = location.get('physicalLocation', {})
+                            artifact_location = physical_location.get('artifactLocation', {})
+                            url = artifact_location.get('uri', 'N/A')
+                        
+                        findings.append({
+                            'id': rule_id,
+                            'title': text[:100] if text else rule_id,
+                            'description': text,
+                            'severity': severity,
+                            'url': url,
+                            'cwe': rule_id
+                        })
+                    
+                    scan = {
+                        'id': 'sarif-import',
+                        'status': 'completed',
+                        'startedAt': datetime.now().isoformat(),
+                        'completedAt': datetime.now().isoformat()
+                    }
+                    break
+        except Exception as e:
+            print(f"⚠️  Could not parse SARIF file: {e}")
+            print("  Will try to fetch from API instead...")
+    
+    # If no SARIF data, try API
+    if not scan:
+        scan = fetch_latest_scan(api_key, application_id)
     if not scan:
         print("⚠️  No scan found. Creating empty report.", file=sys.stderr)
         # Create empty JSON report

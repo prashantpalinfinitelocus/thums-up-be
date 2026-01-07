@@ -165,21 +165,114 @@ def find_report_files(base_dir: str = '.') -> Dict[str, List[str]]:
     
     return reports
 
-def generate_csv(findings: List[Dict[str, Any]], output_path: str):
-    """Generate CSV file from findings."""
+def get_language_from_file(file_path: str) -> str:
+    """Detect programming language from file extension."""
+    if not file_path or file_path == 'N/A':
+        return 'Unknown'
+    
+    file_lower = file_path.lower()
+    if file_lower.endswith('.go'):
+        return 'Go'
+    elif file_lower.endswith('.js') or file_lower.endswith('.jsx'):
+        return 'JavaScript'
+    elif file_lower.endswith('.ts') or file_lower.endswith('.tsx'):
+        return 'TypeScript'
+    elif file_lower.endswith('.py'):
+        return 'Python'
+    elif file_lower.endswith('.java'):
+        return 'Java'
+    elif file_lower.endswith('.rb'):
+        return 'Ruby'
+    elif file_lower.endswith('.php'):
+        return 'PHP'
+    elif file_lower.endswith('.cs'):
+        return 'C#'
+    elif file_lower.endswith('.cpp') or file_lower.endswith('.cc') or file_lower.endswith('.cxx'):
+        return 'C++'
+    elif file_lower.endswith('.c'):
+        return 'C'
+    elif file_lower.endswith('.yaml') or file_lower.endswith('.yml'):
+        return 'YAML'
+    elif file_lower.endswith('.json'):
+        return 'JSON'
+    else:
+        return 'Other'
+
+def normalize_file_path(file_path: str, base_dir: str = '.') -> str:
+    """Normalize file path to be relative to repository root."""
+    if not file_path or file_path == 'N/A':
+        return 'N/A'
+    
+    # Remove file:// prefix if present
+    if file_path.startswith('file://'):
+        file_path = file_path[7:]
+    
+    # Remove leading slashes
+    file_path = file_path.lstrip('/')
+    
+    # Convert to absolute path and then make relative
+    try:
+        base_path = Path(base_dir).resolve()
+        abs_path = Path(file_path).resolve()
+        
+        # Try to make it relative to base
+        try:
+            rel_path = abs_path.relative_to(base_path)
+            return str(rel_path).replace('\\', '/')
+        except ValueError:
+            # If not relative, return the path as is but cleaned
+            return file_path.replace('\\', '/')
+    except Exception:
+        return file_path.replace('\\', '/')
+
+def generate_csv(findings: List[Dict[str, Any]], output_path: str, base_dir: str = '.'):
+    """Generate CSV file from findings with proper file paths."""
     if not findings:
         print("No findings to write to CSV", file=sys.stderr)
+        # Create empty CSV with headers
+        fieldnames = ['Configuration', 'Language', 'File Path', 'Detected Vulnerabilities', 'Fixable Vulnerabilities', 'Severity', 'Rule ID', 'Message', 'Line', 'Column', 'Tool', 'Source']
+        with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+        print(f"✓ Generated empty CSV file: {output_path}")
         return
     
-    fieldnames = ['Tool', 'Severity', 'Rule ID', 'Message', 'File', 'Line', 'Column', 'Source', 'Timestamp']
+    # Process findings to add normalized paths and language
+    processed_findings = []
+    for finding in findings:
+        file_path = finding.get('File', 'N/A')
+        normalized_path = normalize_file_path(file_path, base_dir)
+        language = get_language_from_file(normalized_path)
+        
+        # Determine if fixable (for now, mark as TRUE for most issues, FALSE for informational)
+        severity = finding.get('Severity', 'LOW')
+        fixable = 'TRUE' if severity in ['HIGH', 'MEDIUM', 'LOW'] else 'FALSE'
+        
+        processed_finding = {
+            'Configuration': 'Default',  # Can be customized based on scan config
+            'Language': language,
+            'File Path': normalized_path,
+            'Detected Vulnerabilities': 'TRUE',  # All findings are detected vulnerabilities
+            'Fixable Vulnerabilities': fixable,
+            'Severity': finding.get('Severity', 'LOW'),
+            'Rule ID': finding.get('Rule ID', 'N/A'),
+            'Message': finding.get('Message', 'N/A'),
+            'Line': finding.get('Line', 0),
+            'Column': finding.get('Column', 0),
+            'Tool': finding.get('Tool', 'N/A'),
+            'Source': finding.get('Source', 'N/A')
+        }
+        processed_findings.append(processed_finding)
+    
+    fieldnames = ['Configuration', 'Language', 'File Path', 'Detected Vulnerabilities', 'Fixable Vulnerabilities', 'Severity', 'Rule ID', 'Message', 'Line', 'Column', 'Tool', 'Source']
     
     with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(findings)
+        writer.writerows(processed_findings)
     
     print(f"✓ Generated CSV file: {output_path}")
-    print(f"  Total findings: {len(findings)}")
+    print(f"  Total findings: {len(processed_findings)}")
 
 def main():
     """Main function to extract and generate CSV."""
@@ -232,8 +325,11 @@ def main():
     output_dir.mkdir(exist_ok=True)
     output_path = output_dir / 'code-scanning-files-extracted.csv'
     
+    # Get base directory (repository root)
+    base_dir = Path('.').resolve()
+    
     print(f"\n💾 Generating CSV file...")
-    generate_csv(all_findings, str(output_path))
+    generate_csv(all_findings, str(output_path), str(base_dir))
     
     # Summary
     print("\n" + "=" * 50)
