@@ -1,10 +1,10 @@
-name: "Security Scans"
+name: "Security Scans with Report and Commit"
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ["main"]
   schedule:
     # Run weekly on Wednesday at 2 AM UTC
     - cron: '0 2 * * 3'
@@ -21,6 +21,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup Go
       uses: actions/setup-go@v5
@@ -31,15 +33,18 @@ jobs:
       run: |
         go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
 
+    - name: Create results folder
+      run: mkdir -p ./results
+
     - name: Run gosec
       run: |
-        gosec -fmt json -out gosec-report.json ./...
-        gosec -fmt sarif -out gosec-results.sarif ./...
+        gosec -fmt json -out ./results/gosec-report.json ./...
+        gosec -fmt sarif -out ./results/gosec-results.sarif ./...
 
     - name: Upload gosec results to GitHub Security
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: gosec-results.sarif
+        sarif_file: ./results/gosec-results.sarif
         wait-for-processing: true
       continue-on-error: true
 
@@ -47,8 +52,19 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: gosec-report
-        path: gosec-report.json
+        path: ./results/gosec-report.json
         retention-days: 30
+
+    - name: Upload gosec SARIF as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: gosec-sarif
+        path: ./results/gosec-results.sarif
+        retention-days: 30
+
+    - name: Move SARIF to repo root
+      run: |
+        mv ./results/gosec-results.sarif ./gosec-results.sarif
 
   govulncheck-scan:
     name: Go Vulnerability Check
@@ -59,6 +75,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup Go
       uses: actions/setup-go@v5
@@ -69,16 +87,23 @@ jobs:
       run: |
         go install golang.org/x/vuln/cmd/govulncheck@latest
 
+    - name: Create results folder
+      run: mkdir -p ./results
+
     - name: Run govulncheck
       run: |
-        govulncheck -json ./... > govulncheck-report.json || true
+        govulncheck -json ./... > ./results/govulncheck-report.json || true
 
     - name: Upload govulncheck report as artifact
       uses: actions/upload-artifact@v4
       with:
         name: govulncheck-report
-        path: govulncheck-report.json
+        path: ./results/govulncheck-report.json
         retention-days: 30
+
+    - name: Move report to repo root
+      run: |
+        mv ./results/govulncheck-report.json ./govulncheck-report.json || true
 
     - name: Display vulnerabilities
       run: |
