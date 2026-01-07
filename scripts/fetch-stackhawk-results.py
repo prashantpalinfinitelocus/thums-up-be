@@ -266,16 +266,39 @@ def main():
     
     print(f"📦 Application ID: {application_id}")
     
+    # Create output directory
+    output_dir = Path('results')
+    output_dir.mkdir(exist_ok=True)
+    
+    json_path = output_dir / 'stackhawk-results.json'
+    pdf_path = output_dir / 'stackhawk-security-report.pdf'
+    
     # Fetch latest scan
     scan = fetch_latest_scan(api_key, application_id)
     if not scan:
-        print("⚠️  No scan found. Make sure a scan has been completed.", file=sys.stderr)
-        return 1
+        print("⚠️  No scan found. Creating empty report.", file=sys.stderr)
+        # Create empty JSON report
+        empty_report = {
+            'scan': None,
+            'findings': [],
+            'summary': {
+                'total_findings': 0,
+                'severity_counts': {}
+            },
+            'error': 'No scan found. Make sure a scan has been completed in StackHawk platform.',
+            'generated_at': datetime.now().isoformat()
+        }
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(empty_report, f, indent=2, ensure_ascii=False)
+        print(f"✅ Empty JSON report created: {json_path}")
+        return 0
     
     scan_id = scan.get('id')
     if not scan_id:
-        print("❌ Error: Scan ID not found", file=sys.stderr)
-        return 1
+        print("❌ Error: Scan ID not found. Creating report with available data.", file=sys.stderr)
+        # Create JSON report with scan data but no findings
+        save_json_report(scan, [], str(json_path))
+        return 0
     
     # Fetch findings
     findings = fetch_scan_findings(api_key, scan_id)
@@ -284,21 +307,29 @@ def main():
         print("⚠️  No findings found for this scan")
         findings = []
     
-    # Create output directory
-    output_dir = Path('results')
-    output_dir.mkdir(exist_ok=True)
-    
     # Save JSON report
-    json_path = output_dir / 'stackhawk-results.json'
-    save_json_report(scan, findings, str(json_path))
+    try:
+        save_json_report(scan, findings, str(json_path))
+    except Exception as e:
+        print(f"⚠️  Error saving JSON report: {e}", file=sys.stderr)
+        # Create minimal JSON report
+        minimal_report = {
+            'scan': scan,
+            'findings': [],
+            'summary': {'total_findings': 0, 'severity_counts': {}},
+            'error': str(e),
+            'generated_at': datetime.now().isoformat()
+        }
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(minimal_report, f, indent=2, ensure_ascii=False)
     
     # Generate PDF report
-    pdf_path = output_dir / 'stackhawk-security-report.pdf'
     try:
         generate_pdf_report(scan, findings, str(pdf_path))
     except Exception as e:
         print(f"⚠️  Error generating PDF: {e}", file=sys.stderr)
         print("  PDF generation failed, but JSON report is available", file=sys.stderr)
+        # PDF file won't exist, which is fine - the workflow will skip uploading it
     
     # Summary
     print("\n" + "=" * 50)

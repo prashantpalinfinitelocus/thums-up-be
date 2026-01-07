@@ -107,19 +107,33 @@ jobs:
         python3 scripts/fetch-stackhawk-results.py || echo "StackHawk results fetch completed with warnings"
       continue-on-error: true
 
-    - name: Check if StackHawk SARIF exists
-      id: check-sarif
+    - name: Check if StackHawk files exist
+      id: check-files
       if: always()
       run: |
         if [ -f ./results/stackhawk-results.sarif ]; then
-          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "sarif_exists=true" >> $GITHUB_OUTPUT
         else
-          echo "exists=false" >> $GITHUB_OUTPUT
-          echo "StackHawk SARIF file not found, skipping upload"
+          echo "sarif_exists=false" >> $GITHUB_OUTPUT
+          echo "StackHawk SARIF file not found"
+        fi
+        
+        if [ -f ./results/stackhawk-results.json ]; then
+          echo "json_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "json_exists=false" >> $GITHUB_OUTPUT
+          echo "StackHawk JSON file not found"
+        fi
+        
+        if [ -f ./results/stackhawk-security-report.pdf ]; then
+          echo "pdf_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "pdf_exists=false" >> $GITHUB_OUTPUT
+          echo "StackHawk PDF file not found"
         fi
 
     - name: Upload results to GitHub Security
-      if: always() && steps.check-sarif.outputs.exists == 'true'
+      if: always() && steps.check-files.outputs.sarif_exists == 'true'
       uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: ./results/stackhawk-results.sarif
@@ -127,7 +141,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload StackHawk SARIF as artifact
-      if: always() && steps.check-sarif.outputs.exists == 'true'
+      if: always() && steps.check-files.outputs.sarif_exists == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: stackhawk-sarif
@@ -136,7 +150,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload StackHawk JSON Report as artifact
-      if: always()
+      if: always() && steps.check-files.outputs.json_exists == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: stackhawk-results-json
@@ -145,7 +159,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload StackHawk PDF Report as artifact
-      if: always()
+      if: always() && steps.check-files.outputs.pdf_exists == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: stackhawk-security-report-pdf
