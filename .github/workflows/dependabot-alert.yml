@@ -1,0 +1,83 @@
+name: Dependabot Alerts Report - Backend
+
+on:
+  workflow_dispatch:       # Manual trigger from GitHub UI
+
+jobs:
+  fetch-dependabot-alerts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout backend repo
+        uses: actions/checkout@v4
+
+      - name: Fetch Dependabot alerts
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
+          REPO_OWNER: prashantpalinfinitelocus
+          REPO_NAME: thums-up-be
+        run: |
+          echo "Fetching Dependabot alerts for backend..."
+
+          page=1
+          all_alerts="[]"
+
+          while : ; do
+            response=$(curl -sSL \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dependabot/alerts?per_page=100&page=$page")
+
+            # Check if response is an object (possibly error) or array
+            is_object=$(echo "$response" | jq 'if type=="object" then 1 else 0 end')
+            if [ "$is_object" -eq 1 ]; then
+              error=$(echo "$response" | jq -r '.message // empty')
+              if [ -n "$error" ]; then
+                echo "GitHub API error: $error"
+                exit 1
+              fi
+            fi
+
+            alerts_page=$(echo "$response" | jq '.[]')
+            if [ "$alerts_page" = "null" ] || [ -z "$alerts_page" ]; then
+              break
+            fi
+
+            all_alerts=$(jq -s '.[0] + .[1]' <(echo "$all_alerts") <(echo "$response"))
+
+            count=$(echo "$response" | jq length)
+            if [ "$count" -lt 100 ]; then
+              break
+            fi
+
+            page=$((page+1))
+          done
+
+          echo "$all_alerts" > dependabot-alerts-backend.json
+
+          echo "Converting to CSV..."
+
+          jq -r '
+            (["number", "dependency_package_name", "dependency_package_ecosystem", "security_advisory_severity", "state", "created_at", "fixed_at"] | @csv),
+            (.[] | [
+              .number,
+              .dependency.package.name,
+              .dependency.ecosystem,
+              .security_advisory.severity,
+              .state,
+              .created_at,
+              (.fixed_at // "")
+            ] | @csv)
+          ' dependabot-alerts-backend.json > dependabot-alerts-backend.csv
+
+      - name: Upload JSON report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dependabot-json
+          path: dependabot-alerts-backend.json
+
+      - name: Upload CSV report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dependabot-csv
+          path: dependabot-alerts-backend.csv
