@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: thums_up_postgres
+    environment:
+      POSTGRES_DB: thums-up
+      POSTGRES_USER: prashantpal
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prashantpal -d thums-up"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres_strapi:
+    image: postgres:15-alpine
+    container_name: thums_up_postgres_strapi
+    environment:
+      POSTGRES_DB: strapi-cms
+      POSTGRES_USER: prashantpal
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres_strapi_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prashantpal -d strapi-cms"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: thums_up_backend
+    ports:
+      - "${APP_PORT:-8080}:${APP_PORT:-8080}"
+    volumes:
+      - ./gcp-service-account.json:/app/gcp-service-account.json:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      subscriber:
+        condition: service_started
+      strapi:
+        condition: service_started
+
+  subscriber:
+    build:
+      context: .
+      dockerfile: Dockerfile.subscriber
+    container_name: thums_up_subscriber
+    volumes:
+      - ./gcp-service-account.json:/app/gcp-service-account.json:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  strapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.strapi
+    container_name: thums_up_strapi
+    ports:
+      - "1338:1337"
+    volumes:
+      - strapi_uploads:/srv/app/public/uploads
+    env_file:
+      - ./strapi/.env
+    restart: unless-stopped
+    depends_on:
+      postgres_strapi:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
+  postgres_strapi_data:
+    driver: local
+  strapi_uploads:
+    driver: local
+

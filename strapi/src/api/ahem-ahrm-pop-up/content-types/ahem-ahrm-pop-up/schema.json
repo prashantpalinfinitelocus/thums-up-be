@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ahem_ahrm_pop_ups",
+  "info": {
+    "singularName": "ahem-ahrm-pop-up",
+    "pluralName": "ahem-ahrm-pop-ups",
+    "displayName": "ahem_ahem_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "pop_up_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "pop_up_sub_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "pop_up__button_text": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "thand_rakh_pop_ups",
+  "info": {
+    "singularName": "thand-rakh-pop-up",
+    "pluralName": "thand-rakh-pop-ups",
+    "displayName": "thand_rakh_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "thand_rakh_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "thand_rakh_subheading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "thand_rakh_explore_button": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "have_an_invite_codes",
+  "info": {
+    "singularName": "have-an-invite-code",
+    "pluralName": "have-an-invite-codes",
+    "displayName": "have_an_invite_code"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "have_an_invite_code_header": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "have_an_invite_code_sub_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "have_an_invite_code_button_text": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

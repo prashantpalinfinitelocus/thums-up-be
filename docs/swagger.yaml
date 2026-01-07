@@ -1,0 +1,1930 @@
+basePath: /api/v1
+definitions:
+  dtos.ActivateWeekRequest:
+    properties:
+      week_number:
+        type: integer
+    required:
+    - week_number
+    type: object
+  dtos.AddressRequestDTO:
+    properties:
+      address1:
+        type: string
+      address2:
+        type: string
+      city:
+        type: string
+      is_default:
+        type: boolean
+      nearest_landmark:
+        type: string
+      pincode:
+        type: integer
+      shipping_mobile:
+        type: string
+      state:
+        type: string
+    required:
+    - address1
+    - city
+    - pincode
+    - state
+    type: object
+  dtos.AddressResponseDTO:
+    properties:
+      address1:
+        type: string
+      address2:
+        type: string
+      city:
+        type: string
+      created_on:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      is_default:
+        type: boolean
+      last_modified_on:
+        type: string
+      nearest_landmark:
+        type: string
+      pincode:
+        type: integer
+      shipping_mobile:
+        type: string
+      state:
+        type: string
+    type: object
+  dtos.AnswerQuestionsRequestDTO:
+    properties:
+      answer_id:
+        type: integer
+      question_id:
+        type: integer
+      question_number:
+        type: integer
+    type: object
+  dtos.AvatarResponseDTO:
+    properties:
+      created_on:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      is_published:
+        type: boolean
+      last_modified_on:
+        type: string
+      name:
+        type: string
+      published_by:
+        type: string
+      published_on:
+        type: string
+    type: object
+  dtos.ContestWeekRequest:
+    properties:
+      end_date:
+        type: string
+      start_date:
+        type: string
+      week_number:
+        minimum: 1
+        type: integer
+      winner_count:
+        minimum: 1
+        type: integer
+    required:
+    - end_date
+    - start_date
+    - week_number
+    - winner_count
+    type: object
+  dtos.ContestWeekResponse:
+    properties:
+      created_on:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      start_date:
+        type: string
+      week_number:
+        type: integer
+      winner_count:
+        type: integer
+    type: object
+  dtos.CreateOptionDTO:
+    properties:
+      display_order:
+        type: integer
+      id:
+        description: Nullable for creation
+        type: integer
+      is_active:
+        type: boolean
+      option_text:
+        type: string
+    type: object
+  dtos.CreateQuestionDTO:
+    properties:
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      language_id:
+        type: integer
+      options:
+        items:
+          $ref: '#/definitions/dtos.CreateOptionDTO'
+        type: array
+      ques_point:
+        type: integer
+      question_text:
+        type: string
+    type: object
+  dtos.CreateQuestionsRequestDTO:
+    properties:
+      questions:
+        items:
+          $ref: '#/definitions/dtos.CreateQuestionDTO'
+        type: array
+    type: object
+  dtos.CurrentWeekResponse:
+    properties:
+      end_date:
+        type: string
+      is_active:
+        type: boolean
+      start_date:
+        type: string
+      week_number:
+        type: integer
+      winner_count:
+        type: integer
+    type: object
+  dtos.ErrorResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dtos.GetQuestionByTextRequestDTO:
+    properties:
+      language_id:
+        type: integer
+      question_text:
+        type: string
+    required:
+    - language_id
+    - question_text
+    type: object
+  dtos.LoginCountResponse:
+    properties:
+      count:
+        type: integer
+      last_login:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dtos.OTPResponse:
+    properties:
+      otp:
+        type: string
+    type: object
+  dtos.OptionDTO:
+    properties:
+      display_order:
+        type: integer
+      id:
+        type: integer
+      option_text:
+        type: string
+    type: object
+  dtos.PaginatedResponse:
+    properties:
+      data: {}
+      meta:
+        $ref: '#/definitions/dtos.PaginationMeta'
+      success:
+        type: boolean
+    type: object
+  dtos.PaginationMeta:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_count:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dtos.ProfileResponseDTO:
+    properties:
+      user:
+        $ref: '#/definitions/dtos.UserProfileDTO'
+    type: object
+  dtos.QuestionResponse:
+    properties:
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      language_id:
+        type: integer
+      question_text:
+        type: string
+    type: object
+  dtos.QuestionResponseDTO:
+    properties:
+      id:
+        type: integer
+      language_id:
+        type: integer
+      options:
+        items:
+          $ref: '#/definitions/dtos.OptionDTO'
+        type: array
+      ques_point:
+        type: integer
+      question_text:
+        type: string
+      selected_option:
+        type: integer
+    type: object
+  dtos.QuestionSubmitRequest:
+    properties:
+      language_id:
+        type: integer
+      question_text:
+        type: string
+    required:
+    - language_id
+    - question_text
+    type: object
+  dtos.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dtos.SelectWinnersRequest:
+    properties:
+      week_number:
+        type: integer
+    required:
+    - week_number
+    type: object
+  dtos.SendOTPRequest:
+    properties:
+      phone_number:
+        maxLength: 10
+        minLength: 10
+        type: string
+    required:
+    - phone_number
+    type: object
+  dtos.SignUpRequest:
+    properties:
+      device_token:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      phone_number:
+        maxLength: 10
+        minLength: 10
+        type: string
+      referral_code:
+        type: string
+    required:
+    - name
+    - phone_number
+    type: object
+  dtos.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dtos.ThunderSeatResponse:
+    properties:
+      answer:
+        type: string
+      avatar_name:
+        type: string
+      avatar_url:
+        type: string
+      created_on:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      media_type:
+        type: string
+      media_url:
+        type: string
+      name:
+        type: string
+      user_id:
+        type: string
+      week_number:
+        type: integer
+    type: object
+  dtos.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      email:
+        type: string
+      expires_in:
+        type: integer
+      name:
+        type: string
+      phone_number:
+        type: string
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dtos.UpdateProfileRequestDTO:
+    properties:
+      avatar_id:
+        type: integer
+      email:
+        type: string
+      is_viewed:
+        type: boolean
+      name:
+        type: string
+      platform_user_name:
+        type: string
+      sharing_platform:
+        type: string
+    type: object
+  dtos.UserProfileDTO:
+    properties:
+      avatar_image:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      is_verified:
+        type: boolean
+      is_viewed:
+        type: boolean
+      is_winner:
+        type: boolean
+      name:
+        type: string
+      phone_number:
+        type: string
+      qr_code_url:
+        type: string
+      referral_code:
+        type: string
+      referred_by:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dtos.VerifyOTPRequest:
+    properties:
+      otp:
+        maxLength: 6
+        minLength: 6
+        type: string
+      phone_number:
+        maxLength: 10
+        minLength: 10
+        type: string
+    required:
+    - otp
+    - phone_number
+    type: object
+  dtos.WebsiteStatusResponse:
+    properties:
+      status:
+        type: string
+      winner_announcement:
+        type: boolean
+      winner_announcement_date:
+        type: string
+    type: object
+  dtos.WinnerResponse:
+    properties:
+      avatar_name:
+        type: string
+      avatar_url:
+        type: string
+      created_on:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      qr_code_url:
+        type: string
+      thunder_seat_id:
+        type: integer
+      user_id:
+        type: string
+      week_number:
+        type: integer
+    type: object
+  dtos.WinnerStatusResponse:
+    properties:
+      has_participated:
+        type: boolean
+      has_viewed:
+        type: boolean
+      has_won:
+        type: boolean
+      qr_code_url:
+        type: string
+      week_number:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@thumsup.com
+    name: API Support
+  description: API documentation for Thums Up Backend Service including Contest Week
+    Management
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Thums Up Backend API
+  version: "1.0"
+paths:
+  /admin/winners/select:
+    post:
+      consumes:
+      - application/json
+      description: Admin endpoint to select winners for a specific contest week. Requires
+        API key authentication.
+      parameters:
+      - description: Week number
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.SelectWinnersRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Winners selected successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dtos.WinnerResponse'
+                  type: array
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to select winners
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - APIKey: []
+      summary: Select winners for a week
+      tags:
+      - Admin
+  /auth/login-count:
+    get:
+      consumes:
+      - application/json
+      description: Get the login count for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login count retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.LoginCountResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to get login count
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get user login count
+      tags:
+      - Authentication
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get a new access token using a valid refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token refreshed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.TokenResponse'
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Invalid refresh token
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to refresh token
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Refresh authentication token
+      tags:
+      - Authentication
+  /auth/send-otp:
+    post:
+      consumes:
+      - application/json
+      description: Send a one-time password to the provided phone number for authentication.
+        Returns the OTP in the response (for development/testing purposes when SMS
+        service is not configured).
+      parameters:
+      - description: Phone number
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.SendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP sent successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.OTPResponse'
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "429":
+          description: Too many OTP requests
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to send OTP
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Send OTP to phone number
+      tags:
+      - Authentication
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with phone number, name, and optional email
+        and referral code
+      parameters:
+      - description: User registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.TokenResponse'
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to sign up
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: User sign up
+      tags:
+      - Authentication
+  /auth/verify-otp:
+    post:
+      consumes:
+      - application/json
+      description: Verify the OTP sent to the phone number and return authentication
+        token
+      parameters:
+      - description: Phone number and OTP
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP verified successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.TokenResponse'
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Invalid OTP
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to verify OTP
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Verify OTP
+      tags:
+      - Authentication
+  /avatars:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all avatars, optionally filtered by publication status
+      parameters:
+      - description: Filter by publication status
+        in: query
+        name: is_published
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Avatars retrieved successfully
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/dtos.AvatarResponseDTO'
+              type: array
+            type: object
+        "400":
+          description: Invalid is_published parameter
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to fetch avatars
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all avatars
+      tags:
+      - Avatars
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new avatar with name and image file. Requires authentication.
+      parameters:
+      - description: Avatar name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Avatar image file (jpg, jpeg, png, gif, webp, svg, bmp, ico)
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Whether the avatar is published
+        in: formData
+        name: is_published
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Avatar created successfully
+          schema:
+            $ref: '#/definitions/dtos.AvatarResponseDTO'
+        "400":
+          description: Validation failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to create avatar
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Create a new avatar
+      tags:
+      - Avatars
+  /avatars/{avatarId}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific avatar by its ID
+      parameters:
+      - description: Avatar ID
+        in: path
+        name: avatarId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Avatar retrieved successfully
+          schema:
+            $ref: '#/definitions/dtos.AvatarResponseDTO'
+        "400":
+          description: Invalid avatar ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Avatar not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to fetch avatar
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get avatar by ID
+      tags:
+      - Avatars
+  /contest-weeks:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all contest weeks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contest weeks retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dtos.ContestWeekResponse'
+                  type: array
+              type: object
+        "500":
+          description: Failed to get contest weeks
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get all contest weeks
+      tags:
+      - Contest Weeks
+    post:
+      consumes:
+      - application/json
+      description: Create a new contest week with week number, start date, end date,
+        and winner count. Requires authentication.
+      parameters:
+      - description: Contest week details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.ContestWeekRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Contest week created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.ContestWeekResponse'
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to create contest week
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create a new contest week
+      tags:
+      - Contest Weeks
+  /contest-weeks/{weekNumber}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific contest week by its week number
+      parameters:
+      - description: Week number
+        in: path
+        name: weekNumber
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contest week retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.ContestWeekResponse'
+              type: object
+        "400":
+          description: Invalid week number
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Contest week not found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to get contest week
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get contest week by week number
+      tags:
+      - Contest Weeks
+  /contest-weeks/activate:
+    post:
+      consumes:
+      - application/json
+      description: Activate a specific contest week by week number. Only one week
+        can be active at a time. Requires authentication.
+      parameters:
+      - description: Week number to activate
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.ActivateWeekRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contest week activated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.ContestWeekResponse'
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Contest week not found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to activate contest week
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Activate a contest week
+      tags:
+      - Contest Weeks
+  /contest-weeks/active:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the currently active contest week
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Active week retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.ContestWeekResponse'
+              type: object
+        "404":
+          description: No active contest week found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to get active week
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get active contest week
+      tags:
+      - Contest Weeks
+  /profile:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the authenticated user's profile information including
+        avatar image, winner status, and QR code URL (if user has won and submitted
+        KYC). The is_winner flag indicates if the user is a winner. The QR code is
+        generated after the user submits their KYC details. Requires authentication.
+        This endpoint is optimized with concurrent data fetching using goroutines.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile retrieved successfully
+          schema:
+            $ref: '#/definitions/dtos.ProfileResponseDTO'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to fetch profile
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get user profile
+      tags:
+      - Profile
+    patch:
+      consumes:
+      - application/json
+      description: Update the authenticated user's profile information (name, email,
+        avatar, sharing_platform, platform_user_name). Requires authentication.
+      parameters:
+      - description: Profile update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateProfileRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile updated successfully
+          schema:
+            $ref: '#/definitions/dtos.UserProfileDTO'
+        "400":
+          description: Validation failed or email already in use
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to update profile
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Update user profile
+      tags:
+      - Profile
+  /profile/address:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all addresses for the authenticated user. Requires authentication.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Addresses retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/dtos.AddressResponseDTO'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to fetch addresses
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get user addresses
+      tags:
+      - Profile
+    post:
+      consumes:
+      - application/json
+      description: Add a new delivery address for the authenticated user. Validates
+        pincode and location deliverability. Requires authentication.
+      parameters:
+      - description: Address details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.AddressRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Address created successfully
+          schema:
+            $ref: '#/definitions/dtos.AddressResponseDTO'
+        "400":
+          description: Validation failed or location not deliverable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to add address
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Add a new address
+      tags:
+      - Profile
+  /profile/address/{addressId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing address for the authenticated user. Requires
+        authentication.
+      parameters:
+      - description: Address ID
+        in: path
+        name: addressId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Address deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Address ID is required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Address does not belong to user
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Address not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to delete address
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Delete an address
+      tags:
+      - Profile
+    put:
+      consumes:
+      - application/json
+      description: Update an existing address for the authenticated user. Validates
+        pincode and location deliverability. Requires authentication.
+      parameters:
+      - description: Address ID
+        in: path
+        name: addressId
+        required: true
+        type: string
+      - description: Address details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.AddressRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Address updated successfully
+          schema:
+            $ref: '#/definitions/dtos.AddressResponseDTO'
+        "400":
+          description: Validation failed or location not deliverable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Address does not belong to user
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Address not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to update address
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Update an existing address
+      tags:
+      - Profile
+  /profile/questions:
+    get:
+      consumes:
+      - application/json
+      description: Get all active questions with user's answers
+      parameters:
+      - description: Language ID
+        in: query
+        name: language_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Questions retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dtos.QuestionResponseDTO'
+                  type: array
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to fetch questions
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get Questions
+      tags:
+      - Questions
+    post:
+      consumes:
+      - application/json
+      description: Submit answers to multiple questions
+      parameters:
+      - description: Answer Questions Request
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/dtos.AnswerQuestionsRequestDTO'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Answers submitted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to submit answers
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Answer Questions
+      tags:
+      - Questions
+  /profile/questions/create:
+    post:
+      consumes:
+      - application/json
+      description: Create or update questions and options
+      parameters:
+      - description: Create Questions Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateQuestionsRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Questions created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to create questions
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create Questions
+      tags:
+      - Questions
+  /profile/questions/text:
+    post:
+      consumes:
+      - application/json
+      description: Get a question by its text and language ID
+      parameters:
+      - description: Get Question By Text Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.GetQuestionByTextRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Question retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.QuestionResponseDTO'
+              type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Question not found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get Question By Text
+      tags:
+      - Questions
+  /questions:
+    post:
+      consumes:
+      - application/json
+      description: Submit a new question with text and language. Requires authentication.
+      parameters:
+      - description: Question text and language ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.QuestionSubmitRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Question submitted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.QuestionResponse'
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to submit question
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Submit a new question
+      tags:
+      - Questions
+  /questions/active:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all active questions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Questions retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dtos.QuestionResponse'
+                  type: array
+              type: object
+        "500":
+          description: Failed to get active questions
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get active questions
+      tags:
+      - Questions
+  /states:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all active states. Returns a list of all states where
+        is_active is true and is_deleted is false, ordered by name alphabetically.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: States retrieved successfully
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "500":
+          description: Failed to fetch states
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get all states
+      tags:
+      - Location
+  /thunder-seat:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Submit an answer to a Thunder Seat question for the current week
+        with optional media file (image/audio/video). Requires authentication.
+      parameters:
+      - description: Answer text
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: Sharing platform (instagram, snapchat, facebook, twitter, tiktok,
+          youtube)
+        in: formData
+        name: social_media
+        type: string
+      - description: Platform user name (min 3, max 255 characters)
+        in: formData
+        name: user_name
+        type: string
+      - description: Optional media file (image max 10MB, video max 10MB, audio max
+          100MB)
+        in: formData
+        name: media_file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Answer submitted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.ThunderSeatResponse'
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to submit answer
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Submit Thunder Seat answer
+      tags:
+      - Thunder Seat
+  /thunder-seat/current-week:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the current active contest week details including dates
+        and winner count
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Current week retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.CurrentWeekResponse'
+              type: object
+        "404":
+          description: No active contest week
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to get active contest week
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get current contest week information
+      tags:
+      - Thunder Seat
+  /thunder-seat/submissions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all Thunder Seat answer submissions for the authenticated
+        user. Requires authentication.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Submissions retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dtos.ThunderSeatResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to get submissions
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get user's Thunder Seat submissions
+      tags:
+      - Thunder Seat
+  /website-status:
+    get:
+      consumes:
+      - application/json
+      description: Get the current website status (live, live_soon, or coming_soon)
+        based on launch date
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Website status retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.WebsiteStatusResponse'
+              type: object
+        "500":
+          description: Failed to get website status
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get website status
+      tags:
+      - Website
+  /winners:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all winners with pagination support
+      parameters:
+      - description: Number of items per page
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        required: true
+        type: integer
+      - default: 0
+        description: Number of items to skip
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Winners retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.PaginatedResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dtos.WinnerResponse'
+                  type: array
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to get all winners
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get all winners with pagination
+      tags:
+      - Winners
+  /winners/kyc:
+    post:
+      consumes:
+      - multipart/form-data
+      description: After being selected as a winner, user submits their KYC details
+        including name, email, optional Aadhar card images, and up to three cities
+        for additional information. Aadhar card number and images are optional. Cities
+        are optional text fields.
+      parameters:
+      - description: User name
+        in: formData
+        name: user_name
+        required: true
+        type: string
+      - description: User email
+        in: formData
+        name: user_email
+        required: true
+        type: string
+      - description: Aadhar number (optional)
+        in: formData
+        name: aadhar_number
+        type: string
+      - description: Aadhar front image (optional)
+        in: formData
+        name: aadhar_front
+        type: file
+      - description: Aadhar back image (optional)
+        in: formData
+        name: aadhar_back
+        type: file
+      - description: City 1 (optional)
+        in: formData
+        name: city1
+        type: string
+      - description: City 2 (optional)
+        in: formData
+        name: city2
+        type: string
+      - description: City 3 (optional)
+        in: formData
+        name: city3
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: KYC submitted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Validation failed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to submit KYC
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Submit winner KYC details
+      tags:
+      - Winners
+  /winners/mark-viewed:
+    post:
+      consumes:
+      - application/json
+      description: Mark the congratulations banner as viewed for the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Banner marked as viewed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: User is not a winner
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to mark banner as viewed
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Mark banner as viewed
+      tags:
+      - Winners
+  /winners/status:
+    get:
+      consumes:
+      - application/json
+      description: Check if the authenticated user has won, whether they have viewed
+        the congratulations banner, and if they have participated in the contest.
+        Returns has_won (true if user is a winner), has_viewed (true if banner was
+        viewed), has_participated (true if user has submitted any answers in thunder_seat),
+        week_number (if won), and qr_code_url (if won).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Winner status retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.WinnerStatusResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to check winner status
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Check user winner status
+      tags:
+      - Winners
+  /winners/week/{weekNumber}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all winners for a specific contest week
+      parameters:
+      - description: Week number
+        in: path
+        name: weekNumber
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Winners retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dtos.WinnerResponse'
+                  type: array
+              type: object
+        "400":
+          description: Invalid week number
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Failed to get winners
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Get winners by week
+      tags:
+      - Winners
+securityDefinitions:
+  APIKey:
+    description: Admin API key for protected operations
+    in: header
+    name: X-API-Key
+    type: apiKey
+  Bearer:
+    description: Type "Bearer" followed by a space and JWT token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

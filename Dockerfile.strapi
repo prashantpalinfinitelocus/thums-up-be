@@ -1,0 +1,45 @@
+FROM node:18
+
+# Install OS deps required for better-sqlite3 and bcrypt etc.
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /srv/app
+
+# Copy package files
+COPY ./strapi/package*.json ./
+COPY ./strapi/patches ./patches
+
+# Install deps
+RUN npm install
+
+# Apply patches
+RUN npx patch-package
+
+# Ensure any previous gcp-service-account.json artifact is removed so it can be recreated as a file
+RUN rm -rf /srv/app/gcp-service-account.json
+
+# Copy full Strapi project (excluding dist via .dockerignore)
+COPY ./strapi .
+
+# Copy GCP service account
+COPY ./gcp-service-account.json ./gcp-service-account.json
+
+# Build Strapi admin
+RUN npm run build
+
+# Force clean and copy config files to dist (Strapi 5 looks for them there in production)
+RUN rm -rf dist/config && \
+    mkdir -p dist/config && \
+    cp config/database.js dist/config/ && \
+    cp config/server.js dist/config/ && \
+    cp config/admin.js dist/config/ && \
+    cp config/api.js dist/config/ && \
+    cp config/middlewares.js dist/config/ && \
+    cp config/plugins.js dist/config/ && \
+    echo "Verifying config files are FILES not DIRECTORIES:" && \
+    file dist/config/*.js
+
+# Expose correct Strapi port
+EXPOSE 1337
+
+CMD ["npm", "run", "start"]

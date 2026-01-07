@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "trying_to_prank_us_pop_ups",
+  "info": {
+    "singularName": "trying-to-prank-us-pop-up",
+    "pluralName": "trying-to-prank-us-pop-ups",
+    "displayName": "trying_to_prank_us_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "prank_us_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "prank_us_sub_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "prank_us_button_text": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "easy_me_pop_ups",
+  "info": {
+    "singularName": "easy-me-pop-up",
+    "pluralName": "easy-me-pop-ups",
+    "displayName": "easy_me_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "easy_me_pop_up_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "easy_me_pop_up_sub_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "easy_me_pop_up_sub_heading_1": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

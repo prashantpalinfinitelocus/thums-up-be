@@ -1,0 +1,17 @@
+FROM node:18-alpine
+
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /srv/app
+
+ENV NODE_ENV=development
+
+COPY ./strapi/package*.json ./
+
+RUN npm install --legacy-peer-deps
+
+EXPOSE 1337
+
+# Use develop mode for hot reload
+CMD ["npm", "run", "dev"]
+

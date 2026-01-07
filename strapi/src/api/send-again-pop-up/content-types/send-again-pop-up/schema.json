@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "send_again_pop_ups",
+  "info": {
+    "singularName": "send-again-pop-up",
+    "pluralName": "send-again-pop-ups",
+    "displayName": "send_again_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "sub_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+package entities
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+type User struct {
+	ID               string     `gorm:"type:uuid;primaryKey" json:"id"`
+	PhoneNumber      string     `gorm:"type:varchar(15);uniqueIndex;not null" json:"phone_number"`
+	Name             *string    `gorm:"type:varchar(255)" json:"name"`
+	Email            *string    `gorm:"type:varchar(255);uniqueIndex" json:"email"`
+	AvatarID         *int       `json:"avatar_id,omitempty" gorm:"type:int"`
+	IsActive         bool       `gorm:"default:true" json:"is_active"`
+	IsVerified       bool       `gorm:"default:false" json:"is_verified"`
+	ReferralCode     *string    `gorm:"type:varchar(20);uniqueIndex" json:"referral_code,omitempty"`
+	SharingPlatform  *string    `gorm:"type:varchar(255)" json:"sharing_platform,omitempty"`
+	PlatformUserName *string    `gorm:"type:varchar(255)" json:"platform_user_name,omitempty"`
+	ReferredBy       *string    `gorm:"type:varchar(20)" json:"referred_by,omitempty"`
+	DeviceToken      *string    `gorm:"type:text" json:"device_token,omitempty"`
+	IsViewed         bool       `gorm:"default:false" json:"is_viewed,omitempty"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	DeletedAt        *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	Avatar           *Avatar    `gorm:"foreignKey:AvatarID;references:ID" json:"avatar,omitempty"`
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	if u.ID == "" {
+		u.ID = uuid.New().String()
+	}
+	return nil
+}
+
+func (User) TableName() string {
+	return "users"
+}

@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "break_the_ice_complete_profile_pop_ups",
+  "info": {
+    "singularName": "break-the-ice-complete-profile-pop-up",
+    "pluralName": "break-the-ice-complete-profile-pop-ups",
+    "displayName": "break_the_ice_complete_profile_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "break_the_ice_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "break_the_ice_sub_heading_1": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "break_the_ice_sub_heading_2": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "break_the_ice_yes_button": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "break_the_ice_no_button": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

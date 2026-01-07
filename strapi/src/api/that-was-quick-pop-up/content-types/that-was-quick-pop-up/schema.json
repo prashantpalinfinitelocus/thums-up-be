@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "that_was_quick_pop_ups",
+  "info": {
+    "singularName": "that-was-quick-pop-up",
+    "pluralName": "that-was-quick-pop-ups",
+    "displayName": "that_was_quick_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "heading_title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "sub_heading_title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "got_it_text": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

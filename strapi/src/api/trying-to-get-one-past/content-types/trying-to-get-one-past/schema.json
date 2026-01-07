@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "trying_to_get_one_pasts",
+  "info": {
+    "singularName": "trying-to-get-one-past",
+    "pluralName": "trying-to-get-one-pasts",
+    "displayName": "trying_to_get_one_past_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "trying_to_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "trying_to_sub_heading": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "refer_another_pop_up": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

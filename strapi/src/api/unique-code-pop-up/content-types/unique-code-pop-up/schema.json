@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "unique_code_pop_ups",
+  "info": {
+    "singularName": "unique-code-pop-up",
+    "pluralName": "unique-code-pop-ups",
+    "displayName": "unique_code_pop_up"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title_pop_up": {
+      "type": "string"
+    },
+    "placeholder_unique_code": {
+      "type": "string"
+    },
+    "submit_button": {
+      "type": "string"
+    },
+    "note_message": {
+      "type": "string"
+    }
+  }
+}
