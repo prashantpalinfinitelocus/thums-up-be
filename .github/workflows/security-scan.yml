@@ -42,7 +42,7 @@ jobs:
         gosec -fmt sarif -out ./results/gosec-results.sarif ./... || true
 
     - name: Upload gosec results to GitHub Security
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: ./results/gosec-results.sarif
         wait-for-processing: true
