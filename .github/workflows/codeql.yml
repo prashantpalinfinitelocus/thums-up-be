@@ -53,11 +53,29 @@ jobs:
           category: "/language:${{ matrix.language }}"
           output: ./results
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Extract Code Scanning CSV
+        run: |
+          python3 scripts/extract-code-scanning-csv.py || echo "CSV extraction completed with warnings"
+
       - name: Upload SARIF results as artifact
         uses: actions/upload-artifact@v4
         with:
           name: codeql-sarif-${{ matrix.language }}
           path: ./results/*.sarif
+
+      - name: Upload Code Scanning CSV as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-scanning-files-extracted-${{ matrix.language }}
+          path: ./results/code-scanning-files-extracted.csv
+          retention-days: 30
+        continue-on-error: true
 
       - name: Move SARIF to repo root
         run: |
