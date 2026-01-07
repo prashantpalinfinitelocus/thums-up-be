@@ -109,7 +109,7 @@ jobs:
 
     - name: Upload StackHawk SARIF as artifact
       if: always() && steps.check-sarif.outputs.exists == 'true'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: stackhawk-sarif
         path: ./results/stackhawk-results.sarif

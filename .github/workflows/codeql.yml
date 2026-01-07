@@ -63,14 +63,14 @@ jobs:
           python3 scripts/extract-code-scanning-csv.py || echo "CSV extraction completed with warnings"
 
       - name: Upload SARIF results as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: codeql-sarif-${{ matrix.language }}
           path: ./results/*.sarif
 
       - name: Upload Code Scanning CSV as artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: code-scanning-files-extracted-${{ matrix.language }}
           path: ./results/code-scanning-files-extracted.csv

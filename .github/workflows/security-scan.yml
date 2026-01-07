@@ -60,14 +60,14 @@ jobs:
       continue-on-error: true
 
     - name: Upload gosec report as artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: gosec-report
         path: ./results/gosec-report.json
         retention-days: 30
 
     - name: Upload gosec SARIF as artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: gosec-sarif
         path: ./results/gosec-results.sarif
@@ -84,7 +84,7 @@ jobs:
 
     - name: Upload gosec CSV as artifact
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: code-scanning-files-extracted-gosec
         path: ./results/code-scanning-files-extracted.csv
@@ -124,7 +124,7 @@ jobs:
         govulncheck -json ./... > ./results/govulncheck-report.json || true
 
     - name: Upload govulncheck report as artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: govulncheck-report
         path: ./results/govulncheck-report.json
@@ -183,7 +183,7 @@ jobs:
 
     - name: Upload Code Scanning CSV as artifact
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: code-scanning-files-extracted
         path: ./results/code-scanning-files-extracted.csv
@@ -223,7 +223,7 @@ jobs:
 
     - name: Upload Dependabot Alerts JSON as artifact
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: dependabot-alerts-backend
         path: ./results/dependabot-alerts-backend.json
@@ -232,7 +232,7 @@ jobs:
 
     - name: Upload Dependabot Alerts CSV as artifact
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: dependabot-alerts-backend-csv
         path: ./results/dependabot-alerts-backend.csv
