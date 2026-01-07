@@ -124,7 +124,7 @@ install-tools: ## Install development tools
 	@echo "Installing development tools..."
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install golang.org/x/tools/cmd/goimports@latest
-	go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
 	go install golang.org/x/vuln/cmd/govulncheck@latest
 
 ci: lint test ## Run CI pipeline locally

@@ -31,7 +31,7 @@ jobs:
 
     - name: Install gosec
       run: |
-        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+        go install github.com/securego/gosec/v2/cmd/gosec@latest
 
     - name: Create results folder
       run: mkdir -p ./results
