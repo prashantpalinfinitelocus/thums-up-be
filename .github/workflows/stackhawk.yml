@@ -51,8 +51,8 @@ jobs:
         apiKey: ${{ secrets.STACKHAWK_API_KEY }}
         appId: ${{ secrets.STACKHAWK_APP_ID }}
         envId: ${{ secrets.STACKHAWK_ENV_ID }}
-        # Optional: specify config file
-        # configFile: stackhawk.yml
+        # Use config file (contains applicationId, env, host, etc.)
+        configFile: stackhawk.yml
 
     - name: Move StackHawk results to results folder
       if: always()

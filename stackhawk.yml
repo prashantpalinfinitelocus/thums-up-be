@@ -1,25 +1,27 @@
+# -- stackhawk configuration for thums-up-be --
 app:
-  applicationId: thums-up-backend
-  env: Production
-  host: https://tccc-tja-test-cloudrun-backend-<hash>-<region>.a.run.app
-  openApiSpec: ./docs/swagger.yaml
+  # -- An applicationId obtained from the StackHawk platform. --
+  applicationId: b0a672c9-3beb-430f-8689-1a69a9c22299 # (required)
+  # -- The environment for the applicationId defined in the StackHawk platform. --
+  env: Production # (required)
+  # -- The url of your application to scan --
+  host: https://thunder-zone-staging.coke2home.com # (required)
 
-authentication:
-  type: Bearer
-  token: <your-test-jwt-token>
+# -- Customized Configuration for GraphQL/SOAP/OpenAPI, add here --
+  openApiConf:
+    path: /backend/swagger/index.html#/ # OR...
+#     filePath: openApi.json
+  autoPolicy: true
+  autoInputVectors: true
+  # Configuration Docs: https://docs.stackhawk.com/hawkscan/configuration/
 
-# Optional: Configure specific endpoints to test
-# endpoints:
-#   - path: /backend/api/v1/auth/send-otp
-#     method: POST
-#   - path: /backend/api/v1/profile
-#     method: GET
-#     auth: true
+# -- If Authenticated Scanning is needed, add here --
+  # Authenticated Scanning Docs: https://docs.stackhawk.com/hawkscan/authenticated-scanning.html
+  # Authenticated Scanning Repo: https://github.com/kaakaww/scan-configuration/tree/main/Authentication
+  # authentication:
+  #   type: Bearer
+  #   token: <your-test-jwt-token>
 
-# Optional: Configure scan settings
-# scanConfig:
-#   activeScan: true
-#   passiveScan: true
-#   spider: true
-#   ajaxSpider: true
-
+# -- Help Section --
+  # Docs: https://docs.stackhawk.com/
+  # Contact Support: support@stackhawk.com
