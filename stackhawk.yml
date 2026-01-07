@@ -1,9 +1,9 @@
 # -- stackhawk configuration for thums-up-be --
 app:
   # -- An applicationId obtained from the StackHawk platform. --
-  applicationId: b0a672c9-3beb-430f-8689-1a69a9c22299 # (required)
+  applicationId: 48441821-9fed-45c6-a88c-118908749738 # (required)
   # -- The environment for the applicationId defined in the StackHawk platform. --
-  env: Production # (required)
+  env: Development # (required)
   # -- The url of your application to scan --
   host: https://thunder-zone-staging.coke2home.com # (required)
 
